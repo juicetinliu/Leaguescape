@@ -8,8 +8,8 @@ The [admin] oversees the [game], and is given special tools through the same web
 The intention is for the webapp to work on both mobile/desktop, but for development purposes, we'll first develop for Desktop (and build for mobile views later)
 
 ## Tech
-* [Supabase](https://supabase.com/docs) - to host the game and handle auth, unique per session (managed by the [admin])
-* Pure Vanilla JS/HTML to build the page :)
+* [Supabase](https://supabase.com/docs) - to host the [game] data and handle auth
+* React and Vite to build the webapp
 
 # Definitions
 
@@ -62,9 +62,11 @@ Page id [what [user] role(s) can view this page]:
 ## Non-game Flows
 
 ### `Index` Page
-A log in prompt is shown, with an option to log in as a guest. Log in can be done with Google! As mentioned earlier, there's a link to the `Info` page.
+A log in prompt is shown, with an option to log in as a guest (anonymous user). Log in can be also be done oauth providers later like Google! 
 
-Successfully logging in as a guest/with Google leads you to the `User` page.
+As mentioned earlier, there's a link to the `Info` page.
+
+Successfully logging in leads you to the `User` page.
 
 ### `Info` Page
 Empty for now - will contain details about the game!
