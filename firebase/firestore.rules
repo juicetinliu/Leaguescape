@@ -1,0 +1,67 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin(gameId) {
+      return get(/databases/$(database)/documents/games/$(gameId)).data.adminId == request.auth.uid;
+    }
+    
+    function isPlayer(gameId) {
+      return exists(/databases/$(database)/documents/players/$(request.auth.uid + '_' + gameId));
+    }
+    
+    function isCharacter(gameId, characterId) {
+      let player = get(/databases/$(database)/documents/players/$(request.auth.uid + '_' + gameId));
+      return player.data.assumedCharacterId == characterId;
+    }
+    
+    // User rules
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if request.auth.uid == userId;
+    }
+    
+    // Game rules
+    match /games/{gameId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAdmin(gameId);
+      allow delete: if isAdmin(gameId);
+    }
+    
+    // Player rules
+    match /players/{playerId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAdmin(resource.data.gameId) || request.auth.uid == resource.data.authId;
+      allow delete: if isAdmin(resource.data.gameId);
+    }
+    
+    // Character rules
+    match /characters/{characterId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin(resource.data.gameId);
+      allow update: if isAdmin(resource.data.gameId) || isCharacter(resource.data.gameId, characterId);
+      allow delete: if isAdmin(resource.data.gameId);
+    }
+    
+    // Item rules
+    match /items/{itemId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin(resource.data.gameId);
+    }
+    
+    // Character actions rules
+    match /characterActions/{actionId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAdmin(resource.data.gameId);
+      allow delete: if false;
+    }
+  }
+}
