@@ -43,7 +43,7 @@ class Router {
         }
 
         // Initialize the page
-        route.page;
+        route.page.run();
     }
 
     navigate(path) {

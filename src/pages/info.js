@@ -1,8 +1,12 @@
 class InfoPage {
     constructor() {
-        this.initializeUI();
+        this.run();
     }
 
+    run() {
+        this.initializeUI();
+    }
+    
     initializeUI() {
         const template = `
             <div class="container">

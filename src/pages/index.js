@@ -2,6 +2,10 @@ import AuthService from '../js/services/auth.js';
 
 class IndexPage {
     constructor() {
+        this.run();
+    }
+
+    run() {
         this.initializeUI();
         this.attachEventListeners();
     }
