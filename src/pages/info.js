@@ -1,9 +1,8 @@
 class InfoPage {
     constructor() {
-        this.run();
     }
 
-    run() {
+    show() {
         this.initializeUI();
     }
     

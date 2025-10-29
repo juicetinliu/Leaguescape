@@ -1,12 +1,12 @@
 // Firebase configuration
 const firebaseConfig = {
-    // TODO: Add your Firebase configuration here
-    apiKey: "YOUR_API_KEY",
-    authDomain: "your-app.firebaseapp.com",
-    projectId: "your-app",
-    storageBucket: "your-app.appspot.com",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyAEwv5EYotGK8fWFX1gR3ZSKxjdXTnTHbw",
+    authDomain: "leaguescape.firebaseapp.com",
+    projectId: "leaguescape",
+    storageBucket: "leaguescape.firebasestorage.app",
+    messagingSenderId: "1068732660049",
+    appId: "1:1068732660049:web:5edd3ac1e28d284dc33b70",
+    measurementId: "G-KT9EC5CT9G"
 };
 
 // Initialize Firebase

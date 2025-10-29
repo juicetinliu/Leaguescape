@@ -1,11 +1,11 @@
 import AuthService from '../js/services/auth.js';
+import { router } from '../js/utils/router.js';
 
 class IndexPage {
     constructor() {
-        this.run();
     }
 
-    run() {
+    show() {
         this.initializeUI();
         this.attachEventListeners();
     }
@@ -35,7 +35,7 @@ class IndexPage {
         document.getElementById('loginAnonymous').addEventListener('click', async () => {
             try {
                 await AuthService.signInAnonymously();
-                window.location.href = '/user';
+                router.navigate('/user');
             } catch (error) {
                 console.error('Error signing in anonymously:', error);
             }
@@ -44,7 +44,7 @@ class IndexPage {
         document.getElementById('loginGoogle').addEventListener('click', async () => {
             try {
                 await AuthService.signInWithGoogle();
-                window.location.href = '/user';
+                router.navigate('/user');
             } catch (error) {
                 console.error('Error signing in with Google:', error);
             }

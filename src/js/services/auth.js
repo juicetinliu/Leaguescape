@@ -13,6 +13,7 @@ class AuthService {
     }
 
     async signInAnonymously() {
+        console.log("Signing in anonymously");
         const { user } = await signInAnonymously(auth);
         await this.createUserIfNeeded(user);
         return user;
@@ -31,7 +32,9 @@ class AuthService {
     }
 
     async createUserIfNeeded(authUser) {
+        console.log("Auth user:", authUser);
         const user = await User.get(authUser.uid);
+        console.log("Existing user:", user);
         if (!user) {
             const newUser = new User(authUser.uid, authUser.displayName || 'Guest');
             await newUser.save();

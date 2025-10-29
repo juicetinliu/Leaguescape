@@ -1,6 +1,7 @@
 import { auth } from './config/firebase.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js';
 import { router } from './utils/router.js';
+import AuthService from './services/auth.js';
 
 class App {
     constructor() {
@@ -9,10 +10,11 @@ class App {
     }
 
     initializeAuth() {
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
                 // User is signed in
                 console.log('User is signed in:', user.uid);
+                await AuthService.createUserIfNeeded(user);
                 router.navigate('/user');
             } else {
                 // User is signed out

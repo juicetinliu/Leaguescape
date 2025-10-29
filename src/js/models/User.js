@@ -8,8 +8,12 @@ class User {
     }
 
     static async get(authId) {
+        console.log("Fetching user:", authId);
         const userDoc = await getDoc(doc(db, 'users', authId));
-        if (!userDoc.exists()) return null;
+        if (!userDoc.exists()) {
+            console.log("User not found:", authId);
+            return null;
+        }
         return new User(userDoc.id, userDoc.data().username);
     }
 

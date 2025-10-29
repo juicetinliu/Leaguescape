@@ -42,8 +42,8 @@ class Router {
             return;
         }
 
-        // Initialize the page
-        route.page.run();
+        // Show the page
+        route.page.show();
     }
 
     navigate(path) {

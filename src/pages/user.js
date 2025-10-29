@@ -3,10 +3,9 @@ import GameService from '../js/services/game.js';
 
 class UserPage {
     constructor() {
-        this.run();
     }
 
-    run() {
+    show() {
         this.initializeUI();
         this.loadUserGames();
         this.attachEventListeners();
