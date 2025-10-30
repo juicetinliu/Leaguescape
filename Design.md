@@ -146,7 +146,6 @@ users: {
 
 games: {
   gameId: string,
-  gamePassword: string,
   createdTime: timestamp,
   startTime: timestamp,
   endTime: timestamp,

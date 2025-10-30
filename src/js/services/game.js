@@ -8,16 +8,13 @@ class GameService {
         return game;
     }
 
-    async joinGame(gameId, password, userId) {
+    async joinGame(gameId, userId) {
         const game = await Game.get(gameId);
         if (!game) throw new Error('Game not found');
-        if (game.gamePassword !== password) throw new Error('Invalid password');
 
-        // Create player record
-        await addDoc(collection(db, 'players'), {
-            playerId: `${userId}_${gameId}`,
-            gameId: gameId,
-            authId: userId,
+        // Create player record in game's players subcollection
+        await addDoc(collection(db, `games/${gameId}/players`), {
+            playerId: userId,  // Using just userId as it's already in the game context
             isBanned: false,
             assumedCharacterId: ''
         });
@@ -31,28 +28,30 @@ class GameService {
 
     async getUserGames(userId) {
         const gamesRef = collection(db, 'games');
-        const playersRef = collection(db, 'players');
-
+        const games = [];
+        
         // Get games where user is admin
         const adminGamesQuery = query(gamesRef, where('adminId', '==', userId));
         const adminGames = await getDocs(adminGamesQuery);
-
-        // Get games where user is player
-        const playerGamesQuery = query(playersRef, where('authId', '==', userId));
-        const playerGames = await getDocs(playerGamesQuery);
-
-        const games = [];
         
         // Add admin games
-        for (const doc of adminGames.docs) {
-            games.push(new Game(doc.id, doc.data()));
+        for (const gameDoc of adminGames.docs) {
+            games.push(new Game(gameDoc.id, gameDoc.data()));
         }
 
-        // Add player games
-        for (const doc of playerGames.docs) {
-            const game = await Game.get(doc.data().gameId);
-            if (game && !games.find(g => g.gameId === game.gameId)) {
-                games.push(game);
+        // Get all games and check their players subcollections for this user
+        const allGamesQuery = query(gamesRef);
+        const allGames = await getDocs(allGamesQuery);
+
+        for (const gameDoc of allGames.docs) {
+            if (games.find(g => g.gameId === gameDoc.id)) continue; // Skip if already added as admin
+            
+            const playersRef = collection(db, `games/${gameDoc.id}/players`);
+            const playerQuery = query(playersRef, where('playerId', '==', userId));
+            const playerDocs = await getDocs(playerQuery);
+            
+            if (!playerDocs.empty) {
+                games.push(new Game(gameDoc.id, gameDoc.data()));
             }
         }
 
@@ -60,20 +59,29 @@ class GameService {
     }
 
     async banPlayer(gameId, playerId) {
-        const playerRef = doc(db, 'players', playerId);
+        const playerRef = doc(db, `games/${gameId}/players/${playerId}`);
         await updateDoc(playerRef, {
             isBanned: true
         });
     }
 
     async logAction(playerId, characterId, actionType, actionDetails) {
-        await addDoc(collection(db, 'characterActions'), {
+        const gameId = this.getCurrentGameId();
+        if (!gameId) throw new Error('No active game found');
+
+        await addDoc(collection(db, `games/${gameId}/actions`), {
             playerId,
             characterId,
             actionType,
             actionDetails,
             activityTime: Date.now()
         });
+    }
+
+    getCurrentGameId() {
+        // Extract game ID from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get('gameId');
     }
 }
 

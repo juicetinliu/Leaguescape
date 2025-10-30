@@ -48,10 +48,6 @@ class UserPage {
                             <input type="text" id="gameId" class="form-input">
                         </div>
                         <div class="form-group">
-                            <label for="gamePassword">Password</label>
-                            <input type="password" id="gamePassword" class="form-input">
-                        </div>
-                        <div class="form-group">
                             <button id="submitJoin" class="btn">Join</button>
                             <button id="cancelJoin" class="btn">Cancel</button>
                         </div>
@@ -118,10 +114,9 @@ class UserPage {
 
         document.getElementById('submitJoin').addEventListener('click', async () => {
             const gameId = document.getElementById('gameId').value;
-            const password = document.getElementById('gamePassword').value;
 
             try {
-                await GameService.joinGame(gameId, password, AuthService.currentUser.authId);
+                await GameService.joinGame(gameId, AuthService.currentUser.authId);
                 window.location.href = `/lobby?gameId=${gameId}`;
             } catch (error) {
                 console.error('Error joining game:', error);

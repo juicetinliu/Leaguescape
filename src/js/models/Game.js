@@ -4,7 +4,6 @@ import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'https://www.gst
 class Game {
     constructor(gameId, data = {}) {
         this.gameId = gameId;
-        this.gamePassword = data.gamePassword || '';
         this.createdTime = data.createdTime || null;
         this.startTime = data.startTime || null;
         this.endTime = data.endTime || null;
@@ -14,10 +13,8 @@ class Game {
 
     static async create(adminId) {
         const gameId = crypto.randomUUID();
-        const gamePassword = Math.random().toString(36).slice(-8);
         
         const game = new Game(gameId, {
-            gamePassword,
             adminId,
             createdTime: serverTimestamp(),
             gameState: 'setup'
@@ -35,7 +32,6 @@ class Game {
 
     async save() {
         await setDoc(doc(db, 'games', this.gameId), {
-            gamePassword: this.gamePassword,
             createdTime: this.createdTime || serverTimestamp(),
             startTime: this.startTime,
             endTime: this.endTime,
@@ -57,13 +53,6 @@ class Game {
             gameState: this.gameState,
             startTime: this.startTime,
             endTime: this.endTime
-        });
-    }
-
-    async updatePassword(newPassword) {
-        this.gamePassword = newPassword;
-        await updateDoc(doc(db, 'games', this.gameId), {
-            gamePassword: this.gamePassword
         });
     }
 }

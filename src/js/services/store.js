@@ -1,18 +1,17 @@
 import { db } from '../config/firebase.js';
-import { collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
+import { collection, getDocs } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 import Item from '../models/Item.js';
 import Character from '../models/Character.js';
 import GameService from './game.js';
 
 class StoreService {
     async getAvailableItems(gameId, character) {
-        const itemsRef = collection(db, 'items');
-        const q = query(itemsRef, where('gameId', '==', gameId));
-        const querySnapshot = await getDocs(q);
+        const itemsRef = collection(db, `games/${gameId}/items`);
+        const querySnapshot = await getDocs(itemsRef);
 
         const items = [];
         querySnapshot.forEach(doc => {
-            const item = new Item(doc.id, doc.data());
+            const item = new Item(gameId, doc.id, doc.data());
             // Only show secret items if character has access
             if (!item.isSecret || character.canAccessSecret) {
                 items.push(item);
@@ -22,7 +21,7 @@ class StoreService {
         return items;
     }
 
-    async purchaseItem(character, item, quantity = 1) {
+    async purchaseItem(gameId, character, item, quantity = 1) {
         // Validate prerequisites
         if (!item.checkPrerequisites(character)) {
             throw new Error('Prerequisites not met');
@@ -42,7 +41,7 @@ class StoreService {
         // Process transaction
         await character.updateGold(-totalCost);
         await item.updateQuantity(-quantity);
-        await character.addItem(item.itemNumber.toString());
+        await character.addItem(item.itemId);
 
         // Log the transaction
         await GameService.logAction(
@@ -59,18 +58,16 @@ class StoreService {
         };
     }
 
-    async getCharacterInventory(character) {
-        if (!character.items) return [];
+    async getCharacterInventory(gameId, character) {
+        if (!character.items || character.items.length === 0) return [];
 
-        const itemNumbers = character.items.split(',');
-        const itemsRef = collection(db, 'items');
-        const q = query(itemsRef, where('gameId', '==', character.gameId));
-        const querySnapshot = await getDocs(q);
+        const itemsRef = collection(db, `games/${gameId}/items`);
+        const querySnapshot = await getDocs(itemsRef);
 
         const inventory = [];
         querySnapshot.forEach(doc => {
-            const item = new Item(doc.id, doc.data());
-            if (itemNumbers.includes(item.itemNumber.toString())) {
+            const item = new Item(gameId, doc.id, doc.data());
+            if (character.items.includes(item.itemId)) {
                 inventory.push(item);
             }
         });
