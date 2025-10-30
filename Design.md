@@ -147,24 +147,21 @@ users: {
 games: {
   gameId: string,
   gamePassword: string,
-  createdTime: number,
-  startTime: number,
-  endTime: number,
+  createdTime: timestamp,
+  startTime: timestamp,
+  endTime: timestamp,
   adminId: string,
   gameState: 'setup' | 'running' | 'end'
 }
 
-players: {
-  playerId: string,
-  gameId: string,
-  authId: string,
+games/{gameId}/players: {
+  playerId: string, // Same as user's authId
   isBanned: boolean,
   assumedCharacterId: string
 }
 
-items: {
+games/{gameId}/items: {
   itemId: string,
-  gameId: string,
   itemNumber: number,
   name: string,
   description: string,
@@ -174,9 +171,8 @@ items: {
   isSecret: boolean
 }
 
-characters: {
+games/{gameId}/characters: {
   characterId: string,
-  gameId: string,
   name: string,
   profileImage: string,
   emblemImage: string,
@@ -188,17 +184,17 @@ characters: {
   startingGold: number,
   canAccessSecret: boolean,
   gold: number,
-  items: string
+  items: Array<string>
 }
 
-characterActions: {
+games/{gameId}/actions: {
+  actionId: string,
   playerId: string,
   characterId: string,
   actionType: string,
   actionDetails: string,
-  activityTime: number
+  activityTime: timestamp
 }
-```
 
 ## Security Considerations
 

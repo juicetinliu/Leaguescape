@@ -11,13 +11,22 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/games/$(gameId)).data.adminId == request.auth.uid;
     }
     
-    function isPlayer(gameId) {
-      return exists(/databases/$(database)/documents/players/$(request.auth.uid + '_' + gameId));
+    function isActivePlayer(gameId) {
+      // Non-banned player in the players collection
+      return exists(/databases/$(database)/documents/games/$(gameId)/players/$(request.auth.uid)) &&
+        !get(/databases/$(database)/documents/games/$(gameId)/players/$(request.auth.uid)).data.isBanned;
     }
     
-    function isCharacter(gameId, characterId) {
-      let player = get(/databases/$(database)/documents/players/$(request.auth.uid + '_' + gameId));
-      return player.data.assumedCharacterId == characterId;
+    function hasAssumedCharacter(gameId) {
+      // Check if player has assumed any character and is active
+      return isActivePlayer(gameId) &&
+        get(/databases/$(database)/documents/games/$(gameId)/players/$(request.auth.uid)).data.assumedCharacterId != '';
+    }
+    
+    function hasAssumedThisCharacter(gameId, characterId) {
+      // Check if player has assumed this specific character and is active
+      return isActivePlayer(gameId) &&
+        get(/databases/$(database)/documents/games/$(gameId)/players/$(request.auth.uid)).data.assumedCharacterId == characterId;
     }
     
     // User rules
@@ -32,36 +41,36 @@ service cloud.firestore {
       allow create: if isAuthenticated();
       allow update: if isAdmin(gameId);
       allow delete: if isAdmin(gameId);
-    }
-    
-    // Player rules
-    match /players/{playerId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if isAdmin(resource.data.gameId) || request.auth.uid == resource.data.authId;
-      allow delete: if isAdmin(resource.data.gameId);
-    }
-    
-    // Character rules
-    match /characters/{characterId} {
-      allow read: if isAuthenticated();
-      allow create: if isAdmin(resource.data.gameId);
-      allow update: if isAdmin(resource.data.gameId) || isCharacter(resource.data.gameId, characterId);
-      allow delete: if isAdmin(resource.data.gameId);
-    }
-    
-    // Item rules
-    match /items/{itemId} {
-      allow read: if isAuthenticated();
-      allow write: if isAdmin(resource.data.gameId);
-    }
-    
-    // Character actions rules
-    match /characterActions/{actionId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if isAdmin(resource.data.gameId);
-      allow delete: if false;
+      
+      // Player rules
+      match /players/{playerId} {
+        allow read: if isAuthenticated();
+        allow create: if request.auth.uid == playerId;
+        allow update: if isAdmin(gameId);  // Only admin can update player status
+        allow delete: if isAdmin(gameId);
+      }
+      
+      // Character rules
+      match /characters/{characterId} {
+        allow read: if isAdmin(gameId) || hasAssumedThisCharacter(gameId, characterId);
+        allow create: if isAdmin(gameId);
+        allow update: if isAdmin(gameId);  // Only admin can update character data
+        allow delete: if isAdmin(gameId);
+      }
+      
+      // Item rules
+      match /items/{itemId} {
+        allow read: if isAdmin(gameId) || hasAssumedCharacter(gameId);
+        allow write: if isAdmin(gameId);
+      }
+      
+      // Action rules
+      match /actions/{actionId} {
+        allow read: if isActivePlayer(gameId);
+        allow create: if isActivePlayer(gameId);
+        allow update: if isAdmin(gameId);
+        allow delete: if false;
+      }
     }
   }
 }

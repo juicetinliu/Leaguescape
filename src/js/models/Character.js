@@ -1,10 +1,10 @@
 import { db } from '../config/firebase.js';
-import { doc, getDoc, setDoc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 
 class Character {
-    constructor(characterId, data = {}) {
+    constructor(gameId, characterId, data = {}) {
+        this.gameId = gameId;
         this.characterId = characterId;
-        this.gameId = data.gameId || '';
         this.name = data.name || '';
         this.profileImage = data.profileImage || '';
         this.emblemImage = data.emblemImage || '';
@@ -16,29 +16,24 @@ class Character {
         this.startingGold = data.startingGold || 0;
         this.canAccessSecret = data.canAccessSecret || false;
         this.gold = data.gold || 0;
-        this.items = data.items || '';
+        this.items = data.items || [];
     }
 
     static async create(gameId, characterData) {
         const characterId = crypto.randomUUID();
-        const character = new Character(characterId, {
-            gameId,
-            ...characterData
-        });
-
+        const character = new Character(gameId, characterId, characterData);
         await character.save();
         return character;
     }
 
-    static async get(characterId) {
-        const characterDoc = await getDoc(doc(db, 'characters', characterId));
+    static async get(gameId, characterId) {
+        const characterDoc = await getDoc(doc(db, `games/${gameId}/characters`, characterId));
         if (!characterDoc.exists()) return null;
-        return new Character(characterDoc.id, characterDoc.data());
+        return new Character(gameId, characterDoc.id, characterDoc.data());
     }
 
     async save() {
-        await setDoc(doc(db, 'characters', this.characterId), {
-            gameId: this.gameId,
+        await setDoc(doc(db, `games/${this.gameId}/characters`, this.characterId), {
             name: this.name,
             profileImage: this.profileImage,
             emblemImage: this.emblemImage,
@@ -56,26 +51,24 @@ class Character {
 
     async update(data) {
         Object.assign(this, data);
-        await updateDoc(doc(db, 'characters', this.characterId), data);
+        await updateDoc(doc(db, `games/${this.gameId}/characters`, this.characterId), data);
     }
 
     async delete() {
-        await deleteDoc(doc(db, 'characters', this.characterId));
+        await deleteDoc(doc(db, `games/${this.gameId}/characters`, this.characterId));
     }
 
     async updateGold(amount) {
         this.gold = Math.max(0, this.gold + amount);
-        await updateDoc(doc(db, 'characters', this.characterId), {
+        await updateDoc(doc(db, `games/${this.gameId}/characters`, this.characterId), {
             gold: this.gold
         });
     }
 
-    async addItem(itemNumber) {
-        const items = this.items ? this.items.split(',') : [];
-        if (!items.includes(itemNumber)) {
-            items.push(itemNumber);
-            this.items = items.join(',');
-            await updateDoc(doc(db, 'characters', this.characterId), {
+    async addItem(itemId) {
+        if (!this.items.includes(itemId)) {
+            this.items.push(itemId);
+            await updateDoc(doc(db, `games/${this.gameId}/characters`, this.characterId), {
                 items: this.items
             });
         }

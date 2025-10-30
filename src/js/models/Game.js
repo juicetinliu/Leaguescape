@@ -1,11 +1,11 @@
 import { db } from '../config/firebase.js';
-import { doc, getDoc, setDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 
 class Game {
     constructor(gameId, data = {}) {
         this.gameId = gameId;
         this.gamePassword = data.gamePassword || '';
-        this.createdTime = data.createdTime || Date.now();
+        this.createdTime = data.createdTime || null;
         this.startTime = data.startTime || null;
         this.endTime = data.endTime || null;
         this.adminId = data.adminId || '';
@@ -19,7 +19,7 @@ class Game {
         const game = new Game(gameId, {
             gamePassword,
             adminId,
-            createdTime: Date.now(),
+            createdTime: serverTimestamp(),
             gameState: 'setup'
         });
 
@@ -36,7 +36,7 @@ class Game {
     async save() {
         await setDoc(doc(db, 'games', this.gameId), {
             gamePassword: this.gamePassword,
-            createdTime: this.createdTime,
+            createdTime: this.createdTime || serverTimestamp(),
             startTime: this.startTime,
             endTime: this.endTime,
             adminId: this.adminId,
@@ -50,8 +50,8 @@ class Game {
         }
 
         this.gameState = newState;
-        if (newState === 'running') this.startTime = Date.now();
-        if (newState === 'end') this.endTime = Date.now();
+        if (newState === 'running') this.startTime = serverTimestamp();
+        if (newState === 'end') this.endTime = serverTimestamp();
 
         await updateDoc(doc(db, 'games', this.gameId), {
             gameState: this.gameState,

@@ -2,9 +2,9 @@ import { db } from '../config/firebase.js';
 import { doc, getDoc, setDoc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 
 class Item {
-    constructor(itemId, data = {}) {
+    constructor(gameId, itemId, data = {}) {
+        this.gameId = gameId;
         this.itemId = itemId;
-        this.gameId = data.gameId || '';
         this.itemNumber = data.itemNumber || 0;
         this.name = data.name || '';
         this.description = data.description || '';
@@ -16,24 +16,19 @@ class Item {
 
     static async create(gameId, itemData) {
         const itemId = crypto.randomUUID();
-        const item = new Item(itemId, {
-            gameId,
-            ...itemData
-        });
-
+        const item = new Item(gameId, itemId, itemData);
         await item.save();
         return item;
     }
 
-    static async get(itemId) {
-        const itemDoc = await getDoc(doc(db, 'items', itemId));
+    static async get(gameId, itemId) {
+        const itemDoc = await getDoc(doc(db, `games/${gameId}/items`, itemId));
         if (!itemDoc.exists()) return null;
-        return new Item(itemDoc.id, itemDoc.data());
+        return new Item(gameId, itemDoc.id, itemDoc.data());
     }
 
     async save() {
-        await setDoc(doc(db, 'items', this.itemId), {
-            gameId: this.gameId,
+        await setDoc(doc(db, `games/${this.gameId}/items`, this.itemId), {
             itemNumber: this.itemNumber,
             name: this.name,
             description: this.description,
@@ -46,16 +41,16 @@ class Item {
 
     async update(data) {
         Object.assign(this, data);
-        await updateDoc(doc(db, 'items', this.itemId), data);
+        await updateDoc(doc(db, `games/${this.gameId}/items`, this.itemId), data);
     }
 
     async delete() {
-        await deleteDoc(doc(db, 'items', this.itemId));
+        await deleteDoc(doc(db, `games/${this.gameId}/items`, this.itemId));
     }
 
     async updateQuantity(amount) {
         this.quantity = Math.max(0, this.quantity + amount);
-        await updateDoc(doc(db, 'items', this.itemId), {
+        await updateDoc(doc(db, `games/${this.gameId}/items`, this.itemId), {
             quantity: this.quantity
         });
     }
@@ -69,8 +64,7 @@ class Item {
         if (this.prereqs === 'LOCKED') return false;
         
         const requiredItems = this.prereqs.split(',');
-        const characterItems = character.items ? character.items.split(',') : [];
-        return requiredItems.every(item => characterItems.includes(item));
+        return requiredItems.every(item => character.items.includes(item));
     }
 }
 
