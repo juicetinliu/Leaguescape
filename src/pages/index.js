@@ -34,7 +34,6 @@ class IndexPage {
     attachEventListeners() {
         document.getElementById('loginAnonymous').addEventListener('click', async () => {
             try {
-                console.log("signing in!!!")
                 await AuthService.signInAnonymously();
                 // router.navigate('/user');
                 // No need to navigate as the app.js auth state listener will handle it

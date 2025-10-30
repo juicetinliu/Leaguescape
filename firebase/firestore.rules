@@ -45,7 +45,7 @@ service cloud.firestore {
       // Player rules
       match /players/{playerId} {
         allow read: if isAuthenticated();
-        allow create: if request.auth.uid == playerId;
+        allow create: if isAuthenticated() && request.auth.uid == playerId;
         allow update: if isAdmin(gameId);  // Only admin can update player status
         allow delete: if isAdmin(gameId);
       }

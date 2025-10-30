@@ -8,6 +8,7 @@ class UserPage {
 
     show() {
         this.initializeUI();
+        this.loadUsername();
         this.loadUserGames();
         this.attachEventListeners();
     }
@@ -69,6 +70,7 @@ class UserPage {
                 gamesList.innerHTML = '<p>No games found. Create or join a game to get started!</p>';
                 return;
             }
+            console.log(games);
 
             const gamesHtml = games.map(game => `
                 <div class="card">
@@ -90,10 +92,36 @@ class UserPage {
         }
     }
 
+    async loadUsername() {
+        const usernameElement = document.getElementById('username');
+        if (AuthService.currentUser) {
+            usernameElement.textContent = AuthService.currentUser.username;
+        }
+    }
+
+    async showUsernameEditDialog() {
+        const currentUsername = AuthService.currentUser.username;
+        const newUsername = prompt('Enter new username:', currentUsername);
+        
+        if (newUsername && newUsername !== currentUsername) {
+            try {
+                await AuthService.currentUser.updateUsername(newUsername);
+                document.getElementById('username').textContent = newUsername;
+            } catch (error) {
+                console.error('Error updating username:', error);
+                alert('Failed to update username. Please try again.');
+            }
+        }
+    }
+
     attachEventListeners() {
         document.getElementById('logout').addEventListener('click', async () => {
             await AuthService.signOut();
             router.navigate('/');
+        });
+
+        document.getElementById('editUsername').addEventListener('click', () => {
+            this.showUsernameEditDialog();
         });
 
         document.getElementById('createGame').addEventListener('click', async () => {
