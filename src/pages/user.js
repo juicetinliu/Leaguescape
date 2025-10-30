@@ -1,5 +1,6 @@
 import AuthService from '../js/services/auth.js';
 import GameService from '../js/services/game.js';
+import { router } from '../js/utils/router.js';
 
 class UserPage {
     constructor() {
@@ -92,13 +93,13 @@ class UserPage {
     attachEventListeners() {
         document.getElementById('logout').addEventListener('click', async () => {
             await AuthService.signOut();
-            window.location.href = '/';
+            router.navigate('/');
         });
 
         document.getElementById('createGame').addEventListener('click', async () => {
             try {
                 const game = await GameService.createGame(AuthService.currentUser.authId);
-                window.location.href = `/admin?gameId=${game.gameId}`;
+                router.navigate(`/admin?gameId=${game.gameId}`);
             } catch (error) {
                 console.error('Error creating game:', error);
             }
@@ -117,7 +118,7 @@ class UserPage {
 
             try {
                 await GameService.joinGame(gameId, AuthService.currentUser.authId);
-                window.location.href = `/lobby?gameId=${gameId}`;
+                router.navigate(`/lobby?gameId=${gameId}`);
             } catch (error) {
                 console.error('Error joining game:', error);
             }
@@ -129,17 +130,17 @@ class UserPage {
         if (!game) return;
 
         if (game.adminId === AuthService.currentUser.authId) {
-            window.location.href = `/admin?gameId=${gameId}`;
+            router.navigate(`/admin?gameId=${gameId}`);
         } else {
             switch (game.gameState) {
                 case 'setup':
-                    window.location.href = `/lobby?gameId=${gameId}`;
+                    router.navigate(`/lobby?gameId=${gameId}`);
                     break;
                 case 'running':
-                    window.location.href = `/login?gameId=${gameId}`;
+                    router.navigate(`/login?gameId=${gameId}`);
                     break;
                 case 'end':
-                    window.location.href = `/credits?gameId=${gameId}`;
+                    router.navigate(`/credits?gameId=${gameId}`);
                     break;
             }
         }

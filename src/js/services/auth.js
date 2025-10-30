@@ -13,16 +13,17 @@ class AuthService {
     }
 
     async signInAnonymously() {
-        console.log("Signing in anonymously");
         const { user } = await signInAnonymously(auth);
-        await this.createUserIfNeeded(user);
+        // await this.createUserIfNeeded(user);
+        // No need to create user as the app.js auth state listener will handle it
         return user;
     }
 
     async signInWithGoogle() {
         const provider = new GoogleAuthProvider();
         const { user } = await signInWithPopup(auth, provider);
-        await this.createUserIfNeeded(user);
+        // await this.createUserIfNeeded(user);
+        // No need to create user as the app.js auth state listener will handle it
         return user;
     }
 
@@ -32,9 +33,7 @@ class AuthService {
     }
 
     async createUserIfNeeded(authUser) {
-        console.log("Auth user:", authUser);
         const user = await User.get(authUser.uid);
-        console.log("Existing user:", user);
         if (!user) {
             const newUser = new User(authUser.uid, authUser.displayName || 'Guest');
             await newUser.save();

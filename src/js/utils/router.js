@@ -1,6 +1,8 @@
 import IndexPage from '../../pages/index.js';
 import InfoPage from '../../pages/info.js';
 import UserPage from '../../pages/user.js';
+import AdminPage from '../../pages/admin.js';
+import LobbyPage from '../../pages/lobby.js';
 import AuthService from '../services/auth.js';
 
 class Router {
@@ -16,6 +18,14 @@ class Router {
             },
             '/user': {
                 page: UserPage,
+                requiresAuth: true
+            },
+            '/admin': {
+                page: AdminPage,
+                requiresAuth: true
+            },
+            '/lobby': {
+                page: LobbyPage,
                 requiresAuth: true
             }
             // Additional routes will be added here
@@ -43,7 +53,7 @@ class Router {
         }
 
         // Show the page
-        route.page.show();
+        await route.page.show();
     }
 
     navigate(path) {

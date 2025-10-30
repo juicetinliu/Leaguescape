@@ -34,8 +34,10 @@ class IndexPage {
     attachEventListeners() {
         document.getElementById('loginAnonymous').addEventListener('click', async () => {
             try {
+                console.log("signing in!!!")
                 await AuthService.signInAnonymously();
-                router.navigate('/user');
+                // router.navigate('/user');
+                // No need to navigate as the app.js auth state listener will handle it
             } catch (error) {
                 console.error('Error signing in anonymously:', error);
             }
@@ -44,7 +46,8 @@ class IndexPage {
         document.getElementById('loginGoogle').addEventListener('click', async () => {
             try {
                 await AuthService.signInWithGoogle();
-                router.navigate('/user');
+                // router.navigate('/user');
+                // No need to navigate as the app.js auth state listener will handle it
             } catch (error) {
                 console.error('Error signing in with Google:', error);
             }
