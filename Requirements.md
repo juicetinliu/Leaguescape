@@ -50,6 +50,7 @@ States only progress from `[Setup]` -> `[Running]` -> `[End]`, and NOT backwards
     - gameState (string<`setup`|`running`|`end`>) - can only be modifed by the [admin] through the UI.
 - /players
     * playerId - same as the /users authId!
+    - playername (string) - initially set based on username, can be edited in game.
     - isBanned (boolean) - if true, [user] cannot access the game. This can be set by the [admin] to ban a specific [user].
     - assumedCharacterId (string) - empty if not a character, characterId if [player] successfully becomes a [*character]
 - /items - all fields only modifiable by the [admin] unless said otherwise.

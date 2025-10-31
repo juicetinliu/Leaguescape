@@ -146,7 +146,7 @@ class UserPage {
             const gameId = document.getElementById('gameId').value;
 
             try {
-                await GameService.joinGame(gameId, AuthService.currentUser.authId);
+                await GameService.joinGame(gameId, AuthService.currentUser.authId, AuthService.currentUser.username);
                 router.navigate(`lobby&gameId=${gameId}`);
             } catch (error) {
                 console.error('Error joining game:', error);

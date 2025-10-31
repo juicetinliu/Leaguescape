@@ -8,14 +8,15 @@ class GameService {
         return game;
     }
 
-    async joinGame(gameId, userId) {
+    async joinGame(gameId, userId, username) {
         const game = await Game.get(gameId);
         if (!game) throw new Error('Game not found');
 
         // Create player record in game's players subcollection using userId as the document ID
         await setDoc(doc(db, `games/${gameId}/players`, userId), {
             isBanned: false,
-            assumedCharacterId: ''
+            assumedCharacterId: '',
+            playername: username
         });
 
         return game;
@@ -75,6 +76,18 @@ class GameService {
         const playerRef = doc(db, `games/${gameId}/players/${playerId}`);
         await updateDoc(playerRef, {
             isBanned: true
+        });
+    }
+
+    async kickPlayer(gameId, playerId) {
+        const playerRef = doc(db, `games/${gameId}/players/${playerId}`);
+        await deleteDoc(playerRef);
+    }
+
+    async updatePlayerName(gameId, playerId, newName) {
+        const playerRef = doc(db, `games/${gameId}/players/${playerId}`);
+        await updateDoc(playerRef, {
+            playername: newName
         });
     }
 

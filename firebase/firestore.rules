@@ -46,7 +46,14 @@ service cloud.firestore {
       match /players/{playerId} {
         allow read: if isAuthenticated() && (isAdmin(gameId) || isActivePlayer(gameId));
         allow create: if isAuthenticated() && request.auth.uid == playerId;
-        allow update: if isAdmin(gameId);  // Only admin can update player status
+        allow update: if 
+          // Admin can update all fields
+          isAdmin(gameId) || 
+          // Player can only update their own playername field
+          (request.auth.uid == playerId && 
+           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['playername']) &&
+           request.resource.data.isBanned == resource.data.isBanned &&
+           request.resource.data.assumedCharacterId == resource.data.assumedCharacterId);
         allow delete: if isAdmin(gameId);
       }
       

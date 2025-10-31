@@ -86,8 +86,9 @@ class LobbyPage {
 
         document.getElementById('updateUsername').addEventListener('click', async () => {
             const newUsername = document.getElementById('username').value.trim();
-            if (newUsername && newUsername !== AuthService.currentUser.username) {
+            if (newUsername) {
                 await AuthService.currentUser.updateUsername(newUsername);
+                await GameService.updatePlayerName(this.currentGame.gameId, AuthService.currentUser.authId, newUsername);
                 this.updatePlayersList();
             }
         });
@@ -99,8 +100,8 @@ class LobbyPage {
         
         list.innerHTML = players.map(player => `
             <div class="player-item">
-                <span class="player-name">${player.username}</span>
-                ${player.authId === AuthService.currentUser.authId ? ' (You)' : ''}
+                <span class="player-name">${player.playername || 'Unnamed Player'}</span>
+                ${player.playerId === AuthService.currentUser.authId ? ' (You)' : ''}
             </div>
         `).join('');
     }

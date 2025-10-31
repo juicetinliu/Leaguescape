@@ -158,15 +158,26 @@ class AdminPage {
         
         const playersHtml = players.map(player => `
             <div class="player-item">
-                <span>${player.username}</span>
+                <span>${player.playername || 'Unnamed Player'}</span>
                 ${this.currentGame.gameState === 'setup' ? `
-                    <button class="btn" onclick="kickPlayer('${player.playerId}')">Kick</button>
-                    <button class="btn" onclick="banPlayer('${player.playerId}')">Ban</button>
+                    <button class="btn kick-player" data-player-id="${player.playerId}">Kick</button>
+                    <button class="btn ban-player" data-player-id="${player.playerId}">Ban</button>
                 ` : ''}
             </div>
         `).join('');
 
         lobbyContent.innerHTML = playersHtml || '<p>No players in lobby</p>';
+
+        // Add event listeners for kick and ban buttons
+        if (this.currentGame.gameState === 'setup') {
+            document.querySelectorAll('.kick-player').forEach(button => {
+                button.addEventListener('click', () => this.kickPlayer(button.dataset.playerId));
+            });
+            
+            document.querySelectorAll('.ban-player').forEach(button => {
+                button.addEventListener('click', () => this.banPlayer(button.dataset.playerId));
+            });
+        }
     }
 
     async loadActiveTab() {
@@ -439,17 +450,17 @@ class AdminPage {
         }
     }
 
-    kickPlayer(playerId) {
+    async kickPlayer(playerId) {
         if (confirm('Are you sure you want to kick this player?')) {
-            GameService.kickPlayer(this.currentGame.gameId, playerId);
-            this.loadLobby();
+            await GameService.kickPlayer(this.currentGame.gameId, playerId);
+            await this.loadLobby();
         }
     }
 
-    banPlayer(playerId) {
+    async banPlayer(playerId) {
         if (confirm('Are you sure you want to ban this player?')) {
-            GameService.banPlayer(this.currentGame.gameId, playerId);
-            this.loadLobby();
+            await GameService.banPlayer(this.currentGame.gameId, playerId);
+            await this.loadLobby();
         }
     }
 }
