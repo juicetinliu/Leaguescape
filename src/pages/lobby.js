@@ -21,6 +21,11 @@ class LobbyPage {
             return;
         }
 
+        if (!(await GameService.isPlayer(gameId, AuthService.currentUser.authId))) {
+            router.navigate('user');
+            return;
+        }
+
         // Redirect based on game state
         switch (this.currentGame.gameState) {
             case 'running':
@@ -103,6 +108,8 @@ class LobbyPage {
     startUpdates() {
         // Update player list every 5 seconds
         this.updatePlayersList();
+
+        //TODO: This should be handled via real-time listeners instead of polling
         this.updateInterval = setInterval(() => {
             this.checkGameState();
             this.updatePlayersList();

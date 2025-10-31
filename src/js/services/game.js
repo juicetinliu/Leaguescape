@@ -21,6 +21,17 @@ class GameService {
         return game;
     }
 
+    async isPlayer(gameId, userId) {
+        let hasJoined = false;
+        try {
+            const playerDoc = await getDoc(doc(db, `games/${gameId}/players`, userId));
+            hasJoined = playerDoc.exists();
+        } catch (error) {
+            // If there's an error (e.g., permission denied), we can assume they aren't a player
+        }
+        return hasJoined
+    }
+
     async getGame(gameId) {
         return await Game.get(gameId);
     }
@@ -45,14 +56,16 @@ class GameService {
         for (const gameDoc of allGames.docs) {
             if (games.find(g => g.gameId === gameDoc.id)) continue; // Skip if already added as admin
             
-            // Check if user exists as a player document directly by ID
-            const playerDoc = doc(db, `games/${gameDoc.id}/players`, userId);
-            const playerSnapshot = await getDoc(playerDoc);
-            
-            if (playerSnapshot.exists()) {
-                console.log('Adding game for user:', gameDoc.id);
-                games.push(new Game(gameDoc.id, gameDoc.data()));
-            }
+            // Check if user exists as a player document directly by ID. If there's a firebase read error, it means they're not a player - we can skip.
+            try {
+                const playerDoc = doc(db, `games/${gameDoc.id}/players`, userId);
+                const playerSnapshot = await getDoc(playerDoc);
+                
+                if (playerSnapshot.exists()) {
+                    console.log('Adding game for user:', gameDoc.id);
+                    games.push(new Game(gameDoc.id, gameDoc.data()));
+                }
+            } catch (error) {}
         }
 
         return games;
