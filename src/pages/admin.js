@@ -6,7 +6,6 @@ import { router } from '../js/utils/router.js';
 class AdminPage {
     constructor() {
         this.currentGame = null;
-        this.selectedCharacterId = null;
         this.activeTab = 'profiles';
     }
 
@@ -77,6 +76,16 @@ class AdminPage {
                     <div class="modal-content">
                         <h2>Character Details</h2>
                         <form id="characterForm">
+                            <!-- Form fields will be dynamically added -->
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Item Modal -->
+                <div id="itemModal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <h2>Item Details</h2>
+                        <form id="itemForm">
                             <!-- Form fields will be dynamically added -->
                         </form>
                     </div>
@@ -175,6 +184,52 @@ class AdminPage {
         }
     }
 
+    async loadItems(container) {
+        const items = await GameService.getGameItems(this.currentGame.gameId);
+        
+        const grid = document.createElement('div');
+        grid.className = 'items-grid';
+        
+        items.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'item-card';
+            card.innerHTML = `
+                <div class="item-info">
+                    <h3>${item.name}</h3>
+                    <p>Price: ${item.price} gold</p>
+                    <p>Quantity: ${item.quantity}</p>
+                </div>
+                ${this.currentGame.gameState !== 'end' ? `
+                    <div class="item-actions">
+                        <button class="btn edit-item" data-id="${item.itemId}">Edit</button>
+                        <button class="btn delete-item" data-id="${item.itemId}">Delete</button>
+                    </div>
+                ` : ''}
+            `;
+            
+            if (this.currentGame.gameState !== 'end') {
+                const editBtn = card.querySelector('.edit-item');
+                const deleteBtn = card.querySelector('.delete-item');
+                
+                editBtn.addEventListener('click', () => this.editItem(item));
+                deleteBtn.addEventListener('click', () => this.deleteItem(item.itemId));
+            }
+            
+            grid.appendChild(card);
+        });
+
+        if (this.currentGame.gameState !== 'end') {
+            const addCard = document.createElement('div');
+            addCard.className = 'item-card add-item';
+            addCard.innerHTML = `<button id="addItem" class="btn">Add Item</button>`;
+            addCard.querySelector('#addItem').addEventListener('click', () => this.showItemModal());
+            grid.appendChild(addCard);
+        }
+
+        container.innerHTML = '';
+        container.appendChild(grid);
+    }
+
     async loadProfiles(container) {
         const characters = await GameService.getGameCharacters(this.currentGame.gameId);
         
@@ -192,11 +247,21 @@ class AdminPage {
                 </div>
                 ${this.currentGame.gameState !== 'end' ? `
                     <div class="profile-actions">
-                        <button class="btn" onclick="editCharacter('${character.characterId}')">Edit</button>
-                        <button class="btn" onclick="deleteCharacter('${character.characterId}')">Delete</button>
+                        <button class="btn edit-character" data-id="${character.characterId}">Edit</button>
+                        <button class="btn delete-character" data-id="${character.characterId}">Delete</button>
                     </div>
                 ` : ''}
             `;
+            
+            // Add event listeners
+            if (this.currentGame.gameState !== 'end') {
+                const editBtn = card.querySelector('.edit-character');
+                const deleteBtn = card.querySelector('.delete-character');
+                
+                editBtn.addEventListener('click', () => this.editCharacter(character));
+                deleteBtn.addEventListener('click', () => this.deleteCharacter(character.characterId));
+            }
+            
             grid.appendChild(card);
         });
 
@@ -204,8 +269,9 @@ class AdminPage {
             const addCard = document.createElement('div');
             addCard.className = 'profile-card add-profile';
             addCard.innerHTML = `
-                <button class="btn" onclick="addCharacter()">Add Profile</button>
+                <button id="addCharacter" class="btn">Add Character</button>
             `;
+            addCard.querySelector('#addCharacter').addEventListener('click', () => this.showCharacterModal());
             grid.appendChild(addCard);
         }
 
@@ -242,6 +308,135 @@ class AdminPage {
         `).join('');
         
         modal.style.display = 'flex';
+    }
+
+    async editCharacter(character) {
+        const characterModal = document.getElementById('characterModal');
+        const form = document.getElementById('characterForm');
+        
+        form.innerHTML = `
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="characterName" value="${character.name || ''}" required>
+            </div>
+            <div class="form-group">
+                <label>Account Number</label>
+                <input type="text" id="accountNumber" value="${character.accountNumber || ''}" required>
+            </div>
+            <div class="form-group">
+                <label>Account Password</label>
+                <input type="text" id="accountPassword" value="${character.accountPassword || ''}" required>
+            </div>
+            <div class="form-group">
+                <label>Starting Gold</label>
+                <input type="number" id="startingGold" value="${character.startingGold || 0}" required>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn">Save</button>
+                <button type="button" class="btn" id="cancelCharacter">Cancel</button>
+            </div>
+        `;
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const updatedCharacter = {
+                name: document.getElementById('characterName').value,
+                accountNumber: document.getElementById('accountNumber').value,
+                accountPassword: document.getElementById('accountPassword').value,
+                startingGold: parseInt(document.getElementById('startingGold').value),
+                gold: parseInt(document.getElementById('startingGold').value)
+            };
+
+            if (character.characterId) {
+                await GameService.updateCharacter(this.currentGame.gameId, character.characterId, updatedCharacter);
+            } else {
+                await GameService.createCharacter(this.currentGame.gameId, updatedCharacter);
+            }
+
+            characterModal.style.display = 'none';
+            this.loadProfiles(document.getElementById('tabContent'));
+        };
+
+        document.getElementById('cancelCharacter').onclick = () => {
+            characterModal.style.display = 'none';
+        };
+
+        characterModal.style.display = 'flex';
+    }
+
+    async editItem(item) {
+        const itemModal = document.getElementById('itemModal');
+        const form = document.getElementById('itemForm');
+        
+        form.innerHTML = `
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="itemName" value="${item.name || ''}" required>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="itemDescription">${item.description || ''}</textarea>
+            </div>
+            <div class="form-group">
+                <label>Price</label>
+                <input type="number" id="itemPrice" value="${item.price || 0}" required>
+            </div>
+            <div class="form-group">
+                <label>Quantity</label>
+                <input type="number" id="itemQuantity" value="${item.quantity || 0}" required>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn">Save</button>
+                <button type="button" class="btn" id="cancelItem">Cancel</button>
+            </div>
+        `;
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const updatedItem = {
+                name: document.getElementById('itemName').value,
+                description: document.getElementById('itemDescription').value,
+                price: parseInt(document.getElementById('itemPrice').value),
+                quantity: parseInt(document.getElementById('itemQuantity').value)
+            };
+
+            if (item.itemId) {
+                await GameService.updateItem(this.currentGame.gameId, item.itemId, updatedItem);
+            } else {
+                await GameService.createItem(this.currentGame.gameId, updatedItem);
+            }
+
+            itemModal.style.display = 'none';
+            this.loadItems(document.getElementById('tabContent'));
+        };
+
+        document.getElementById('cancelItem').onclick = () => {
+            itemModal.style.display = 'none';
+        };
+
+        itemModal.style.display = 'flex';
+    }
+
+    showCharacterModal() {
+        this.editCharacter({});
+    }
+
+    showItemModal() {
+        this.editItem({});
+    }
+
+    async deleteCharacter(characterId) {
+        if (confirm('Are you sure you want to delete this character?')) {
+            await GameService.deleteCharacter(this.currentGame.gameId, characterId);
+            this.loadProfiles(document.getElementById('tabContent'));
+        }
+    }
+
+    async deleteItem(itemId) {
+        if (confirm('Are you sure you want to delete this item?')) {
+            await GameService.deleteItem(this.currentGame.gameId, itemId);
+            this.loadItems(document.getElementById('tabContent'));
+        }
     }
 
     kickPlayer(playerId) {

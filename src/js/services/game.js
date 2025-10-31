@@ -1,5 +1,5 @@
 import { db } from '../config/firebase.js';
-import { collection, query, where, getDocs, addDoc, doc, updateDoc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
+import { collection, query, where, getDocs, addDoc, doc, updateDoc, setDoc, getDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 import Game from '../models/Game.js';
 
 class GameService {
@@ -76,6 +76,52 @@ class GameService {
             actionDetails,
             activityTime: Date.now()
         });
+    }
+
+    async getGamePlayers(gameId) {
+        const playersRef = collection(db, `games/${gameId}/players`);
+        const players = await getDocs(playersRef);
+        return players.docs.map(doc => ({ playerId: doc.id, ...doc.data() }));
+    }
+
+    async getGameCharacters(gameId) {
+        const charactersRef = collection(db, `games/${gameId}/characters`);
+        const characters = await getDocs(charactersRef);
+        return characters.docs.map(doc => ({ characterId: doc.id, ...doc.data() }));
+    }
+
+    async getGameItems(gameId) {
+        const itemsRef = collection(db, `games/${gameId}/items`);
+        const items = await getDocs(itemsRef);
+        return items.docs.map(doc => ({ itemId: doc.id, ...doc.data() }));
+    }
+
+    async createCharacter(gameId, characterData) {
+        const charactersRef = collection(db, `games/${gameId}/characters`);
+        const docRef = await addDoc(charactersRef, characterData);
+        return { characterId: docRef.id, ...characterData };
+    }
+
+    async createItem(gameId, itemData) {
+        const itemsRef = collection(db, `games/${gameId}/items`);
+        const docRef = await addDoc(itemsRef, itemData);
+        return { itemId: docRef.id, ...itemData };
+    }
+
+    async deleteCharacter(gameId, characterId) {
+        await deleteDoc(doc(db, `games/${gameId}/characters`, characterId));
+    }
+
+    async deleteItem(gameId, itemId) {
+        await deleteDoc(doc(db, `games/${gameId}/items`, itemId));
+    }
+
+    async updateCharacter(gameId, characterId, characterData) {
+        await updateDoc(doc(db, `games/${gameId}/characters`, characterId), characterData);
+    }
+
+    async updateItem(gameId, itemId, itemData) {
+        await updateDoc(doc(db, `games/${gameId}/items`, itemId), itemData);
     }
 
     getCurrentGameId() {
