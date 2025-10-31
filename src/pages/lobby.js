@@ -87,7 +87,6 @@ class LobbyPage {
         document.getElementById('updateUsername').addEventListener('click', async () => {
             const newUsername = document.getElementById('username').value.trim();
             if (newUsername) {
-                await AuthService.currentUser.updateUsername(newUsername);
                 await GameService.updatePlayerName(this.currentGame.gameId, AuthService.currentUser.authId, newUsername);
                 this.updatePlayersList();
             }
@@ -100,7 +99,7 @@ class LobbyPage {
         
         list.innerHTML = players.map(player => `
             <div class="player-item">
-                <span class="player-name">${player.playername || 'Unnamed Player'}</span>
+                <span class="player-name">${player.playerName || 'Unnamed Player'}</span>
                 ${player.playerId === AuthService.currentUser.authId ? ' (You)' : ''}
             </div>
         `).join('');

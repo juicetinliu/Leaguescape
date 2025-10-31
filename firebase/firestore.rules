@@ -49,9 +49,9 @@ service cloud.firestore {
         allow update: if 
           // Admin can update all fields
           isAdmin(gameId) || 
-          // Player can only update their own playername field
+          // Player can only update their own playerName field
           (request.auth.uid == playerId && 
-           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['playername']) &&
+           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['playerName']) &&
            request.resource.data.isBanned == resource.data.isBanned &&
            request.resource.data.assumedCharacterId == resource.data.assumedCharacterId);
         allow delete: if isAdmin(gameId);

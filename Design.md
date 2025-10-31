@@ -155,6 +155,7 @@ games: {
 
 games/{gameId}/players: {
   playerId: string, // Same as user's authId
+  playerName: string,
   isBanned: boolean,
   assumedCharacterId: string
 }

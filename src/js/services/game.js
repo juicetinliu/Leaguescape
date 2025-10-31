@@ -16,7 +16,7 @@ class GameService {
         await setDoc(doc(db, `games/${gameId}/players`, userId), {
             isBanned: false,
             assumedCharacterId: '',
-            playername: username
+            playerName: username
         });
 
         return game;
@@ -86,9 +86,12 @@ class GameService {
 
     async updatePlayerName(gameId, playerId, newName) {
         const playerRef = doc(db, `games/${gameId}/players/${playerId}`);
-        await updateDoc(playerRef, {
-            playername: newName
-        });
+        const playerDoc = await getDoc(playerRef);
+        if (playerDoc.exists()) {
+            await updateDoc(playerRef, { playerName: newName });
+        } else {
+            await setDoc(playerRef, { playerName: newName }, { merge: true });
+        }
     }
 
     async logAction(playerId, characterId, actionType, actionDetails) {

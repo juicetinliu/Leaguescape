@@ -158,7 +158,7 @@ class AdminPage {
         
         const playersHtml = players.map(player => `
             <div class="player-item">
-                <span>${player.playername || 'Unnamed Player'}</span>
+                <span>${player.playerName || 'Unnamed Player'}</span>
                 ${this.currentGame.gameState === 'setup' ? `
                     <button class="btn kick-player" data-player-id="${player.playerId}">Kick</button>
                     <button class="btn ban-player" data-player-id="${player.playerId}">Ban</button>
