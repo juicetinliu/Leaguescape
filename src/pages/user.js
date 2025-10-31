@@ -117,7 +117,8 @@ class UserPage {
     attachEventListeners() {
         document.getElementById('logout').addEventListener('click', async () => {
             await AuthService.signOut();
-            router.navigate('/');
+            router.navigate('index');
+            // No need to navigate as the app.js auth state listener will handle it
         });
 
         document.getElementById('editUsername').addEventListener('click', () => {
@@ -127,7 +128,7 @@ class UserPage {
         document.getElementById('createGame').addEventListener('click', async () => {
             try {
                 const game = await GameService.createGame(AuthService.currentUser.authId);
-                router.navigate(`/admin?gameId=${game.gameId}`);
+                router.navigate(`admin&gameId=${game.gameId}`);
             } catch (error) {
                 console.error('Error creating game:', error);
             }
@@ -146,7 +147,7 @@ class UserPage {
 
             try {
                 await GameService.joinGame(gameId, AuthService.currentUser.authId);
-                router.navigate(`/lobby?gameId=${gameId}`);
+                router.navigate(`lobby&gameId=${gameId}`);
             } catch (error) {
                 console.error('Error joining game:', error);
             }
@@ -158,17 +159,17 @@ class UserPage {
         if (!game) return;
 
         if (game.adminId === AuthService.currentUser.authId) {
-            router.navigate(`/admin?gameId=${gameId}`);
+            router.navigate(`admin&gameId=${gameId}`);
         } else {
             switch (game.gameState) {
                 case 'setup':
-                    router.navigate(`/lobby?gameId=${gameId}`);
+                    router.navigate(`lobby&gameId=${gameId}`);
                     break;
                 case 'running':
-                    router.navigate(`/login?gameId=${gameId}`);
+                    router.navigate(`login&gameId=${gameId}`);
                     break;
                 case 'end':
-                    router.navigate(`/credits?gameId=${gameId}`);
+                    router.navigate(`credits&gameId=${gameId}`);
                     break;
             }
         }

@@ -14,7 +14,7 @@ class AuthService {
 
     async signInAnonymously() {
         const { user } = await signInAnonymously(auth);
-        // await this.createUserIfNeeded(user);
+        await this.createUserIfNeeded(user);
         // No need to create user as the app.js auth state listener will handle it
         return user;
     }
@@ -22,7 +22,7 @@ class AuthService {
     async signInWithGoogle() {
         const provider = new GoogleAuthProvider();
         const { user } = await signInWithPopup(auth, provider);
-        // await this.createUserIfNeeded(user);
+        await this.createUserIfNeeded(user);
         // No need to create user as the app.js auth state listener will handle it
         return user;
     }

@@ -124,7 +124,7 @@ Successfully logging in leads you to the `User` page.
 Empty for now - will contain details about the game! TBD.
 
 ### `User` Page
-This page header should display the [user]'s name - with an option to edit it. A logout button is displayed, which will take the user back to the `Index` page and turn the [user] into as [visitor].
+This page header should display the [user]'s name - with an option to edit it. A logout button is displayed, which will take the user back to the `Index` page and turn the [user] into a [visitor].
 
 At the top of the page, we are presented with "Join" or "Create" game. 
 * Pressing "Join" prompts the [user] for an existing [game] ID. Successful joins will make the [user] a [player] for that [game], and lead them to the `Lobby` page (if the game is still in the `[Setup]` state) or `Login` page (if the game is in the `[Running]` state) or `Credits` page (if the game is in the `[End]` state)

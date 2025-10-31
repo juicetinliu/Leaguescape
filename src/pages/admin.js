@@ -13,13 +13,13 @@ class AdminPage {
     async show() {
         const gameId = new URLSearchParams(window.location.search).get('gameId');
         if (!gameId) {
-            router.navigate('/user');
+            router.navigate('user');
             return;
         }
 
         this.currentGame = await GameService.getGame(gameId);
         if (!this.currentGame || this.currentGame.adminId !== auth.currentUser.uid) {
-            router.navigate('/user');
+            router.navigate('user');
             return;
         }
 
@@ -101,7 +101,7 @@ class AdminPage {
     attachEventListeners() {
         // Game state buttons
         document.getElementById('exitGame').addEventListener('click', () => {
-            router.navigate('/user');
+            router.navigate('user');
         });
 
         const startGameBtn = document.getElementById('startGame');

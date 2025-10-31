@@ -11,23 +11,23 @@ class LobbyPage {
     async show() {
         const gameId = new URLSearchParams(window.location.search).get('gameId');
         if (!gameId) {
-            router.navigate('/user');
+            router.navigate('user');
             return;
         }
 
         this.currentGame = await GameService.getGame(gameId);
         if (!this.currentGame) {
-            router.navigate('/user');
+            router.navigate('user');
             return;
         }
 
         // Redirect based on game state
         switch (this.currentGame.gameState) {
             case 'running':
-                router.navigate(`/login?gameId=${gameId}`);
+                router.navigate(`login&gameId=${gameId}`);
                 return;
             case 'end':
-                router.navigate(`/credits?gameId=${gameId}`);
+                router.navigate(`credits&gameId=${gameId}`);
                 return;
         }
 
@@ -75,7 +75,7 @@ class LobbyPage {
         document.getElementById('leaveGame').addEventListener('click', async () => {
             if (confirm('Are you sure you want to leave the game?')) {
                 await GameService.leaveGame(this.currentGame.gameId, AuthService.currentUser.authId);
-                router.navigate('/user');
+                router.navigate('user');
             }
         });
 

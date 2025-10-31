@@ -8,23 +8,23 @@ import AuthService from '../services/auth.js';
 class Router {
     constructor() {
         this.routes = {
-            '/': {
+            'index': {
                 page: IndexPage,
                 requiresAuth: false
             },
-            '/info': {
+            'info': {
                 page: InfoPage,
                 requiresAuth: false
             },
-            '/user': {
+            'user': {
                 page: UserPage,
                 requiresAuth: true
             },
-            '/admin': {
+            'admin': {
                 page: AdminPage,
                 requiresAuth: true
             },
-            '/lobby': {
+            'lobby': {
                 page: LobbyPage,
                 requiresAuth: true
             }
@@ -38,26 +38,44 @@ class Router {
     }
 
     async handleRoute() {
-        const path = window.location.pathname;
-        const route = this.routes[path];
+        const params = new URLSearchParams(window.location.search);
+        const page = params.get('page') || 'index';
+        const route = this.routes[page];
 
         if (!route) {
-            // Handle 404
-            window.location.href = '/';
+            window.location.href = '?page=index';
             return;
         }
 
         if (route.requiresAuth && !AuthService.isAuthenticated()) {
-            window.location.href = '/';
+            let retries = 5;
+
+            var retryFunction = async () => {
+                // Give time for auth state to update and then direct to the route.
+                if (AuthService.isAuthenticated()) {
+                    setTimeout(async () => { 
+                        await route.page.show();
+                    }, 500)
+                } else if (retries > 0) {
+                    console.log("pending auth, retrying...", retries);
+                    retries--;
+                    setTimeout(retryFunction, 100);
+                } else {
+                    window.location.href = '?page=index';
+                }
+            };
+
+            await retryFunction();
             return;
         }
 
-        // Show the page
         await route.page.show();
     }
 
+    
     navigate(path) {
-        window.history.pushState({}, '', path);
+        const newPath = `?page=${path}`;
+        window.history.pushState({}, '', newPath);
         this.handleRoute();
     }
 }

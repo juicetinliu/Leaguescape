@@ -15,11 +15,9 @@ class App {
                 // User is signed in
                 console.log('User is signed in:', user.uid);
                 await AuthService.createUserIfNeeded(user);
-                router.navigate('/user');
             } else {
                 // User is signed out
                 console.log('User is signed out');
-                router.navigate('/');
             }
         });
     }
