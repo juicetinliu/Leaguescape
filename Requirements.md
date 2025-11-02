@@ -165,7 +165,7 @@ After the [admin] presses "End Game", the game is now in the `[End]` state. The 
 ### `Lobby` Page - `[Setup]` state
 The `Lobby` page can ONLY be accessed by [player]s during the `[Setup]` state. 
 
-Here, the [player] can see the [game] ID, and get a READ ONLY view of the lobby and the other [player]s in the lobby. [player]s in the lobby are identified by their [user] name. They have options to leave the [game], or update their [user] name.
+Here, the [player] can see the [game] ID, and get a READ ONLY view of the lobby and the other [player]s in the lobby. [player]s in the lobby are identified by their [user] name. They have options to leave the [game] to go back to the `User` page, or update their [user] name.
 
 Once the game is in the `Running` phase, all [player]s automatically get directed to the `Login` page.
 Once the game is in the `End` phase, all [player]s automatically get directed to the `Credits` page.
@@ -173,7 +173,7 @@ Once the game is in the `End` phase, all [player]s automatically get directed to
 ### `Login` Page - `[Running]` Phase
 The `Login` page can ONLY be accessed by [player]s during the `[Running]` state.
 
-A simple log in menu is shown here. Details TBD
+A simple log in menu is shown here. 
 
 ### `Character` Page - `[Running]` Phase
 The `Character` page can ONLY be accessed by [*character]s during the `[Running]` state.
@@ -203,4 +203,4 @@ Details TBD
 ###  `Credits` Page - `[End]` Phase
 The `Credits` page can ONLY be accessed by [player]s during the `[End]` state.
 
-Details TBD
+The Credits Page is empty for the [player] for now. There's a button to get back to the `User` page.

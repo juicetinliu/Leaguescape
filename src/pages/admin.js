@@ -1,3 +1,4 @@
+import Page from '../js/models/Page.js';
 import AuthService from '../js/services/auth.js';
 import GameService from '../js/services/game.js';
 import { router } from '../js/utils/router.js';
@@ -8,8 +9,9 @@ const TABS = {
     BANK: 'bank'
 }
 
-class AdminPage {
+class AdminPage extends Page {
     constructor() {
+        super();
         this.currentGame = null;
         this.activeTab = TABS.PROFILES;
     }

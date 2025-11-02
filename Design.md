@@ -7,59 +7,61 @@ This document outlines the directory structure and key files for the Leaguescape
 ```
 leaguescape/
 ├── public/                     # Static assets
-│   ├── index.html             # Main HTML entry point
-│   ├── styles/                # CSS files
-│   │   ├── main.css          # Global styles
-│   │   ├── components.css     # Reusable component styles
-│   │   └── pages/            # Page-specific styles
-│   ├── images/               # Image assets
-│   └── favicon.ico           # Site favicon
+│   ├── index.html              # Main HTML entry point
+│   ├── styles/                 # CSS files
+│   │   ├── main.css            # Global styles
+│   │   ├── components.css      # Reusable component styles
+│   │   └── pages/              # Page-specific styles
+│   ├── images/                 # Image assets
+│   └── favicon.ico             # Site favicon
 │
-├── src/                      # Source code
-│   ├── js/                   # JavaScript modules
-│   │   ├── app.js           # Main application entry point
-│   │   ├── config/          # Configuration files
-│   │   │   └── firebase.js  # Firebase configuration
-│   │   ├── models/          # Data models
-│   │   │   ├── User.js      # User model
-│   │   │   ├── Game.js      # Game model
-│   │   │   ├── Character.js # Character model
-│   │   │   └── Item.js      # Item model
-│   │   ├── services/        # Business logic and services
-│   │   │   ├── auth.js      # Authentication service
-│   │   │   ├── game.js      # Game management service
-│   │   │   ├── store.js     # Store/shop service
-│   │   │   └── bank.js      # Banking service
-│   │   ├── components/      # Reusable UI components
-│   │   │   ├── Header/      # Site header component
-│   │   │   ├── Lobby/       # Game lobby components
-│   │   │   ├── Shop/        # Shop components
-│   │   │   └── Bank/        # Banking components
-│   │   └── utils/           # Utility functions
-│   │       ├── validation.js # Input validation
-│   │       └── helpers.js    # Helper functions
+├── src/                        # Source code
+│   ├── js/                     # JavaScript modules
+│   │   ├── app.js              # Main application entry point
+│   │   ├── config/             # Configuration files
+│   │   │   └── firebase.js     # Firebase configuration
+│   │   ├── models/             # Data models
+│   │   │   ├── User.js         # User model
+│   │   │   ├── Game.js         # Game model
+│   │   │   ├── Character.js    # Character model
+│   │   │   ├── Action.js       # Action model
+│   │   │   ├── ActionType.js   # Action enums
+│   │   │   └── Item.js         # Item model
+│   │   ├── services/           # Business logic and services
+│   │   │   ├── auth.js         # Authentication service
+│   │   │   ├── game.js         # Game management service
+│   │   │   ├── store.js        # Store/shop service
+│   │   │   └── bank.js         # Banking service
+│   │   ├── components/         # Reusable UI components
+│   │   │   ├── Header/         # Site header component
+│   │   │   ├── Lobby/          # Game lobby components
+│   │   │   ├── Shop/           # Shop components
+│   │   │   └── Bank/           # Banking components
+│   │   └── utils/              # Utility functions
+│   │       ├── validation.js   # Input validation
+│   │       └── helpers.js      # Helper functions
 │   │
-│   └── pages/               # Page implementations
-│       ├── index.js         # Landing page
-│       ├── info.js          # Information page
-│       ├── user.js          # User dashboard
-│       ├── admin.js         # Admin dashboard
-│       ├── lobby.js         # Game lobby
-│       ├── login.js         # Character login
-│       ├── character.js     # Character dashboard
-│       ├── shop.js          # Main shop
-│       ├── secret-shop.js   # Secret shop
-│       ├── bank.js          # Banking interface
-│       ├── inventory.js     # Character inventory
-│       └── credits.js       # End game credits
+│   └── pages/                  # Page implementations
+│       ├── index.js            # Landing page
+│       ├── info.js             # Information page
+│       ├── user.js             # User dashboard
+│       ├── admin.js            # Admin dashboard
+│       ├── lobby.js            # Game lobby
+│       ├── login.js            # Character login
+│       ├── character.js        # Character dashboard
+│       ├── shop.js             # Main shop
+│       ├── secret-shop.js      # Secret shop
+│       ├── bank.js             # Banking interface
+│       ├── inventory.js        # Character inventory
+│       └── credits.js          # End game credits
 │
-├── firebase/               # Firebase configuration and rules
-│   ├── firestore.rules    # Firestore security rules
-│   └── storage.rules      # Storage security rules
+├── firebase/                   # Firebase configuration and rules
+│   ├── firestore.rules         # Firestore security rules
+│   └── storage.rules           # Storage security rules
 │
-└── tests/                 # Test files
-    ├── unit/             # Unit tests
-    └── integration/      # Integration tests
+└── tests/                      # Test files
+    ├── unit/                   # Unit tests
+    └── integration/            # Integration tests
 ```
 
 ## Key Components and Responsibilities

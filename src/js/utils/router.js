@@ -30,9 +30,11 @@ class Router {
             }
             // Additional routes will be added here
         };
+        this.prevRoute = null;
     }
 
     init() {
+        this.prevRoute = null;
         window.addEventListener('popstate', () => this.handleRoute());
         this.handleRoute();
     }
@@ -69,11 +71,13 @@ class Router {
             return;
         }
 
+        this.prevRoute = route;
         await route.page.show();
     }
 
     
     navigate(path) {
+        if (this.prevRoute) this.prevRoute.page.cleanup();
         const newPath = `?page=${path}`;
         window.history.pushState({}, '', newPath);
         this.handleRoute();

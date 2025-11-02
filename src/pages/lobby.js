@@ -1,9 +1,12 @@
+import Page from '../js/models/Page.js';
 import AuthService from '../js/services/auth.js';
 import GameService from '../js/services/game.js';
 import { router } from '../js/utils/router.js';
 
-class LobbyPage {
+
+class LobbyPage extends Page {
     constructor() {
+        super();
         this.currentGame = null;
         this.updateInterval = null;
     }
@@ -84,7 +87,6 @@ class LobbyPage {
     attachEventListeners() {
         document.getElementById('leaveGame').addEventListener('click', async () => {
             if (confirm('Are you sure you want to leave the game?')) {
-                await GameService.leaveGame(this.currentGame.gameId, AuthService.currentUser.authId);
                 router.navigate('user');
             }
         });

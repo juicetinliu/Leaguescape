@@ -1,9 +1,11 @@
+import Page from '../js/models/Page.js';
 import AuthService from '../js/services/auth.js';
 import GameService from '../js/services/game.js';
 import { router } from '../js/utils/router.js';
 
-class UserPage {
+class UserPage extends Page {
     constructor() {
+        super();
     }
 
     show() {

@@ -1,5 +1,8 @@
-class InfoPage {
+import Page from '../js/models/Page.js';
+
+class InfoPage extends Page {
     constructor() {
+        super();
     }
 
     show() {

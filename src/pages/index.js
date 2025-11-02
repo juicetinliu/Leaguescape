@@ -1,8 +1,10 @@
+import Page from '../js/models/Page.js';
 import AuthService from '../js/services/auth.js';
 import { router } from '../js/utils/router.js';
 
-class IndexPage {
+class IndexPage extends Page {
     constructor() {
+        super();
     }
 
     show() {
