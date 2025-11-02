@@ -22,6 +22,11 @@ class GameService {
         return game;
     }
 
+    async isAdmin(gameId, userId) {
+        const game = await this.getGame(gameId);
+        return game.adminId === userId;
+    }
+
     async isPlayer(gameId, userId) {
         let hasJoined = false;
         try {

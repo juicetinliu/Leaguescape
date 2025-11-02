@@ -1,6 +1,5 @@
 import AuthService from '../js/services/auth.js';
 import GameService from '../js/services/game.js';
-import { auth } from '../js/config/firebase.js';
 import { router } from '../js/utils/router.js';
 
 class AdminPage {
@@ -17,7 +16,7 @@ class AdminPage {
         }
 
         this.currentGame = await GameService.getGame(gameId);
-        if (!this.currentGame || this.currentGame.adminId !== auth.currentUser.uid) {
+        if (!this.currentGame || await !GameService.isAdmin(gameId, AuthService.currentUser.authId)) {
             router.navigate('user');
             return;
         }

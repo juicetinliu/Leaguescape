@@ -26,6 +26,11 @@ class LobbyPage {
             return;
         }
 
+        if (await GameService.isAdmin(gameId, AuthService.currentUser.authId)) {
+            router.navigate(`admin&gameId=${gameId}`);
+            return;
+        }
+
         // Redirect based on game state
         switch (this.currentGame.gameState) {
             case 'running':
