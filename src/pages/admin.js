@@ -169,6 +169,7 @@ class AdminPage extends Page {
                 ${this.currentGame.gameState === 'setup' ? `
                     <button class="btn kick-player" data-player-id="${player.playerId}">Kick</button>
                     <button class="btn ban-player" data-player-id="${player.playerId}">Ban</button>
+                    <button class="btn unban-player" data-player-id="${player.playerId}">UnBan</button>
                 ` : ''}
             </div>
         `).join('');
@@ -183,6 +184,10 @@ class AdminPage extends Page {
             
             document.querySelectorAll('.ban-player').forEach(button => {
                 button.addEventListener('click', () => this.banPlayer(button.dataset.playerId));
+            });
+
+            document.querySelectorAll('.unban-player').forEach(button => {
+                button.addEventListener('click', () => this.unBanPlayer(button.dataset.playerId));
             });
         }
     }
@@ -467,6 +472,13 @@ class AdminPage extends Page {
     async banPlayer(playerId) {
         if (confirm('Are you sure you want to ban this player?')) {
             await GameService.banPlayer(this.currentGame.gameId, playerId);
+            await this.loadLobby();
+        }
+    }
+
+    async unBanPlayer(playerId) {
+        if (confirm('Are you sure you want to unban this player?')) {
+            await GameService.unBanPlayer(this.currentGame.gameId, playerId);
             await this.loadLobby();
         }
     }

@@ -19,10 +19,14 @@ class GameService {
 
         // Create player record in game's players subcollection using userId as the document ID
         await setDoc(doc(db, `games/${gameId}/players`, userId), {
+            playerName: username
+        });
+
+        const privateDetailsRef = doc(db, `games/${gameId}/players/${userId}/privateDetails`, 'data');
+        await setDoc(privateDetailsRef, {
             isBanned: false,
             assumedCharacterId: '',
-            canAccessSecret: false,
-            playerName: username
+            loginMode: 'normal'
         });
 
         return game;
@@ -41,7 +45,7 @@ class GameService {
         } catch (error) {
             // If there's an error (e.g., permission denied), we can assume they aren't a player
         }
-        return hasJoined
+        return hasJoined;
     }
 
     async getGame(gameId) {
@@ -84,29 +88,26 @@ class GameService {
     }
 
     async banPlayer(gameId, playerId) {
-        const playerRef = doc(db, `games/${gameId}/players/${playerId}`);
+        // This should only be called by admin, firestore rules will enforce this
+        const playerRef = doc(db, `games/${gameId}/players/${playerId}/privateDetails/data`);
         await updateDoc(playerRef, {
             isBanned: true
         });
     }
 
     async unBanPlayer(gameId, playerId) {
-        const playerRef = doc(db, `games/${gameId}/players/${playerId}`);
+        // This should only be called by admin, firestore rules will enforce this
+        const playerRef = doc(db, `games/${gameId}/players/${playerId}/privateDetails/data`);
         await updateDoc(playerRef, {
             isBanned: false
         });
     }
 
     async kickPlayer(gameId, playerId) {
+        const playerPrivateRef = doc(db, `games/${gameId}/players/${playerId}/privateDetails/data`);
+        await deleteDoc(playerPrivateRef);
         const playerRef = doc(db, `games/${gameId}/players/${playerId}`);
         await deleteDoc(playerRef);
-    }
-
-    async togglePlayerSecretAccess(gameId, playerId, canAccess) {
-        const playerRef = doc(db, `games/${gameId}/players/${playerId}`);
-        await updateDoc(playerRef, {
-            canAccessSecret: canAccess
-        });
     }
 
     async updatePlayerName(gameId, playerId, newName) {
@@ -117,6 +118,14 @@ class GameService {
         } else {
             await setDoc(playerRef, { playerName: newName }, { merge: true });
         }
+    }
+
+    async updatePlayerLoginMode(gameId, playerId, loginMode) {
+        // This should only be called by admin, firestore rules will enforce this
+        const playerRef = doc(db, `games/${gameId}/players/${playerId}/privateDetails/data`);
+        await updateDoc(playerRef, {
+            loginMode: loginMode
+        });
     }
 
     async logAction(gameId, actionData) {

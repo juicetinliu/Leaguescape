@@ -12,24 +12,25 @@ service cloud.firestore {
     }
     
     function isActivePlayer(gameId) {
-      // Non-banned player in the players collection
+      // Check if player's public profile exists AND their private data shows they are not banned
       return exists(/databases/$(database)/documents/games/$(gameId)/players/$(request.auth.uid)) &&
-        !get(/databases/$(database)/documents/games/$(gameId)/players/$(request.auth.uid)).data.isBanned;
+             exists(/databases/$(database)/documents/games/$(gameId)/players/$(request.auth.uid)/privateDetails/data) &&
+             !get(/databases/$(database)/documents/games/$(gameId)/players/$(request.auth.uid)/privateDetails/data).data.isBanned;
     }
     
     function hasAssumedCharacter(gameId) {
       // Check if player has assumed any character and is active
       return isActivePlayer(gameId) &&
-        get(/databases/$(database)/documents/games/$(gameId)/players/$(request.auth.uid)).data.assumedCharacterId != '';
+             get(/databases/$(database)/documents/games/$(gameId)/players/$(request.auth.uid)/privateDetails/data).data.assumedCharacterId != '';
     }
     
     function hasAssumedThisCharacter(gameId, characterId) {
       // Check if player has assumed this specific character and is active
       return isActivePlayer(gameId) &&
-        get(/databases/$(database)/documents/games/$(gameId)/players/$(request.auth.uid)).data.assumedCharacterId == characterId;
+             get(/databases/$(database)/documents/games/$(gameId)/players/$(request.auth.uid)/privateDetails/data).data.assumedCharacterId == characterId;
     }
-    
-    // User rules
+
+    // User rules (unchanged)
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow write: if request.auth.uid == userId;
@@ -41,20 +42,29 @@ service cloud.firestore {
       allow create: if isAuthenticated();
       allow update: if isAdmin(gameId);
       allow delete: if isAdmin(gameId);
-      
-      // Player rules
+
+      // Rules for the PUBLIC player data (e.g., playerName)
       match /players/{playerId} {
+        // All active players in the game can read other players' public data (like playerName for lobby)
         allow read: if isAuthenticated() && (isAdmin(gameId) || isActivePlayer(gameId));
+        // A player can create their own public profile when they join
         allow create: if isAuthenticated() && request.auth.uid == playerId;
-        allow update: if 
-          // Admin can update all fields
-          isAdmin(gameId) || 
-          // Player can only update their own playerName field
-          (request.auth.uid == playerId && 
-           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['playerName']) &&
-           request.resource.data.isBanned == resource.data.isBanned &&
-           request.resource.data.assumedCharacterId == resource.data.assumedCharacterId);
-        allow delete: if isAdmin(gameId);
+        allow update: if isAuthenticated() && (isAdmin(gameId) || 
+                      // A player can update ONLY their own playerName
+                      (request.auth.uid == playerId &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['playerName'])));
+        allow delete: if isAdmin(gameId); // Only admin can delete a player's public profile
+
+        // Rules for the PRIVATE player data (e.g., isBanned, assumedCharacterId)
+        match /privateDetails/{detailId} { // 'detailId' would typically be 'data'
+          // Only the player themselves or an admin can read their private data
+          allow read: if isAuthenticated() && isAdmin(gameId);
+          // A player can create their private data when they join
+          allow create: if isAuthenticated() && (request.auth.uid == playerId && detailId == 'data' && request.resource.data.isBanned == false && request.resource.data.assumedCharacterId == '' && request.resource.data.loginMode == 'normal');
+          // Only an admin can update private details (e.g., ban status, assigned character)
+          allow update: if isAdmin(gameId);
+          allow delete: if isAdmin(gameId);
+        }
       }
       
       // Character rules

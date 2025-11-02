@@ -51,9 +51,9 @@ States only progress from `[Setup]` -> `[Running]` -> `[End]`, and NOT backwards
 - /players
     * playerId - same as the /users authId!
     - playerName (string) - initially set based on username, can be edited in game.
-    - isBanned (boolean) - if true, [user] cannot access the game. This can be set by the [admin] to ban a specific [user].
-    - assumedCharacterId (string) - empty if not a character, characterId if [player] successfully becomes a [*character]
-    - canAccessSecret (boolean) - if the player gets access to the secret shop
+    - privateDetails/'data'/isBanned (boolean) - if true, [user] cannot access the game. This can be set by the [admin] to ban a specific [user].
+    - privateDetails/'data'/assumedCharacterId (string) - empty if not a character, characterId if [player] successfully becomes a [*character]
+    - privateDetails/'data'/loginMode (string<`normal`|`secret`|`inventory`>) - dictates the mode which the player will enter through the `Login` page
 - /items - all fields only modifiable by the [admin] unless said otherwise.
     * itemId - uuid
     - itemNumber (number) - display field

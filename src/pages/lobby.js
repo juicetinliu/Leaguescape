@@ -117,8 +117,8 @@ class LobbyPage extends Page {
         this.updatePlayersList();
 
         //TODO: This should be handled via real-time listeners instead of polling
-        this.updateInterval = setInterval(() => {
-            this.checkGameState();
+        this.updateInterval = setInterval(async () => {
+            await this.checkGameState();
             this.updatePlayersList();
         }, 5000);
     }
