@@ -53,6 +53,7 @@ States only progress from `[Setup]` -> `[Running]` -> `[End]`, and NOT backwards
     - playerName (string) - initially set based on username, can be edited in game.
     - isBanned (boolean) - if true, [user] cannot access the game. This can be set by the [admin] to ban a specific [user].
     - assumedCharacterId (string) - empty if not a character, characterId if [player] successfully becomes a [*character]
+    - canAccessSecret (boolean) - if the player gets access to the secret shop
 - /items - all fields only modifiable by the [admin] unless said otherwise.
     * itemId - uuid
     - itemNumber (number) - display field
@@ -74,7 +75,7 @@ States only progress from `[Setup]` -> `[Running]` -> `[End]`, and NOT backwards
     - securityQuestion (string) - display field
     - securityAnswer (string) - regex?
     - startingGold (number) - starting amount of [gold] for the [*character] once the [game] is `[running]`
-    - canAccessSecret (boolean) - if the player gets access to the secret shop !!!!!!CHECK WITH GRACE!!!!!!
+    - canAccessSecret (boolean) - if the character gets access to the secret shop
     - gold (number) - actual current gold balance while the [game] is `[running]`. Since purchases are 'approved' by the admin, we do NOT allow modification by other roles.
     - items (array<string>) - list of owned items by itemId
     - ??? - more fields TBD.
@@ -173,7 +174,9 @@ Once the game is in the `End` phase, all [player]s automatically get directed to
 ### `Login` Page - `[Running]` Phase
 The `Login` page can ONLY be accessed by [player]s during the `[Running]` state.
 
-A simple log in menu is shown here. 
+
+
+A simple log in menu is shown here. The [player] can attempt to log in to become one of the [*character]s set up by the [admin]. 
 
 ### `Character` Page - `[Running]` Phase
 The `Character` page can ONLY be accessed by [*character]s during the `[Running]` state.

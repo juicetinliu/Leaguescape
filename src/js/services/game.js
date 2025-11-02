@@ -21,6 +21,7 @@ class GameService {
         await setDoc(doc(db, `games/${gameId}/players`, userId), {
             isBanned: false,
             assumedCharacterId: '',
+            canAccessSecret: false,
             playerName: username
         });
 
@@ -89,9 +90,23 @@ class GameService {
         });
     }
 
+    async unBanPlayer(gameId, playerId) {
+        const playerRef = doc(db, `games/${gameId}/players/${playerId}`);
+        await updateDoc(playerRef, {
+            isBanned: false
+        });
+    }
+
     async kickPlayer(gameId, playerId) {
         const playerRef = doc(db, `games/${gameId}/players/${playerId}`);
         await deleteDoc(playerRef);
+    }
+
+    async togglePlayerSecretAccess(gameId, playerId, canAccess) {
+        const playerRef = doc(db, `games/${gameId}/players/${playerId}`);
+        await updateDoc(playerRef, {
+            canAccessSecret: canAccess
+        });
     }
 
     async updatePlayerName(gameId, playerId, newName) {
@@ -121,13 +136,17 @@ class GameService {
     async getGameCharacters(gameId) {
         const charactersRef = collection(db, `games/${gameId}/characters`);
         const characters = await getDocs(charactersRef);
-        return characters.docs.map(doc => ({ characterId: doc.id, ...doc.data() }));
+        return characters.docs.map(doc => 
+            new Character(gameId, doc.id, doc.data())
+        );
     }
 
     async getGameItems(gameId) {
         const itemsRef = collection(db, `games/${gameId}/items`);
         const items = await getDocs(itemsRef);
-        return items.docs.map(doc => ({ itemId: doc.id, ...doc.data() }));
+        return items.docs.map(doc => 
+            new Item(gameId, doc.id, doc.data())
+        );
     }
 
     async createCharacter(gameId, characterData) {

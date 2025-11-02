@@ -1,8 +1,8 @@
 const ActionType = {
     ENTER_GAME: 'enterGame',
     EXIT_GAME: 'exitGame',
-    LOGIN_CHARACTER: 'loginCharacter',
-    LOGOUT_CHARACTER: 'logoutCharacter',
+    LOGIN_CHARACTER: 'loginCharacter', // Success/Failure
+    LOGOUT_CHARACTER: 'logoutCharacter', // Success/Failure
     PURCHASE_ITEM: 'purchaseItem', // Item, Quantity
     WITHDRAW_GOLD: 'withdrawGold', // Amount
     DEPOSIT_GOLD: 'depositGold', // Amount
