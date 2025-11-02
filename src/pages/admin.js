@@ -2,10 +2,16 @@ import AuthService from '../js/services/auth.js';
 import GameService from '../js/services/game.js';
 import { router } from '../js/utils/router.js';
 
+const TABS = {
+    PROFILES: 'profiles',
+    ITEMS: 'items',
+    BANK: 'bank'
+}
+
 class AdminPage {
     constructor() {
         this.currentGame = null;
-        this.activeTab = 'profiles';
+        this.activeTab = TABS.PROFILES;
     }
 
     async show() {
@@ -54,9 +60,9 @@ class AdminPage {
 
                 <div class="card">
                     <div class="tabs">
-                        <button class="tab-btn active" data-tab="profiles">Profiles</button>
-                        <button class="tab-btn" data-tab="items">Items</button>
-                        <button class="tab-btn" data-tab="bank">Bank</button>
+                        <button class="tab-btn active" data-tab="${TABS.PROFILES}">Profiles</button>
+                        <button class="tab-btn" data-tab="${TABS.ITEMS}">Items</button>
+                        <button class="tab-btn" data-tab="${TABS.BANK}">Bank</button>
                     </div>
                     <div id="tabContent"></div>
                 </div>
@@ -182,13 +188,13 @@ class AdminPage {
     async loadActiveTab() {
         const content = document.getElementById('tabContent');
         switch (this.activeTab) {
-            case 'profiles':
+            case TABS.PROFILES:
                 await this.loadProfiles(content);
                 break;
-            case 'items':
+            case TABS.ITEMS:
                 await this.loadItems(content);
                 break;
-            case 'bank':
+            case TABS.BANK:
                 await this.loadBank(content);
                 break;
         }
