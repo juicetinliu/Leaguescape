@@ -1,6 +1,7 @@
 import { db } from '../config/firebase.js';
 import { collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 import Character from '../models/Character.js';
+import ActionType from '../models/ActionType.js';
 import GameService from './game.js';
 
 class BankService {
@@ -15,11 +16,12 @@ class BankService {
 
         await character.updateGold(amount);
         
-        await GameService.logAction(
-            character.userId,
-            character.characterId,
-            'depositGold',
-            amount.toString()
+        await GameService.logAction(gameId,
+            {
+                characterId: character.characterId,
+                actionType: ActionType.DEPOSIT_GOLD,
+                actionDetails: amount.toString()
+            }
         );
 
         return character.gold;
@@ -31,11 +33,12 @@ class BankService {
 
         await character.updateGold(-amount);
         
-        await GameService.logAction(
-            character.userId,
-            character.characterId,
-            'withdrawGold',
-            amount.toString()
+        await GameService.logAction(gameId,
+            {
+                characterId: character.characterId,
+                actionType: ActionType.WITHDRAW_GOLD,
+                actionDetails: amount.toString()
+            }
         );
 
         return character.gold;

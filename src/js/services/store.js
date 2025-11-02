@@ -1,7 +1,7 @@
 import { db } from '../config/firebase.js';
 import { collection, getDocs } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 import Item from '../models/Item.js';
-import Character from '../models/Character.js';
+import ActionType from '../models/ActionType.js';
 import GameService from './game.js';
 
 class StoreService {
@@ -44,11 +44,12 @@ class StoreService {
         await character.addItem(item.itemId);
 
         // Log the transaction
-        await GameService.logAction(
-            character.userId,
-            character.characterId,
-            'purchaseItem',
-            `${item.itemId},${quantity}`
+        await GameService.logAction(gameId,
+            { 
+                characterId: character.characterId,
+                actionType: ActionType.PURCHASE_ITEM,
+                actionDetails: `${item.itemId},${quantity}`
+            }
         );
 
         return {

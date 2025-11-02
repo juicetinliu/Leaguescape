@@ -13,7 +13,7 @@ class Action {
     }
 
     static async create(gameId, actionData) {
-        const action = new Action(gameId, '', {
+        const action = new Action(gameId, 'willBeOverwritten', {
             ...actionData,
             activityTime: serverTimestamp()
         });

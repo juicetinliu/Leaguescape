@@ -1,6 +1,11 @@
 import { db } from '../config/firebase.js';
 import { collection, query, where, getDocs, addDoc, doc, updateDoc, setDoc, getDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 import Game from '../models/Game.js';
+import Character from '../models/Character.js';
+import Item from '../models/Item.js';
+import Action from '../models/Action.js';
+import ActionType from '../models/ActionType.js';
+import AuthService from '../services/auth.js';
 
 class GameService {
     async createGame(adminId) {
@@ -99,17 +104,12 @@ class GameService {
         }
     }
 
-    async logAction(playerId, characterId, actionType, actionDetails) {
-        const gameId = this.getCurrentGameId();
-        if (!gameId) throw new Error('No active game found');
-
-        await addDoc(collection(db, `games/${gameId}/actions`), {
-            playerId,
-            characterId,
-            actionType,
-            actionDetails,
-            activityTime: Date.now()
-        });
+    async logAction(gameId, actionData) {
+        const action = {
+            ...actionData,
+            playerId: AuthService.currentUser.authId
+        }
+        return await Action.create(gameId, action);
     }
 
     async getGamePlayers(gameId) {
@@ -131,31 +131,31 @@ class GameService {
     }
 
     async createCharacter(gameId, characterData) {
-        const charactersRef = collection(db, `games/${gameId}/characters`);
-        const docRef = await addDoc(charactersRef, characterData);
-        return { characterId: docRef.id, ...characterData };
+        return await Character.create(gameId, characterData);
     }
 
     async createItem(gameId, itemData) {
-        const itemsRef = collection(db, `games/${gameId}/items`);
-        const docRef = await addDoc(itemsRef, itemData);
-        return { itemId: docRef.id, ...itemData };
+        return await Item.create(gameId, itemData);
     }
 
     async deleteCharacter(gameId, characterId) {
-        await deleteDoc(doc(db, `games/${gameId}/characters`, characterId));
+        const character = await Character.get(gameId, characterId);
+        await character.delete();
     }
 
     async deleteItem(gameId, itemId) {
-        await deleteDoc(doc(db, `games/${gameId}/items`, itemId));
+        const item = await Item.get(gameId, itemId);
+        await item.delete();
     }
 
     async updateCharacter(gameId, characterId, characterData) {
-        await updateDoc(doc(db, `games/${gameId}/characters`, characterId), characterData);
+        const character = await Character.get(gameId, characterId);
+        await character.update(characterData);
     }
 
     async updateItem(gameId, itemId, itemData) {
-        await updateDoc(doc(db, `games/${gameId}/items`, itemId), itemData);
+        const item = await Item.get(gameId, itemId);
+        await item.update(itemData);
     }
 
     getCurrentGameId() {

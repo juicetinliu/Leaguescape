@@ -1,5 +1,5 @@
 import { db } from '../config/firebase.js';
-import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
+import { doc, getDoc, addDoc, updateDoc, deleteDoc, collection } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 
 class Character {
     constructor(gameId, characterId, data = {}) {
@@ -20,33 +20,31 @@ class Character {
     }
 
     static async create(gameId, characterData) {
-        const characterId = crypto.randomUUID();
-        const character = new Character(gameId, characterId, characterData);
-        await character.save();
+        const character = new Character(gameId, 'willBeOverwritten', characterData);
+
+        const docRef = await addDoc(collection(db, `games/${gameId}/characters`), {
+            name: character.name,
+            profileImage: character.profileImage,
+            emblemImage: character.emblemImage,
+            userId: character.userId,
+            accountNumber: character.accountNumber,
+            accountPassword: character.accountPassword,
+            securityQuestion: character.securityQuestion,
+            securityAnswer: character.securityAnswer,
+            startingGold: character.startingGold,
+            canAccessSecret: character.canAccessSecret,
+            gold: character.gold,
+            items: character.items
+        });
+
+        character.characterId = docRef.id;
         return character;
     }
 
     static async get(gameId, characterId) {
         const characterDoc = await getDoc(doc(db, `games/${gameId}/characters`, characterId));
-        if (!characterDoc.exists()) return null;
+        if (!characterDoc.exists()) throw new Error('Character not found');
         return new Character(gameId, characterDoc.id, characterDoc.data());
-    }
-
-    async save() {
-        await setDoc(doc(db, `games/${this.gameId}/characters`, this.characterId), {
-            name: this.name,
-            profileImage: this.profileImage,
-            emblemImage: this.emblemImage,
-            userId: this.userId,
-            accountNumber: this.accountNumber,
-            accountPassword: this.accountPassword,
-            securityQuestion: this.securityQuestion,
-            securityAnswer: this.securityAnswer,
-            startingGold: this.startingGold,
-            canAccessSecret: this.canAccessSecret,
-            gold: this.gold,
-            items: this.items
-        });
     }
 
     async update(data) {

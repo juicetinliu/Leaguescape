@@ -1,5 +1,5 @@
 import { db } from '../config/firebase.js';
-import { doc, getDoc, setDoc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
+import { doc, getDoc, addDoc, updateDoc, deleteDoc, collection } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 
 class Item {
     constructor(gameId, itemId, data = {}) {
@@ -15,28 +15,26 @@ class Item {
     }
 
     static async create(gameId, itemData) {
-        const itemId = crypto.randomUUID();
-        const item = new Item(gameId, itemId, itemData);
-        await item.save();
+        const item = new Item(gameId, 'willBeOverwritten', itemData);
+
+        const docRef = await addDoc(collection(db, `games/${gameId}/items`), {
+            itemNumber: item.itemNumber,
+            name: item.name,
+            description: item.description,
+            quantity: item.quantity,
+            price: item.price,
+            prereqs: item.prereqs,
+            isSecret: item.isSecret
+        });
+
+        item.itemId = docRef.id;
         return item;
     }
 
     static async get(gameId, itemId) {
         const itemDoc = await getDoc(doc(db, `games/${gameId}/items`, itemId));
-        if (!itemDoc.exists()) return null;
+        if (!itemDoc.exists()) throw new Error('Item not found');
         return new Item(gameId, itemDoc.id, itemDoc.data());
-    }
-
-    async save() {
-        await setDoc(doc(db, `games/${this.gameId}/items`, this.itemId), {
-            itemNumber: this.itemNumber,
-            name: this.name,
-            description: this.description,
-            quantity: this.quantity,
-            price: this.price,
-            prereqs: this.prereqs,
-            isSecret: this.isSecret
-        });
     }
 
     async update(data) {
