@@ -2,13 +2,18 @@ import Page from '../js/models/Page.js';
 import AuthService from '../js/services/auth.js';
 import GameService from '../js/services/game.js';
 import { router } from '../js/utils/router.js';
-
+import { db } from '../js/config/firebase.js';
+import { collection, query, where, orderBy, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
+import Message from '../js/models/Message.js';
+import { MessageTo, MessageType } from '../js/models/MessageTypes.js';
 
 class LobbyPage extends Page {
     constructor() {
         super();
         this.currentGame = null;
-        this.updateInterval = null;
+        // this.updateInterval = null; // Not necessary as onSnapshot will handle updates
+        this.gamePlayersUnsubscribe = null;
+        this.gameUnsubscribe = null;
     }
 
     async show() {
@@ -24,12 +29,13 @@ class LobbyPage extends Page {
             return;
         }
 
-        if (!(await GameService.isPlayer(gameId, AuthService.currentUser.authId))) {
+        const userId = AuthService.currentUser.authId;
+        if (!(await GameService.isPlayer(gameId, userId))) {
             router.navigate('user');
             return;
         }
 
-        if (await GameService.isAdmin(gameId, AuthService.currentUser.authId)) {
+        if (await GameService.isAdmin(gameId, userId)) {
             router.navigate(`admin&gameId=${gameId}`);
             return;
         }
@@ -46,7 +52,7 @@ class LobbyPage extends Page {
 
         this.initializeUI();
         this.attachEventListeners();
-        this.startUpdates();
+        // this.startUpdates();  // Not necessary as onSnapshot will handle updates
     }
 
     initializeUI() {
@@ -95,13 +101,25 @@ class LobbyPage extends Page {
             const newUsername = document.getElementById('username').value.trim();
             if (newUsername) {
                 await GameService.updatePlayerName(this.currentGame.gameId, AuthService.currentUser.authId, newUsername);
-                this.updatePlayersList();
+                // this.updatePlayersList();  // Not necessary as onSnapshot will handle updates
             }
         });
+        
+        if(this.currentGame.gameId) {
+            this.gamePlayersUnsubscribe = GameService.onGamePlayersSnapshot(this.currentGame.gameId, async (gameLobbyData) => {
+                await this.updatePlayersList(gameLobbyData);
+            }, false);
+
+            this.gameUnsubscribe = GameService.onGameSnapshot(this.currentGame.gameId, async (gameData) => {
+                if (gameData.gameState !== 'setup') {
+                    window.location.reload();
+                }
+            });
+        }
     }
 
-    async updatePlayersList() {
-        const players = await GameService.getGamePlayers(this.currentGame.gameId);
+    async updatePlayersList(gamePlayers) {
+        const players = gamePlayers ? gamePlayers : await GameService.getGamePlayers(this.currentGame.gameId);
         const list = document.getElementById('playersList');
         
         list.innerHTML = players.map(player => `
@@ -112,27 +130,33 @@ class LobbyPage extends Page {
         `).join('');
     }
 
-    startUpdates() {
-        // Update player list every 5 seconds
-        this.updatePlayersList();
+    // startUpdates() {
+    //     // Update player list every 5 seconds
+    //     this.updatePlayersList();
 
-        //TODO: This should be handled via real-time listeners instead of polling
-        this.updateInterval = setInterval(async () => {
-            await this.checkGameState();
-            this.updatePlayersList();
-        }, 5000);
-    }
+    //     //TODO: This should be handled via real-time listeners instead of polling
+    //     this.updateInterval = setInterval(async () => {
+    //         await this.checkGameState();
+    //         this.updatePlayersList();
+    //     }, 5000);
+    // } // Not necessary as onSnapshot will handle updates
 
-    async checkGameState() {
-        const game = await GameService.getGame(this.currentGame.gameId);
-        if (game.gameState !== 'setup') {
-            window.location.reload();
-        }
-    }
+    // async checkGameState() {
+    //     const game = await GameService.getGame(this.currentGame.gameId);
+    //     if (game.gameState !== 'setup') {
+    //         window.location.reload();
+    //     }
+    // }  // Not necessary as onSnapshot will handle updates
 
     cleanup() {
-        if (this.updateInterval) {
-            clearInterval(this.updateInterval);
+        // if (this.updateInterval) {
+        //     clearInterval(this.updateInterval);
+        // }  // Not necessary as onSnapshot will handle updates
+        if (this.gamePlayersUnsubscribe) {
+            this.gamePlayersUnsubscribe();
+        }
+        if (this.gameUnsubscribe) {
+            this.gameUnsubscribe();
         }
     }
 }

@@ -1,11 +1,14 @@
 import { db } from '../config/firebase.js';
-import { collection, query, where, getDocs, addDoc, doc, updateDoc, setDoc, getDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
+import { collection, query, where, getDocs, addDoc, doc, updateDoc, setDoc, getDoc, deleteDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 import Game from '../models/Game.js';
 import Character from '../models/Character.js';
 import Item from '../models/Item.js';
 import Action from '../models/Action.js';
+import Message from '../models/Message.js';
+import { MessageTo, MessageType } from '../models/MessageTypes.js';
 import ActionType from '../models/ActionType.js';
 import AuthService from '../services/auth.js';
+import MessageService from '../services/message.js';
 
 class GameService {
     async createGame(adminId) {
@@ -50,6 +53,13 @@ class GameService {
 
     async getGame(gameId) {
         return await Game.get(gameId);
+    }
+
+    onGameSnapshot(gameId, callback) {
+        return onSnapshot(doc(db, 'games', gameId), async (gameDoc) => {
+            
+            await callback(gameDoc.data());
+        });
     }
 
     async getUserGames(userId) {
@@ -120,6 +130,17 @@ class GameService {
         }
     }
 
+    async updatePlayerAssumedCharacter(gameId, playerId, characterId) {
+        const playerRef = doc(db, `games/${gameId}/players/${playerId}/privateDetails/data`);
+        await updateDoc(playerRef, {
+            assumedCharacterId: characterId
+        });
+        await this.logAction(gameId, {
+            actionType: ActionType.ASSUME_CHARACTER,
+            characterId: characterId,
+        }, playerId);
+    }
+
     async updatePlayerLoginMode(gameId, playerId, loginMode) {
         // This should only be called by admin, firestore rules will enforce this
         const playerRef = doc(db, `games/${gameId}/players/${playerId}/privateDetails/data`);
@@ -128,10 +149,41 @@ class GameService {
         });
     }
 
-    async logAction(gameId, actionData) {
+    async approveLogIn(gameId, playerId, characterId) {
+        await this.updatePlayerAssumedCharacter(gameId, playerId, characterId);
+
+        await MessageService.sendAdminMessageToPlayer(gameId, {
+            type: MessageTo.PLAYER,
+            messageType: MessageType.LOGIN_SUCCESS,
+            messageDetails: { 
+                characterId: characterId 
+            }
+        }, playerId);
+    }
+
+    // Login page actions
+    async attemptLogIn(gameId, accountNumber, accountPassword) {
+        await this.logAction(gameId, {
+            actionType: ActionType.LOGIN_CHARACTER,
+            actionDetails: { 
+                accountNumber: accountNumber, 
+                accountPassword: accountPassword 
+            }
+        });
+        await MessageService.sendPlayerMessageToAdmin(gameId, {
+            type: MessageTo.ADMIN,
+            messageType: MessageType.LOGIN_ATTEMPT,
+            messageDetails: {
+                accountNumber: accountNumber, 
+                accountPassword: accountPassword 
+            }
+        });
+    }
+
+    async logAction(gameId, actionData, playerIdForAction = null) {
         const action = {
             ...actionData,
-            playerId: AuthService.currentUser.authId
+            playerId: playerIdForAction ? playerIdForAction : AuthService.currentUser.authId
         }
         return await Action.create(gameId, action);
     }
@@ -139,7 +191,39 @@ class GameService {
     async getGamePlayers(gameId) {
         const playersRef = collection(db, `games/${gameId}/players`);
         const players = await getDocs(playersRef);
-        return players.docs.map(doc => ({ playerId: doc.id, ...doc.data() }));
+        return await Promise.all(players.docs.map(async (doc) => {
+            return await this.getPlayerDetails(gameId, doc);
+        }));
+    }
+
+    async getPlayerDetails(gameId, playerDoc, fetchPrivateDetails = true) {
+        let privateDetails = {};
+
+        if (fetchPrivateDetails) {
+            console.log("fetching privates")
+            try {
+                const privateDetailsRef = collection(db, `games/${gameId}/players/${playerDoc.id}/privateDetails`);
+                const privateDetailsDoc = await getDocs(privateDetailsRef);
+                privateDetails = privateDetailsDoc.docs[0].data();
+            } catch (error) {
+                // If there's an error (e.g., permission denied), return empty private details
+            }
+        }   
+
+        return { 
+            playerId: playerDoc.id, 
+            ...playerDoc.data(), 
+            privateDetails: privateDetails }
+    }
+
+    onGamePlayersSnapshot(gameId, callback, fetchPrivateDetails = true) {
+        return onSnapshot(collection(db, `games/${gameId}/players`), async (players) => {
+            const playerDetails = await Promise.all(players.docs.map(async (doc) => {
+                return await this.getPlayerDetails(gameId, doc, fetchPrivateDetails);
+            }))
+
+            await callback(playerDetails);
+        });
     }
 
     async getGameCharacters(gameId) {
@@ -148,6 +232,10 @@ class GameService {
         return characters.docs.map(doc => 
             new Character(gameId, doc.id, doc.data())
         );
+    }
+
+    async getGameCharacter(gameId, characterId) {
+        return await Character.get(gameId, characterId);
     }
 
     async getGameItems(gameId) {

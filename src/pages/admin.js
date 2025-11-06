@@ -1,6 +1,8 @@
 import Page from '../js/models/Page.js';
 import AuthService from '../js/services/auth.js';
 import GameService from '../js/services/game.js';
+import MessageService from '../js/services/message.js';
+import { MessageTo, MessageType } from '../js/models/MessageTypes.js';
 import { router } from '../js/utils/router.js';
 
 const TABS = {
@@ -14,6 +16,11 @@ class AdminPage extends Page {
         super();
         this.currentGame = null;
         this.activeTab = TABS.PROFILES;
+        this.gamePlayersUnsubscribe = null;
+        this.adminMessageUnsubscribe = null;
+
+        this.characters = [];
+        this.items = [];
     }
 
     async show() {
@@ -31,7 +38,7 @@ class AdminPage extends Page {
 
         this.initializeUI();
         this.attachEventListeners();
-        this.loadLobby();
+        // this.loadLobby(); // Not necessary as onSnapshot will handle updates
         this.loadActiveTab();
     }
 
@@ -157,39 +164,53 @@ class AdminPage extends Page {
                 btn.textContent = '▶';
             }
         });
+
+        if(this.currentGame.gameId) {
+            this.gamePlayersUnsubscribe = GameService.onGamePlayersSnapshot(this.currentGame.gameId, async (gameLobbyData) => {
+                await this.loadLobby(gameLobbyData);
+            });
+
+            this.setupAdminMessageListener()
+        }
     }
 
-    async loadLobby() {
+    async loadLobby(gamePlayers) {
         const lobbyContent = document.getElementById('lobbyContent');
-        const players = await GameService.getGamePlayers(this.currentGame.gameId);
-        
+        const players = gamePlayers ? gamePlayers : await GameService.getGamePlayers(this.currentGame.gameId);
         const playersHtml = players.map(player => `
             <div class="player-item">
                 <span>${player.playerName || 'Unnamed Player'}</span>
-                ${this.currentGame.gameState === 'setup' ? `
-                    <button class="btn kick-player" data-player-id="${player.playerId}">Kick</button>
-                    <button class="btn ban-player" data-player-id="${player.playerId}">Ban</button>
-                    <button class="btn unban-player" data-player-id="${player.playerId}">UnBan</button>
-                ` : ''}
+                <select class="login-mode-select" data-player-id="${player.playerId}">
+                    <option value="normal" ${player.privateDetails.loginMode === 'normal' ? 'selected' : ''}>Normal</option>
+                    <option value="secret" ${player.privateDetails.loginMode === 'secret' ? 'selected' : ''}>Secret</option>
+                    <option value="inventory" ${player.privateDetails.loginMode === 'inventory' ? 'selected' : ''}>Inventory</option>
+                </select>
+                <button class="btn kick-player" data-player-id="${player.playerId}">Kick</button>
+                <button class="btn ban-player" data-player-id="${player.playerId}">Ban</button>
+                <button class="btn unban-player" data-player-id="${player.playerId}">UnBan</button>
             </div>
         `).join('');
 
         lobbyContent.innerHTML = playersHtml || '<p>No players in lobby</p>';
 
         // Add event listeners for kick and ban buttons
-        if (this.currentGame.gameState === 'setup') {
-            document.querySelectorAll('.kick-player').forEach(button => {
-                button.addEventListener('click', () => this.kickPlayer(button.dataset.playerId));
-            });
-            
-            document.querySelectorAll('.ban-player').forEach(button => {
-                button.addEventListener('click', () => this.banPlayer(button.dataset.playerId));
-            });
+        document.querySelectorAll('.kick-player').forEach(button => {
+            button.addEventListener('click', () => this.kickPlayer(button.dataset.playerId));
+        });
+        
+        document.querySelectorAll('.ban-player').forEach(button => {
+            button.addEventListener('click', () => this.banPlayer(button.dataset.playerId));
+        });
 
-            document.querySelectorAll('.unban-player').forEach(button => {
-                button.addEventListener('click', () => this.unBanPlayer(button.dataset.playerId));
+        document.querySelectorAll('.unban-player').forEach(button => {
+            button.addEventListener('click', () => this.unBanPlayer(button.dataset.playerId));
+        });
+
+        document.querySelectorAll('.login-mode-select').forEach(select => {
+            select.addEventListener('change', async (e) => {
+                await GameService.updatePlayerLoginMode(this.currentGame.gameId, e.target.dataset.playerId, e.target.value);
             });
-        }
+        });
     }
 
     async loadActiveTab() {
@@ -208,12 +229,12 @@ class AdminPage extends Page {
     }
 
     async loadItems(container) {
-        const items = await GameService.getGameItems(this.currentGame.gameId);
+        this.items = await GameService.getGameItems(this.currentGame.gameId);
         
         const grid = document.createElement('div');
         grid.className = 'items-grid';
         
-        items.forEach(item => {
+        this.items.forEach(item => {
             const card = document.createElement('div');
             card.className = 'item-card';
             card.innerHTML = `
@@ -254,12 +275,12 @@ class AdminPage extends Page {
     }
 
     async loadProfiles(container) {
-        const characters = await GameService.getGameCharacters(this.currentGame.gameId);
+        this.characters = await GameService.getGameCharacters(this.currentGame.gameId);
         
         const grid = document.createElement('div');
         grid.className = 'profile-grid';
         
-        characters.forEach(character => {
+        this.characters.forEach(character => {
             const card = document.createElement('div');
             card.className = 'profile-card';
             card.innerHTML = `
@@ -465,21 +486,57 @@ class AdminPage extends Page {
     async kickPlayer(playerId) {
         if (confirm('Are you sure you want to kick this player?')) {
             await GameService.kickPlayer(this.currentGame.gameId, playerId);
-            await this.loadLobby();
+            // await this.loadLobby(); // Not necessary as onSnapshot will handle updates
         }
     }
 
     async banPlayer(playerId) {
         if (confirm('Are you sure you want to ban this player?')) {
             await GameService.banPlayer(this.currentGame.gameId, playerId);
-            await this.loadLobby();
+            // await this.loadLobby(); // Not necessary as onSnapshot will handle updates
         }
     }
 
     async unBanPlayer(playerId) {
         if (confirm('Are you sure you want to unban this player?')) {
             await GameService.unBanPlayer(this.currentGame.gameId, playerId);
-            await this.loadLobby();
+            // await this.loadLobby(); // Not necessary as onSnapshot will handle updates
+        }
+    }
+
+    async setupAdminMessageListener() {
+        this.adminMessageUnsubscribe = MessageService.onUnprocessedAdminMessagesSnapshot(this.currentGame.gameId, async (messages) => {
+            // process the last message - the listener will update as messages get processed.
+            if (messages && messages.length > 0) {
+                const message = messages[messages.length - 1];
+                await this.processAdminMessage(message);
+            }
+        });
+    }
+
+    async processAdminMessage(message) {
+        if (message.messageType === MessageType.LOGIN_ATTEMPT) {
+            const { accountNumber, accountPassword } = message.messageDetails;
+            const playerId = message.playerId;
+
+            const character = this.characters.find(c => 
+                c.accountNumber === accountNumber && 
+                c.accountPassword === accountPassword
+            );
+
+            if (character) {
+                await GameService.approveLogIn(this.currentGame.gameId, playerId, character.characterId);
+            }
+            await message.markAsProcessed();
+        }
+    }
+
+    cleanup() {
+        if (this.gamePlayersUnsubscribe) {
+            this.gamePlayersUnsubscribe();
+        }
+        if (this.adminMessageUnsubscribe) {
+            this.adminMessageUnsubscribe();
         }
     }
 }

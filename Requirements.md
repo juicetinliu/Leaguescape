@@ -145,7 +145,10 @@ When a [game] is first created by the [admin], they are presented with the `Admi
         - [game] ID - necessary to share with other [user]s for them to join.
         - "Start Game" button - requires confirmation, but will move the [game] to the `[Running]` state
         - "Exit Game" button - which does NOT end the [game], but leads the [admin] back to the `User` page and sets the [admin] back to a [user].
-    - The current lobby - which [player]s are in the [game] - with actions to kick/ban [player]s if necessary. This can be minimized.
+    - The current lobby - which [player]s are in the [game] - with actions:
+        - To kick/ban/unban [player]s if necessary.
+        - To select the loginMode for the [player] - what they will see after successfully getting past the `login` page. (`normal`|`secret`|`inventory`)
+        - The lobby can be minimized.
     - Tabbed views for:
         - "Profiles": [*character] overviews in a grid of profiles. Tapping on a profile opens a preview window on the right with detailed information about each [*character]. There's an "edit" and "delete" button in the preview window to manage the selected [*character]. In the grid of profiles, the last entry is an "Add Profile" button.
             - Pressing edit/Add Profile leads to the same popover - that allows you to edit all the [*character] details.
@@ -174,9 +177,20 @@ Once the game is in the `End` phase, all [player]s automatically get directed to
 ### `Login` Page - `[Running]` Phase
 The `Login` page can ONLY be accessed by [player]s during the `[Running]` state.
 
+An single enter button is displayed with a welcome message. Pressing this enter button prompts the [player] with a login page. 
 
+The [player] now sees an input for an "Account Number" and "Password".
+Entering an accountNumber and accountPassword sends a notification to the [admin] through the Activity modal. This Action is logged as a `loginCharacter` action.
 
-A simple log in menu is shown here. The [player] can attempt to log in to become one of the [*character]s set up by the [admin]. 
+The [admin] can approve the login, which assigns the assumedCharacterId for that character. An `assumeCharacter` action is logged.
+
+The [admin] can reject the login. A `loginDenied` action is logged.
+
+The loginMode (set by the [admin]) dicates what the [player] sees after being approved for login.
+- `normal`/`secret` - both take the [player] to the `Character` page. The difference being `secret` mode gives access to the `Shop - secret` page. See the `Character` page for more info.
+- `inventory` - takes the [player] directly to the `Inventory` page. See the `Inventory` page for more info.
+
+There is again an option to leave the [game] to go back to the `User` page.
 
 ### `Character` Page - `[Running]` Phase
 The `Character` page can ONLY be accessed by [*character]s during the `[Running]` state.

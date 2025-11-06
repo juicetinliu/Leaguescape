@@ -3,6 +3,12 @@ import InfoPage from '../../pages/info.js';
 import UserPage from '../../pages/user.js';
 import AdminPage from '../../pages/admin.js';
 import LobbyPage from '../../pages/lobby.js';
+import LoginPage from '../../pages/login.js';
+import CharacterPage from '../../pages/character.js';
+import ShopPage from '../../pages/shop.js';
+import BankPage from '../../pages/bank.js';
+import InventoryPage from '../../pages/inventory.js';
+import CreditsPage from '../../pages/credits.js';
 import AuthService from '../services/auth.js';
 
 class Router {
@@ -27,8 +33,31 @@ class Router {
             'lobby': {
                 page: LobbyPage,
                 requiresAuth: true
+            },
+            'login': {
+                page: LoginPage,
+                requiresAuth: true
+            },
+            'character': {
+                page: CharacterPage,
+                requiresAuth: true
+            },
+            'shop': {
+                page: ShopPage,
+                requiresAuth: true
+            },
+            'bank': {
+                page: BankPage,
+                requiresAuth: true
+            },
+            'inventory': {
+                page: InventoryPage,
+                requiresAuth: true
+            },
+            'credits': {
+                page: CreditsPage,
+                requiresAuth: true
             }
-            // Additional routes will be added here
         };
         this.prevRoute = null;
     }

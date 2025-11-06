@@ -1,14 +1,25 @@
 import { db } from '../config/firebase.js';
 import { doc, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 
+//TODO: validate action based on actionType
+// Actions are for the final Admin activity log.
 class Action {
     constructor(gameId, actionId, data = {}) {
         this.gameId = gameId;
         this.actionId = actionId;
+
+        // Must be included in actionData
         this.playerId = data.playerId || '';
+        
+        // May be included in actionData
         this.characterId = data.characterId || '';
+
+        // Must be included in actionData
         this.actionType = data.actionType || '';
+        
+        // Optional details about the action
         this.actionDetails = data.actionDetails || '';
+        
         this.activityTime = data.activityTime || null;
     }
 
