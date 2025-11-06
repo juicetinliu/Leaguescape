@@ -19,7 +19,6 @@ class LoginPage extends Page {
         this.gameUnsubscribe = null;
         this.playerMessageUnsubscribe = null;
 
-        console.log('LoginPage show called', this);
         const gameId = new URLSearchParams(window.location.search).get('gameId');
         if (!gameId) {
             router.navigate('user');
@@ -111,8 +110,6 @@ class LoginPage extends Page {
             });
             this.setupPlayerMessageUnsubscribe();
         }
-                console.log('LoginPage show called', this);
-
     }
     
     async setupPlayerMessageUnsubscribe() {

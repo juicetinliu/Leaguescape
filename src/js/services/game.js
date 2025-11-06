@@ -200,7 +200,6 @@ class GameService {
         let privateDetails = {};
 
         if (fetchPrivateDetails) {
-            console.log("fetching privates")
             try {
                 const privateDetailsRef = collection(db, `games/${gameId}/players/${playerDoc.id}/privateDetails`);
                 const privateDetailsDoc = await getDocs(privateDetailsRef);

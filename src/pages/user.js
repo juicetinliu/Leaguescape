@@ -72,7 +72,6 @@ class UserPage extends Page {
                 gamesList.innerHTML = '<p>No games found. Create or join a game to get started!</p>';
                 return;
             }
-            console.log(games);
 
             const gamesHtml = games.map(game => `
                 <div class="card">
