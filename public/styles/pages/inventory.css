@@ -1,0 +1,18 @@
+#inventory {
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+    gap: 2rem;
+
+    .inventory-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .inventory-item {
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 1rem;
+    }
+}

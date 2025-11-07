@@ -86,7 +86,7 @@ class Router {
                 // Give time for auth state to update and then direct to the route.
                 if (AuthService.isAuthenticated()) {
                     setTimeout(async () => { 
-                        await route.page.show();
+                        await this._showPage(route);
                     }, 500)
                 } else if (retries > 0) {
                     console.log("pending auth, retrying...", retries);
@@ -101,6 +101,10 @@ class Router {
             return;
         }
 
+        await this._showPage(route);
+    }
+
+    async _showPage(route) {
         this.prevRoute = route;
         await route.page.show();
     }

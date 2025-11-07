@@ -3,7 +3,7 @@
     /* Color variables */
     --primary-color: #4a4a4a;
     --secondary-color: #0a0a0a;
-    --accent-color: #3273dc;
+    --accent-color: #BAA477;
     --background-color: #ffffff;
     --text-color: #4a4a4a;
     --error-color: #ff3860;
@@ -32,6 +32,7 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    background-color: #01222A;
 }
 
 /* Common classes */

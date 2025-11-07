@@ -37,22 +37,53 @@ class CharacterPage extends Page {
 
     initializeUI() {
         const template = `
-            <div class="container">
-                <header class="header">
-                    <div class="nav">
-                        <h1>Character Dashboard</h1>
-                        <div>
-                            <button id="logoutCharacter" class="btn">Logout</button>
+            <div id="${this.page}" class="page-container">
+                <div class="logout-container">
+                    <button id="logoutCharacter" class="text-button">LOG OUT</button>
+                </div>
+
+                <div class="character-menu-wrapper">
+                    <div class="character-menu-header">
+                        Welcome to Piltover Academy.
+                    </div>
+                    <div class="character-menu-subheader">
+                        Please select your mode.
+                    </div>
+                    
+                    <div class="character-menu-buttons-wrapper">
+                        <div id="goToShop" class="character-menu-button">
+                            <div class="character-menu-button-image">
+                                <img src="">
+                            </div>
+                            <div class="character-menu-button-label">
+                                THE SHOP
+                            </div>
+                        </div>
+                        <div id="goToBank" class="character-menu-button">
+                            <div class="character-menu-button-image">
+                                <img src="">
+                            </div>
+                            <div class="character-menu-button-label">
+                                THE BANK
+                            </div>
+                        </div>
+                        <div id="goToInventory" class="character-menu-button">
+                            <div class="character-menu-button-image">
+                                <img src="">
+                            </div>
+                            <div class="character-menu-button-label">
+                                THE INVENTORY
+                            </div>
                         </div>
                     </div>
-                </header>
+                </div>
 
-                <div class="card">
-                    <h2>Welcome, ${this.currentCharacter.name}</h2>
-                    <div class="menu">
-                        <button id="goToShop" class="btn">Shop</button>
-                        <button id="goToBank" class="btn">Bank</button>
-                        <button id="goToInventory" class="btn">Inventory</button>
+                <div class="character-footer-wrapper">
+                    <div class="character-footer-name">
+                        ${this.currentCharacter.name}
+                    </div>
+                    <div class="character-footer-account-number">
+                        ${this.currentCharacter.accountNumber}
                     </div>
                 </div>
             </div>
