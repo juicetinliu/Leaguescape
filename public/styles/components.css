@@ -6,10 +6,20 @@ button.text-button {
     font-size: 18px;
     background-color: #1D2328;
     padding: 10px 20px;
+    min-width: 120px;
 }
 
 button.text-button:hover {
     background-color: #70767b;
+    cursor: pointer;
+}
+
+input.text-form-input {
+    border: 2px solid var(--accent-color);
+    color: white;
+    background-color: #1D2328;
+    font-size: 18px;
+    padding: 10px;
 }
 
 

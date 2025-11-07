@@ -31,26 +31,31 @@ class LoginPage extends Page {
 
     initializeUI() {
         const template = `
-            <div class="container">
-                <header class="header">
-                    <div class="nav">
-                        <h1>Character Login</h1>
-                        <button id="backToLobby" class="btn">Back to Lobby</button>
-                    </div>
-                </header>
+            <div id="${this.page}" class="page-container">
+                <div class="login-header-wrapper">
+                    <button id="backToLobby" class="login-exit-button text-button">Exit</button>
+                </div>
 
-                <div class="card">
-                    <form id="loginForm">
-                        <div class="form-group">
-                            <label for="accountNumber">Account Number</label>
-                            <input type="text" id="accountNumber" class="form-input" required>
+                <div class="login-wrapper">
+                    <div class="login-card">
+                        <div class="login-emblem">
+                            <img src="">
                         </div>
-                        <div class="form-group">
-                            <label for="accountPassword">Password</label>
-                            <input type="password" id="accountPassword" class="form-input" required>
-                        </div>
-                        <button type="submit" class="btn">Login</button>
-                    </form>
+                        <form id="loginForm" class="login-form-wrapper">
+                            <div class="login-text-input-wrapper">
+                                <label class="text-form-label" for="accountNumber">ACCOUNT NUMBER</label>
+                                <input type="text" id="accountNumber" class="text-form-input" required>
+                            </div>
+                            <div class="login-text-input-wrapper">
+                                <label class="text-form-label" for="accountPassword">PASSWORD</label>
+                                <input type="password" id="accountPassword" class="text-form-input" required>
+                            </div>
+                            <div class="login-error-message-placeholder error"></div>
+                            <div class="form-submit-wrapper">
+                                <button id="login-submit-button" type="submit" class="text-button">LOGIN</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         `;

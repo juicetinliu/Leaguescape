@@ -38,7 +38,7 @@ class CharacterPage extends Page {
     initializeUI() {
         const template = `
             <div id="${this.page}" class="page-container">
-                <div class="logout-container">
+                <div class="character-header-wrapper">
                     <button id="logoutCharacter" class="text-button">LOG OUT</button>
                 </div>
 
