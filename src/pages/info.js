@@ -1,8 +1,9 @@
 import Page from '../js/models/Page.js';
+import { PAGES } from '../js/models/Enums.js';
 
 class InfoPage extends Page {
     constructor() {
-        super();
+        super(PAGES.info);
     }
 
     show() {

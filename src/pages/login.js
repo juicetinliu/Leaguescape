@@ -4,11 +4,12 @@ import GameService from '../js/services/game.js';
 import MessageService from '../js/services/message.js';
 import { MessageTo, MessageType } from '../js/models/MessageTypes.js';
 import { router } from '../js/utils/router.js';
-import ActionType from '../js/models/ActionType.js';
+import { PAGES, GAME_STATE } from '../js/models/Enums.js';
+import { gameRouter } from '../js/utils/gamerouter.js';
 
 class LoginPage extends Page {
     constructor() {
-        super();
+        super(PAGES.login);
         this.currentGame = null;
         
         this.gameUnsubscribe = null;
@@ -18,37 +19,10 @@ class LoginPage extends Page {
     async show() {
         this.gameUnsubscribe = null;
         this.playerMessageUnsubscribe = null;
-
-        const gameId = new URLSearchParams(window.location.search).get('gameId');
-        if (!gameId) {
-            router.navigate('user');
-            return;
-        }
-
-        this.currentGame = await GameService.getGame(gameId);
-        if (!this.currentGame) {
-            router.navigate('user');
-            return;
-        }
-
-        const userId = AuthService.currentUser.authId;
-        if (!(await GameService.isPlayer(gameId, userId))) {
-            router.navigate('user');
-            return;
-        }
         
-        if (await GameService.isAdmin(gameId, userId)) {
-            router.navigate(`admin&gameId=${gameId}`);
+        this.currentGame = await gameRouter.handlePlayerGamePageShow(this.page);
+        if (!this.currentGame) {
             return;
-        }
-
-        switch (this.currentGame.gameState) {
-            case 'setup':
-                router.navigate(`lobby&gameId=${gameId}`);
-                return;
-            case 'end':
-                router.navigate(`credits&gameId=${gameId}`);
-                return;
         }
 
         this.initializeUI();
@@ -86,7 +60,7 @@ class LoginPage extends Page {
 
     attachEventListeners() {
         document.getElementById('backToLobby').addEventListener('click', () => {
-            router.navigate(`lobby&gameId=${this.currentGame.gameId}`);
+            router.navigate(`${PAGES.lobby}&gameId=${this.currentGame.gameId}`);
         });
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -104,7 +78,7 @@ class LoginPage extends Page {
         
         if(this.currentGame.gameId) {
             this.gameUnsubscribe = GameService.onGameSnapshot(this.currentGame.gameId, async (gameData) => {
-                if (gameData.gameState !== 'running') {
+                if (gameData.gameState !== GAME_STATE.RUNNING) {
                     window.location.reload();
                 }
             });
@@ -126,7 +100,7 @@ class LoginPage extends Page {
         if (message.messageType === MessageType.LOGIN_SUCCESS) {
             const { characterId } = message.messageDetails;
             
-            router.navigate(`character&gameId=${this.currentGame.gameId}&characterId=${characterId}`);
+            router.navigate(`${PAGES.character}&gameId=${this.currentGame.gameId}&characterId=${characterId}`);
             
             await message.markAsProcessed();
         }

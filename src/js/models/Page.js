@@ -1,5 +1,6 @@
 class Page {
-    constructor() {
+    constructor(page) {
+        this.page = page;
     }
 
     async show() {}

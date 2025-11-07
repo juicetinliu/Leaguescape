@@ -2,19 +2,19 @@ import Page from '../js/models/Page.js';
 import AuthService from '../js/services/auth.js';
 import GameService from '../js/services/game.js';
 import { router } from '../js/utils/router.js';
+import { PAGES } from '../js/models/Enums.js';
+import { gameRouter } from '../js/utils/gamerouter.js';
 
 class BankPage extends Page {
     constructor() {
-        super();
+        super(PAGES.bank);
         this.currentGame = null;
         this.currentCharacter = null;
     }
 
     async show() {
-        // Basic character validation, placeholder for now
-        const gameId = new URLSearchParams(window.location.search).get('gameId');
-        if (!gameId) {
-            router.navigate('user');
+        this.currentGame = await gameRouter.handlePlayerGamePageShow(this.page);
+        if (!this.currentGame) {
             return;
         }
 

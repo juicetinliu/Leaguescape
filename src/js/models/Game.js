@@ -1,5 +1,6 @@
 import { db } from '../config/firebase.js';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
+import { GAME_STATE } from './Enums.js';
 
 class Game {
     constructor(gameId, data = {}) {
@@ -8,7 +9,7 @@ class Game {
         this.startTime = data.startTime || null;
         this.endTime = data.endTime || null;
         this.adminId = data.adminId || '';
-        this.gameState = data.gameState || 'setup';
+        this.gameState = data.gameState || GAME_STATE.SETUP;
     }
 
     static async create(adminId) {
@@ -17,7 +18,7 @@ class Game {
         const game = new Game(gameId, {
             adminId,
             createdTime: serverTimestamp(),
-            gameState: 'setup'
+            gameState: GAME_STATE.SETUP
         });
 
         await game.save();
@@ -41,13 +42,13 @@ class Game {
     }
 
     async updateState(newState) {
-        if (!['setup', 'running', 'end'].includes(newState)) {
-            throw new Error('Invalid game state');
+        if (!Object.values(GAME_STATE).includes(newState)) {
+            throw new Error('Invalid game state: ' + newState);
         }
 
         this.gameState = newState;
-        if (newState === 'running') this.startTime = serverTimestamp();
-        if (newState === 'end') this.endTime = serverTimestamp();
+        if (newState === GAME_STATE.RUNNING) this.startTime = serverTimestamp();
+        if (newState === GAME_STATE.END) this.endTime = serverTimestamp();
 
         await updateDoc(doc(db, 'games', this.gameId), {
             gameState: this.gameState,

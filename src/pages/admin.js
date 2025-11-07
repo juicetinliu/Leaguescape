@@ -4,6 +4,7 @@ import GameService from '../js/services/game.js';
 import MessageService from '../js/services/message.js';
 import { MessageTo, MessageType } from '../js/models/MessageTypes.js';
 import { router } from '../js/utils/router.js';
+import { PAGES, GAME_STATE } from '../js/models/Enums.js';
 
 const TABS = {
     PROFILES: 'profiles',
@@ -13,7 +14,7 @@ const TABS = {
 
 class AdminPage extends Page {
     constructor() {
-        super();
+        super(PAGES.admin);
         this.currentGame = null;
         this.activeTab = TABS.PROFILES;
         this.gamePlayersUnsubscribe = null;
@@ -26,13 +27,13 @@ class AdminPage extends Page {
     async show() {
         const gameId = new URLSearchParams(window.location.search).get('gameId');
         if (!gameId) {
-            router.navigate('user');
+            router.navigate(PAGES.user);
             return;
         }
 
         this.currentGame = await GameService.getGame(gameId);
         if (!this.currentGame || await !GameService.isAdmin(gameId, AuthService.currentUser.authId)) {
-            router.navigate('user');
+            router.navigate(PAGES.user);
             return;
         }
 
@@ -52,11 +53,11 @@ class AdminPage extends Page {
                             ${this.getGameStateButton()}
                         </div>
                         <div>
-                            ${this.currentGame.gameState === 'running' ? '<button id="showActivity" class="btn">View Activity</button>' : ''}
+                            ${this.currentGame.gameState === GAME_STATE.RUNNING ? '<button id="showActivity" class="btn">View Activity</button>' : ''}
                             <button id="exitGame" class="btn">Exit Game</button>
                         </div>
                     </div>
-                    ${this.currentGame.gameState === 'running' ? '<div id="gameTimer"></div>' : ''}
+                    ${this.currentGame.gameState === GAME_STATE.RUNNING ? '<div id="gameTimer"></div>' : ''}
                 </header>
 
                 <div class="card" id="lobbySection">
@@ -112,9 +113,9 @@ class AdminPage extends Page {
 
     getGameStateButton() {
         switch (this.currentGame.gameState) {
-            case 'setup':
+            case GAME_STATE.SETUP:
                 return '<button id="startGame" class="btn">Start Game</button>';
-            case 'running':
+            case GAME_STATE.RUNNING:
                 return '<button id="endGame" class="btn">End Game</button>';
             default:
                 return '';
@@ -124,17 +125,17 @@ class AdminPage extends Page {
     attachEventListeners() {
         // Game state buttons
         document.getElementById('exitGame').addEventListener('click', () => {
-            router.navigate('user');
+            router.navigate(PAGES.user);
         });
 
         const startGameBtn = document.getElementById('startGame');
         if (startGameBtn) {
-            startGameBtn.addEventListener('click', () => this.updateGameState('running'));
+            startGameBtn.addEventListener('click', () => this.updateGameState(GAME_STATE.RUNNING));
         }
 
         const endGameBtn = document.getElementById('endGame');
         if (endGameBtn) {
-            endGameBtn.addEventListener('click', () => this.updateGameState('end'));
+            endGameBtn.addEventListener('click', () => this.updateGameState(GAME_STATE.END));
         }
 
         // Tab switching
@@ -243,7 +244,7 @@ class AdminPage extends Page {
                     <p>Price: ${item.price} gold</p>
                     <p>Quantity: ${item.quantity}</p>
                 </div>
-                ${this.currentGame.gameState !== 'end' ? `
+                ${this.currentGame.gameState !== GAME_STATE.END ? `
                     <div class="item-actions">
                         <button class="btn edit-item" data-id="${item.itemId}">Edit</button>
                         <button class="btn delete-item" data-id="${item.itemId}">Delete</button>
@@ -251,7 +252,7 @@ class AdminPage extends Page {
                 ` : ''}
             `;
             
-            if (this.currentGame.gameState !== 'end') {
+            if (this.currentGame.gameState !== GAME_STATE.END) {
                 const editBtn = card.querySelector('.edit-item');
                 const deleteBtn = card.querySelector('.delete-item');
                 
@@ -262,7 +263,7 @@ class AdminPage extends Page {
             grid.appendChild(card);
         });
 
-        if (this.currentGame.gameState !== 'end') {
+        if (this.currentGame.gameState !== GAME_STATE.END) {
             const addCard = document.createElement('div');
             addCard.className = 'item-card add-item';
             addCard.innerHTML = `<button id="addItem" class="btn">Add Item</button>`;
@@ -289,7 +290,7 @@ class AdminPage extends Page {
                     <h3>${character.name}</h3>
                     <p>Account: ${character.accountNumber}</p>
                 </div>
-                ${this.currentGame.gameState !== 'end' ? `
+                ${this.currentGame.gameState !== GAME_STATE.END ? `
                     <div class="profile-actions">
                         <button class="btn edit-character" data-id="${character.characterId}">Edit</button>
                         <button class="btn delete-character" data-id="${character.characterId}">Delete</button>
@@ -298,7 +299,7 @@ class AdminPage extends Page {
             `;
             
             // Add event listeners
-            if (this.currentGame.gameState !== 'end') {
+            if (this.currentGame.gameState !== GAME_STATE.END) {
                 const editBtn = card.querySelector('.edit-character');
                 const deleteBtn = card.querySelector('.delete-character');
                 
@@ -309,7 +310,7 @@ class AdminPage extends Page {
             grid.appendChild(card);
         });
 
-        if (this.currentGame.gameState !== 'end') {
+        if (this.currentGame.gameState !== GAME_STATE.END) {
             const addCard = document.createElement('div');
             addCard.className = 'profile-card add-profile';
             addCard.innerHTML = `
@@ -330,7 +331,7 @@ class AdminPage extends Page {
     }
 
     async updateGameState(newState) {
-        if (!confirm(`Are you sure you want to ${newState === 'running' ? 'start' : 'end'} the game?`)) {
+        if (!confirm(`Are you sure you want to ${newState === GAME_STATE.RUNNING ? 'start' : 'end'} the game?`)) {
             return;
         }
 

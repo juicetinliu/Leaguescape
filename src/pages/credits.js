@@ -2,17 +2,18 @@ import Page from '../js/models/Page.js';
 import AuthService from '../js/services/auth.js';
 import GameService from '../js/services/game.js';
 import { router } from '../js/utils/router.js';
+import { PAGES } from '../js/models/Enums.js';
+import { gameRouter } from '../js/utils/gamerouter.js';
 
 class CreditsPage extends Page {
     constructor() {
-        super();
+        super(PAGES.credits);
         this.currentGame = null;
     }
 
     async show() {
-        const gameId = new URLSearchParams(window.location.search).get('gameId');
-        if (!gameId) {
-            router.navigate('user');
+        this.currentGame = await gameRouter.handlePlayerGamePageShow(this.page);
+        if (!this.currentGame) {
             return;
         }
 
@@ -42,7 +43,7 @@ class CreditsPage extends Page {
 
     attachEventListeners() {
         document.getElementById('backToUser').addEventListener('click', () => {
-            router.navigate('user');
+            router.navigate(PAGES.user);
         });
     }
 }

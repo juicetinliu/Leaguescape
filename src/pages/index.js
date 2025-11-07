@@ -1,10 +1,11 @@
 import Page from '../js/models/Page.js';
 import AuthService from '../js/services/auth.js';
 import { router } from '../js/utils/router.js';
+import { PAGES } from '../js/models/Enums.js';
 
 class IndexPage extends Page {
     constructor() {
-        super();
+        super(PAGES.index);
     }
 
     show() {
@@ -24,7 +25,7 @@ class IndexPage extends Page {
                         <button id="loginGoogle" class="btn">Sign in with Google</button>
                     </div>
                     <div class="form-group">
-                        <a href="/?page=info" class="btn">Learn More</a>
+                        <a href="/?page=${PAGES.info}" class="btn">Learn More</a>
                     </div>
                 </div>
             </div>
@@ -37,7 +38,7 @@ class IndexPage extends Page {
         document.getElementById('loginAnonymous').addEventListener('click', async () => {
             try {
                 await AuthService.signInAnonymously();
-                router.navigate('user');
+                router.navigate(PAGES.user);
                 // No need to navigate as the app.js auth state listener will handle it
             } catch (error) {
                 console.error('Error signing in anonymously:', error);
@@ -47,7 +48,7 @@ class IndexPage extends Page {
         document.getElementById('loginGoogle').addEventListener('click', async () => {
             try {
                 await AuthService.signInWithGoogle();
-                router.navigate('user');
+                router.navigate(PAGES.user);
                 // No need to navigate as the app.js auth state listener will handle it
             } catch (error) {
                 console.error('Error signing in with Google:', error);

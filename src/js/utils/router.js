@@ -10,51 +10,52 @@ import BankPage from '../../pages/bank.js';
 import InventoryPage from '../../pages/inventory.js';
 import CreditsPage from '../../pages/credits.js';
 import AuthService from '../services/auth.js';
+import { PAGES } from '../models/Enums.js';
 
 class Router {
     constructor() {
         this.routes = {
-            'index': {
+            [PAGES.index]: {
                 page: IndexPage,
                 requiresAuth: false
             },
-            'info': {
+            [PAGES.info]: {
                 page: InfoPage,
                 requiresAuth: false
             },
-            'user': {
+            [PAGES.user]: {
                 page: UserPage,
                 requiresAuth: true
             },
-            'admin': {
+            [PAGES.admin]: {
                 page: AdminPage,
                 requiresAuth: true
             },
-            'lobby': {
+            [PAGES.lobby]: {
                 page: LobbyPage,
                 requiresAuth: true
             },
-            'login': {
+            [PAGES.login]: {
                 page: LoginPage,
                 requiresAuth: true
             },
-            'character': {
+            [PAGES.character]: {
                 page: CharacterPage,
                 requiresAuth: true
             },
-            'shop': {
+            [PAGES.shop]: {
                 page: ShopPage,
                 requiresAuth: true
             },
-            'bank': {
+            [PAGES.bank]: {
                 page: BankPage,
                 requiresAuth: true
             },
-            'inventory': {
+            [PAGES.inventory]: {
                 page: InventoryPage,
                 requiresAuth: true
             },
-            'credits': {
+            [PAGES.credits]: {
                 page: CreditsPage,
                 requiresAuth: true
             }
@@ -70,11 +71,11 @@ class Router {
 
     async handleRoute() {
         const params = new URLSearchParams(window.location.search);
-        const page = params.get('page') || 'index';
+        const page = params.get('page') || PAGES.index;
         const route = this.routes[page];
 
         if (!route) {
-            window.location.href = '?page=index';
+            window.location.href = `?page=${PAGES.index}`;
             return;
         }
 
@@ -92,7 +93,7 @@ class Router {
                     retries--;
                     setTimeout(retryFunction, 100);
                 } else {
-                    window.location.href = '?page=index';
+                    window.location.href = `?page=${PAGES.index}`;
                 }
             };
 

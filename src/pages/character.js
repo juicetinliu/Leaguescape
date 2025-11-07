@@ -2,56 +2,32 @@ import Page from '../js/models/Page.js';
 import AuthService from '../js/services/auth.js';
 import GameService from '../js/services/game.js';
 import { router } from '../js/utils/router.js';
+import { PAGES } from '../js/models/Enums.js';
+import { gameRouter } from '../js/utils/gamerouter.js';
 
 class CharacterPage extends Page {
     constructor() {
-        super();
+        super(PAGES.character);
         this.currentGame = null;
         this.currentCharacter = null;
     }
 
     async show() {
-        const gameId = new URLSearchParams(window.location.search).get('gameId');
-        if (!gameId) {
-            router.navigate('user');
-            return;
-        }
-
-        this.currentGame = await GameService.getGame(gameId);
+        this.currentGame = await gameRouter.handlePlayerGamePageShow(this.page);
         if (!this.currentGame) {
-            router.navigate('user');
             return;
         }
 
-        const userId = AuthService.currentUser.authId;
-        if (!(await GameService.isPlayer(gameId, userId))) {
-            router.navigate('user');
-            return;
-        }
-        
-        if (await GameService.isAdmin(gameId, userId)) {
-            router.navigate(`admin&gameId=${gameId}`);
-            return;
-        }
-
-        switch (this.currentGame.gameState) {
-            case 'setup':
-                router.navigate(`lobby&gameId=${gameId}`);
-                return;
-            case 'end':
-                router.navigate(`credits&gameId=${gameId}`);
-                return;
-        }
+        const gameId = this.currentGame.gameId;
 
         const characterId = new URLSearchParams(window.location.search).get('characterId');
         try {
             this.currentCharacter = await GameService.getGameCharacter(gameId, characterId);
         } catch (error) { 
             // Ignore error 
-
         }
         if (!this.currentCharacter) {
-            router.navigate(`login&gameId=${gameId}`);
+            router.navigate(`${PAGES.login}&gameId=${gameId}`);
             return;
         }
 
@@ -88,19 +64,19 @@ class CharacterPage extends Page {
     attachEventListeners() {
         document.getElementById('logoutCharacter').addEventListener('click', async () => {
             await GameService.updatePlayerAssumedCharacter(this.currentGame.gameId, AuthService.currentUser.authId, '');
-            router.navigate(`login&gameId=${this.currentGame.gameId}`);
+            router.navigate(`${PAGES.login}&gameId=${this.currentGame.gameId}`);
         });
 
         document.getElementById('goToShop').addEventListener('click', () => {
-            router.navigate(`shop&gameId=${this.currentGame.gameId}`);
+            router.navigate(`${PAGES.shop}&gameId=${this.currentGame.gameId}`);
         });
 
         document.getElementById('goToBank').addEventListener('click', () => {
-            router.navigate(`bank&gameId=${this.currentGame.gameId}`);
+            router.navigate(`${PAGES.bank}&gameId=${this.currentGame.gameId}`);
         });
 
         document.getElementById('goToInventory').addEventListener('click', () => {
-            router.navigate(`inventory&gameId=${this.currentGame.gameId}`);
+            router.navigate(`${PAGES.inventory}&gameId=${this.currentGame.gameId}`);
         });
     }
 }

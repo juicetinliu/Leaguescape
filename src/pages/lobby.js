@@ -2,57 +2,26 @@ import Page from '../js/models/Page.js';
 import AuthService from '../js/services/auth.js';
 import GameService from '../js/services/game.js';
 import { router } from '../js/utils/router.js';
-import { db } from '../js/config/firebase.js';
-import { collection, query, where, orderBy, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
-import Message from '../js/models/Message.js';
-import { MessageTo, MessageType } from '../js/models/MessageTypes.js';
+import { GAME_STATE, PAGES } from '../js/models/Enums.js';
+import { gameRouter } from '../js/utils/gamerouter.js';
 
 class LobbyPage extends Page {
     constructor() {
-        super();
+        super(PAGES.lobby);
         this.currentGame = null;
-        // this.updateInterval = null; // Not necessary as onSnapshot will handle updates
+
         this.gamePlayersUnsubscribe = null;
         this.gameUnsubscribe = null;
     }
 
     async show() {
-        const gameId = new URLSearchParams(window.location.search).get('gameId');
-        if (!gameId) {
-            router.navigate('user');
-            return;
-        }
-
-        this.currentGame = await GameService.getGame(gameId);
+        this.currentGame = await gameRouter.handlePlayerGamePageShow(this.page);
         if (!this.currentGame) {
-            router.navigate('user');
             return;
-        }
-
-        const userId = AuthService.currentUser.authId;
-        if (!(await GameService.isPlayer(gameId, userId))) {
-            router.navigate('user');
-            return;
-        }
-
-        if (await GameService.isAdmin(gameId, userId)) {
-            router.navigate(`admin&gameId=${gameId}`);
-            return;
-        }
-
-        // Redirect based on game state
-        switch (this.currentGame.gameState) {
-            case 'running':
-                router.navigate(`login&gameId=${gameId}`);
-                return;
-            case 'end':
-                router.navigate(`credits&gameId=${gameId}`);
-                return;
         }
 
         this.initializeUI();
         this.attachEventListeners();
-        // this.startUpdates();  // Not necessary as onSnapshot will handle updates
     }
 
     initializeUI() {
@@ -93,7 +62,7 @@ class LobbyPage extends Page {
     attachEventListeners() {
         document.getElementById('leaveGame').addEventListener('click', async () => {
             if (confirm('Are you sure you want to leave the game?')) {
-                router.navigate('user');
+                router.navigate(PAGES.user);
             }
         });
 
@@ -101,7 +70,6 @@ class LobbyPage extends Page {
             const newUsername = document.getElementById('username').value.trim();
             if (newUsername) {
                 await GameService.updatePlayerName(this.currentGame.gameId, AuthService.currentUser.authId, newUsername);
-                // this.updatePlayersList();  // Not necessary as onSnapshot will handle updates
             }
         });
         
@@ -111,7 +79,7 @@ class LobbyPage extends Page {
             }, false);
 
             this.gameUnsubscribe = GameService.onGameSnapshot(this.currentGame.gameId, async (gameData) => {
-                if (gameData.gameState !== 'setup') {
+                if (gameData.gameState !== GAME_STATE.SETUP) {
                     window.location.reload();
                 }
             });
@@ -130,28 +98,7 @@ class LobbyPage extends Page {
         `).join('');
     }
 
-    // startUpdates() {
-    //     // Update player list every 5 seconds
-    //     this.updatePlayersList();
-
-    //     //TODO: This should be handled via real-time listeners instead of polling
-    //     this.updateInterval = setInterval(async () => {
-    //         await this.checkGameState();
-    //         this.updatePlayersList();
-    //     }, 5000);
-    // } // Not necessary as onSnapshot will handle updates
-
-    // async checkGameState() {
-    //     const game = await GameService.getGame(this.currentGame.gameId);
-    //     if (game.gameState !== 'setup') {
-    //         window.location.reload();
-    //     }
-    // }  // Not necessary as onSnapshot will handle updates
-
     cleanup() {
-        // if (this.updateInterval) {
-        //     clearInterval(this.updateInterval);
-        // }  // Not necessary as onSnapshot will handle updates
         if (this.gamePlayersUnsubscribe) {
             this.gamePlayersUnsubscribe();
         }

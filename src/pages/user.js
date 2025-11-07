@@ -2,10 +2,11 @@ import Page from '../js/models/Page.js';
 import AuthService from '../js/services/auth.js';
 import GameService from '../js/services/game.js';
 import { router } from '../js/utils/router.js';
+import { PAGES, GAME_STATE } from '../js/models/Enums.js';
 
 class UserPage extends Page {
     constructor() {
-        super();
+        super(PAGES.user);
     }
 
     show() {
@@ -118,8 +119,7 @@ class UserPage extends Page {
     attachEventListeners() {
         document.getElementById('logout').addEventListener('click', async () => {
             await AuthService.signOut();
-            router.navigate('index');
-            // No need to navigate as the app.js auth state listener will handle it
+            router.navigate(PAGES.index);
         });
 
         document.getElementById('editUsername').addEventListener('click', () => {
@@ -129,7 +129,7 @@ class UserPage extends Page {
         document.getElementById('createGame').addEventListener('click', async () => {
             try {
                 const game = await GameService.createGame(AuthService.currentUser.authId);
-                router.navigate(`admin&gameId=${game.gameId}`);
+                router.navigate(`${PAGES.admin}&gameId=${game.gameId}`);
             } catch (error) {
                 console.error('Error creating game:', error);
             }
@@ -148,7 +148,7 @@ class UserPage extends Page {
 
             try {
                 await GameService.joinGame(gameId, AuthService.currentUser.authId, AuthService.currentUser.username);
-                router.navigate(`lobby&gameId=${gameId}`);
+                router.navigate(`${PAGES.lobby}&gameId=${gameId}`);
             } catch (error) {
                 console.error('Error joining game:', error);
             }
@@ -160,17 +160,17 @@ class UserPage extends Page {
         if (!game) return;
 
         if (game.adminId === AuthService.currentUser.authId) {
-            router.navigate(`admin&gameId=${gameId}`);
+            router.navigate(`${PAGES.admin}&gameId=${gameId}`);
         } else {
             switch (game.gameState) {
-                case 'setup':
-                    router.navigate(`lobby&gameId=${gameId}`);
+                case GAME_STATE.SETUP:
+                    router.navigate(`${PAGES.lobby}&gameId=${gameId}`);
                     break;
-                case 'running':
-                    router.navigate(`login&gameId=${gameId}`);
+                case GAME_STATE.RUNNING:
+                    router.navigate(`${PAGES.login}&gameId=${gameId}`);
                     break;
-                case 'end':
-                    router.navigate(`credits&gameId=${gameId}`);
+                case GAME_STATE.END:
+                    router.navigate(`${PAGES.credits}&gameId=${gameId}`);
                     break;
             }
         }
