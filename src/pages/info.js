@@ -7,12 +7,13 @@ class InfoPage extends Page {
     }
 
     show() {
+        super.show();
         this.initializeUI();
     }
     
     initializeUI() {
         const template = `
-            <div class="container">
+            <div id="${this.page}" class="page-container">
                 <div class="card">
                     <h1>About Leaguescape</h1>
                     <p>Welcome to Leaguescape, a digital companion to your escape room experience.</p>
@@ -53,6 +54,10 @@ class InfoPage extends Page {
         `;
         
         document.querySelector('#app').innerHTML = template;
+    }
+
+    cleanup() {
+        super.cleanup();
     }
 }
 

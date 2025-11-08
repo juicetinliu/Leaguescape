@@ -9,13 +9,14 @@ class IndexPage extends Page {
     }
 
     show() {
+        super.show();
         this.initializeUI();
         this.attachEventListeners();
     }
 
     initializeUI() {
         const template = `
-            <div class="container">
+            <div id="${this.page}" class="page-container">
                 <div class="card">
                     <h1>Welcome to Leaguescape</h1>
                     <div class="form-group">
@@ -54,6 +55,11 @@ class IndexPage extends Page {
                 console.error('Error signing in with Google:', error);
             }
         });
+    }
+
+
+    cleanup() {
+        super.cleanup();
     }
 }
 

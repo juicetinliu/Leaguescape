@@ -22,7 +22,7 @@ class GameRouter {
      * return false if redirected, otherwise return currentGame
      */
     async handlePlayerGamePageShow(currentPage) {
-        const gameId = new URLSearchParams(window.location.search).get('gameId');
+        const gameId = GameService.getCurrentGameId();
         if (!gameId) {
             router.navigate(PAGES.user);
             return false;
@@ -51,6 +51,21 @@ class GameRouter {
             router.navigate(this.defaultGamePageByState[currentGame.gameState] + `&gameId=${gameId}`);
             return false;
         }
+    }
+
+    async handleCharacterGamePageShow(gameId) {
+        const characterId = new URLSearchParams(window.location.search).get('characterId');
+        let currentCharacter = null;
+        try {
+            currentCharacter = await GameService.getGameCharacter(gameId, characterId);
+        } catch (error) { 
+            // Ignore error - this means they didn't assume the character (no permissions!)
+        }
+        if (!currentCharacter) {
+            router.navigate(`${PAGES.login}&gameId=${gameId}`);
+            return false;
+        }
+        return currentCharacter;
     }
 }
 

@@ -39,12 +39,27 @@ class MessageService {
         )
     }
 
-    // ONLY used by the admin
+    /**
+     * ONLY used by the admin - to send a message for processing to a specific player
+     * @param {*} gameId 
+     * @param {*} messageData 
+     *  * `messageType`: mandatory - MessageType
+     *  * `messageDetails`: optional - map of any necessary details
+     * @param {*} playerId 
+     * @returns 
+     */
     async sendAdminMessageToPlayer(gameId, messageData, playerId) {
         return await Message.create(gameId, playerId, messageData, MessageTo.PLAYER);
     }
 
-    // ONLY used by players
+    /**
+     * ONLY used by players - to send a message for processing to the admin
+     * @param {*} gameId 
+     * @param {*} messageData 
+     *  * `messageType`: mandatory - MessageType
+     *  * `messageDetails`: optional - map of any necessary details
+     * @returns 
+     */
     async sendPlayerMessageToAdmin(gameId, messageData) {
         const playerId = AuthService.currentUser.authId;
         return await Message.create(gameId, playerId, messageData, MessageTo.ADMIN);

@@ -25,6 +25,7 @@ class AdminPage extends Page {
     }
 
     async show() {
+        super.show();
         const gameId = new URLSearchParams(window.location.search).get('gameId');
         if (!gameId) {
             router.navigate(PAGES.user);
@@ -45,7 +46,7 @@ class AdminPage extends Page {
 
     initializeUI() {
         const template = `
-            <div class="container">
+            <div id="${this.page}" class="page-container">
                 <header class="header">
                     <div class="nav">
                         <div>
@@ -516,6 +517,8 @@ class AdminPage extends Page {
     }
 
     async processAdminMessage(message) {
+        console.log(message);
+        await message.markAsProcessed();
         if (message.messageType === MessageType.LOGIN_ATTEMPT) {
             const { accountNumber, accountPassword } = message.messageDetails;
             const playerId = message.playerId;
@@ -526,13 +529,21 @@ class AdminPage extends Page {
             );
 
             if (character) {
-                await GameService.approveLogIn(this.currentGame.gameId, playerId, character.characterId);
+                await GameService.adminHandlePlayerLogIn(this.currentGame.gameId, playerId, character.characterId, true);
             }
-            await message.markAsProcessed();
+        } else if (message.messageType === MessageType.LOGOUT_ATTEMPT) {
+            const { characterId } = message.messageDetails;
+            const playerId = message.playerId;
+
+            if (characterId) {
+                await GameService.adminHandlePlayerLogOut(this.currentGame.gameId, playerId, characterId, true);
+            }
         }
+        
     }
 
     cleanup() {
+        super.cleanup();
         if (this.gamePlayersUnsubscribe) {
             this.gamePlayersUnsubscribe();
         }

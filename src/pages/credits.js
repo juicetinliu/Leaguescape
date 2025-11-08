@@ -2,16 +2,19 @@ import Page from '../js/models/Page.js';
 import AuthService from '../js/services/auth.js';
 import GameService from '../js/services/game.js';
 import { router } from '../js/utils/router.js';
-import { PAGES } from '../js/models/Enums.js';
+import { GAME_STATE, PAGES } from '../js/models/Enums.js';
 import { gameRouter } from '../js/utils/gamerouter.js';
 
 class CreditsPage extends Page {
     constructor() {
         super(PAGES.credits);
         this.currentGame = null;
+
+        this.gameUnsubscribe = null;
     }
 
     async show() {
+        super.show();
         this.currentGame = await gameRouter.handlePlayerGamePageShow(this.page);
         if (!this.currentGame) {
             return;
@@ -23,7 +26,7 @@ class CreditsPage extends Page {
 
     initializeUI() {
         const template = `
-            <div class="container">
+            <div id="${this.page}" class="page-container">
                 <header class="header">
                     <div class="nav">
                         <h1>Game Over</h1>
@@ -45,6 +48,22 @@ class CreditsPage extends Page {
         document.getElementById('backToUser').addEventListener('click', () => {
             router.navigate(PAGES.user);
         });
+                
+        if(this.currentGame.gameId) {
+            this.gameUnsubscribe = GameService.onGameSnapshot(this.currentGame.gameId, async (gameData) => {
+                if (gameData.gameState !== GAME_STATE.END) {
+                    window.location.reload();
+                }
+            });
+            this.setupPlayerMessageUnsubscribe();
+        }
+    }
+
+    cleanup() {
+        super.cleanup();
+        if (this.gameUnsubscribe) {
+            this.gameUnsubscribe();
+        }
     }
 }
 

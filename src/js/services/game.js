@@ -11,6 +11,14 @@ import AuthService from '../services/auth.js';
 import MessageService from '../services/message.js';
 
 class GameService {
+    createPlayerRef(gameId, playerId) {
+        return doc(db, `games/${gameId}/players/${playerId}`);
+    }
+
+    createPlayerPrivateDataRef(gameId, playerId) {
+        return doc(db, `games/${gameId}/players/${playerId}/privateDetails/data`);
+    }
+
     async createGame(adminId) {
         const game = await Game.create(adminId);
         return game;
@@ -99,7 +107,7 @@ class GameService {
 
     async banPlayer(gameId, playerId) {
         // This should only be called by admin, firestore rules will enforce this
-        const playerRef = doc(db, `games/${gameId}/players/${playerId}/privateDetails/data`);
+        const playerRef = this.createPlayerPrivateDataRef(gameId, playerId)
         await updateDoc(playerRef, {
             isBanned: true
         });
@@ -107,21 +115,21 @@ class GameService {
 
     async unBanPlayer(gameId, playerId) {
         // This should only be called by admin, firestore rules will enforce this
-        const playerRef = doc(db, `games/${gameId}/players/${playerId}/privateDetails/data`);
+        const playerRef = this.createPlayerPrivateDataRef(gameId, playerId)
         await updateDoc(playerRef, {
             isBanned: false
         });
     }
 
     async kickPlayer(gameId, playerId) {
-        const playerPrivateRef = doc(db, `games/${gameId}/players/${playerId}/privateDetails/data`);
+        const playerPrivateRef = this.createPlayerPrivateDataRef(gameId, playerId)
         await deleteDoc(playerPrivateRef);
-        const playerRef = doc(db, `games/${gameId}/players/${playerId}`);
+        const playerRef = this.createPlayerRef(gameId, playerId);
         await deleteDoc(playerRef);
     }
 
     async updatePlayerName(gameId, playerId, newName) {
-        const playerRef = doc(db, `games/${gameId}/players/${playerId}`);
+        const playerRef = this.createPlayerRef(gameId, playerId);
         const playerDoc = await getDoc(playerRef);
         if (playerDoc.exists()) {
             await updateDoc(playerRef, { playerName: newName });
@@ -131,7 +139,7 @@ class GameService {
     }
 
     async updatePlayerAssumedCharacter(gameId, playerId, characterId) {
-        const playerRef = doc(db, `games/${gameId}/players/${playerId}/privateDetails/data`);
+        const playerRef = this.createPlayerPrivateDataRef(gameId, playerId)
         await updateDoc(playerRef, {
             assumedCharacterId: characterId
         });
@@ -141,28 +149,63 @@ class GameService {
         }, playerId);
     }
 
+    async clearPlayerAssumedCharacter(gameId, playerId, characterId) {
+        const playerRef = this.createPlayerPrivateDataRef(gameId, playerId)
+        await updateDoc(playerRef, {
+            assumedCharacterId: ''
+        });
+        await this.logAction(gameId, {
+            actionType: ActionType.UNASSUME_CHARACTER,
+            characterId: characterId,
+        }, playerId);
+    }
+
     async updatePlayerLoginMode(gameId, playerId, loginMode) {
         // This should only be called by admin, firestore rules will enforce this
-        const playerRef = doc(db, `games/${gameId}/players/${playerId}/privateDetails/data`);
+        const playerRef = this.createPlayerPrivateDataRef(gameId, playerId)
         await updateDoc(playerRef, {
             loginMode: loginMode
         });
     }
 
-    async approveLogIn(gameId, playerId, characterId) {
-        await this.updatePlayerAssumedCharacter(gameId, playerId, characterId);
 
-        await MessageService.sendAdminMessageToPlayer(gameId, {
-            type: MessageTo.PLAYER,
-            messageType: MessageType.LOGIN_SUCCESS,
-            messageDetails: { 
-                characterId: characterId 
-            }
-        }, playerId);
+    async adminHandlePlayerLogOut(gameId, playerId, characterId, approved, rejectionReason = "") {
+        if (approved) {
+            await this.clearPlayerAssumedCharacter(gameId, playerId, characterId);
+            await MessageService.sendAdminMessageToPlayer(gameId, {
+                messageType: MessageType.LOGOUT_SUCCESS
+            }, playerId);
+        } else {
+            await MessageService.sendAdminMessageToPlayer(gameId, {
+                messageType: MessageType.LOGOUT_FAILURE,
+                messageDetails: { 
+                    rejectionReason: rejectionReason 
+                }
+            }, playerId);
+        }
+    }
+
+    async adminHandlePlayerLogIn(gameId, playerId, characterId, approved, rejectionReason = "") {
+        if (approved) {
+            await this.updatePlayerAssumedCharacter(gameId, playerId, characterId);
+            await MessageService.sendAdminMessageToPlayer(gameId, {
+                messageType: MessageType.LOGIN_SUCCESS,
+                messageDetails: { 
+                    characterId: characterId 
+                }
+            }, playerId);
+        } else {
+            await MessageService.sendAdminMessageToPlayer(gameId, {
+                messageType: MessageType.LOGIN_FAILURE,
+                messageDetails: { 
+                    rejectionReason: rejectionReason 
+                }
+            }, playerId);
+        }
     }
 
     // Login page actions
-    async attemptLogIn(gameId, accountNumber, accountPassword) {
+    async playerLogIn(gameId, accountNumber, accountPassword) {
         await this.logAction(gameId, {
             actionType: ActionType.LOGIN_CHARACTER,
             actionDetails: { 
@@ -171,7 +214,6 @@ class GameService {
             }
         });
         await MessageService.sendPlayerMessageToAdmin(gameId, {
-            type: MessageTo.ADMIN,
             messageType: MessageType.LOGIN_ATTEMPT,
             messageDetails: {
                 accountNumber: accountNumber, 
@@ -180,12 +222,17 @@ class GameService {
         });
     }
 
-    async logAction(gameId, actionData, playerIdForAction = null) {
-        const action = {
-            ...actionData,
-            playerId: playerIdForAction ? playerIdForAction : AuthService.currentUser.authId
-        }
-        return await Action.create(gameId, action);
+    async playerLogOut(gameId, characterId) {
+        await this.logAction(gameId, {
+            actionType: ActionType.LOGOUT_CHARACTER,
+            characterId: characterId
+        });
+        await MessageService.sendPlayerMessageToAdmin(gameId, {
+            messageType: MessageType.LOGOUT_ATTEMPT,
+            messageDetails: {
+                characterId: characterId
+            }
+        });
     }
 
     async getGamePlayers(gameId) {
@@ -277,6 +324,22 @@ class GameService {
         // Extract game ID from URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         return urlParams.get('gameId');
+    }
+
+    /** 
+     * @param {*} gameId 
+     * @param {*} actionData
+     *  * `actionType`: mandatory - ActionType
+     *  * `characterId`: optional - if related to a character
+     *  * `actionDetails`: optional - any other details
+     * @param {*} playerIdForAction include if it's for a specific player (should only be used by admin), otherwise keep empty for current player/user
+     */
+    async logAction(gameId, actionData, playerIdForAction = null) {
+        const action = {
+            ...actionData,
+            playerId: playerIdForAction ? playerIdForAction : AuthService.currentUser.authId
+        }
+        return await Action.create(gameId, action);
     }
 }
 

@@ -10,6 +10,7 @@ class UserPage extends Page {
     }
 
     show() {
+        super.show();
         this.initializeUI();
         this.loadUsername();
         this.loadUserGames();
@@ -18,7 +19,7 @@ class UserPage extends Page {
 
     initializeUI() {
         const template = `
-            <div class="container">
+            <div id="${this.page}" class="page-container">
                 <header class="header">
                     <div class="nav">
                         <div>
@@ -174,6 +175,10 @@ class UserPage extends Page {
                     break;
             }
         }
+    }
+
+    cleanup() {
+        super.cleanup();
     }
 }
 

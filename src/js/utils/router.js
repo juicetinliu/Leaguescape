@@ -105,13 +105,13 @@ class Router {
     }
 
     async _showPage(route) {
+        if (this.prevRoute) await this.prevRoute.page.cleanup();
         this.prevRoute = route;
         await route.page.show();
     }
 
     
     navigate(path) {
-        if (this.prevRoute) this.prevRoute.page.cleanup();
         const newPath = `?page=${path}`;
         window.history.pushState({}, '', newPath);
         this.handleRoute();

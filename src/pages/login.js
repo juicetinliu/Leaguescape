@@ -2,7 +2,7 @@ import Page from '../js/models/Page.js';
 import AuthService from '../js/services/auth.js';
 import GameService from '../js/services/game.js';
 import MessageService from '../js/services/message.js';
-import { MessageTo, MessageType } from '../js/models/MessageTypes.js';
+import { MessageType } from '../js/models/MessageTypes.js';
 import { router } from '../js/utils/router.js';
 import { PAGES, GAME_STATE } from '../js/models/Enums.js';
 import { gameRouter } from '../js/utils/gamerouter.js';
@@ -17,6 +17,7 @@ class LoginPage extends Page {
     }
 
     async show() {
+        super.show();
         this.gameUnsubscribe = null;
         this.playerMessageUnsubscribe = null;
         
@@ -33,7 +34,7 @@ class LoginPage extends Page {
         const template = `
             <div id="${this.page}" class="page-container">
                 <div class="login-header-wrapper">
-                    <button id="backToLobby" class="login-exit-button text-button">Exit</button>
+                    <button id="backToUser" class="login-exit-button text-button">Exit</button>
                 </div>
 
                 <div class="login-wrapper">
@@ -64,8 +65,8 @@ class LoginPage extends Page {
     }
 
     attachEventListeners() {
-        document.getElementById('backToLobby').addEventListener('click', () => {
-            router.navigate(`${PAGES.lobby}&gameId=${this.currentGame.gameId}`);
+        document.getElementById('backToUser').addEventListener('click', () => {
+            router.navigate(`${PAGES.user}&gameId=${this.currentGame.gameId}`);
         });
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -74,7 +75,7 @@ class LoginPage extends Page {
             const accountPassword = document.getElementById('accountPassword').value;
 
             try {
-                await GameService.attemptLogIn(this.currentGame.gameId, accountNumber, accountPassword);
+                await GameService.playerLogIn(this.currentGame.gameId, accountNumber, accountPassword);
             } catch (error) {
                 console.error('Login error:', error);
                 alert('An error occurred during login');
@@ -102,16 +103,18 @@ class LoginPage extends Page {
     }
 
     async processPlayerMessage(message) {
+        console.log(message);
+        await message.markAsProcessed();
         if (message.messageType === MessageType.LOGIN_SUCCESS) {
             const { characterId } = message.messageDetails;
             
             router.navigate(`${PAGES.character}&gameId=${this.currentGame.gameId}&characterId=${characterId}`);
             
-            await message.markAsProcessed();
         }
     }
 
     cleanup() {
+        super.cleanup();
         if (this.gameUnsubscribe) {
             this.gameUnsubscribe();
         }

@@ -15,6 +15,7 @@ class LobbyPage extends Page {
     }
 
     async show() {
+        super.show();
         this.currentGame = await gameRouter.handlePlayerGamePageShow(this.page);
         if (!this.currentGame) {
             return;
@@ -26,7 +27,7 @@ class LobbyPage extends Page {
 
     initializeUI() {
         const template = `
-            <div class="container">
+            <div id="${this.page}" class="page-container">
                 <header class="header">
                     <div class="nav">
                         <h1>Game Lobby</h1>
@@ -99,6 +100,7 @@ class LobbyPage extends Page {
     }
 
     cleanup() {
+        super.cleanup();
         if (this.gamePlayersUnsubscribe) {
             this.gamePlayersUnsubscribe();
         }
