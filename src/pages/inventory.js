@@ -36,16 +36,14 @@ class InventoryPage extends Page {
     initializeUI() {
         const template = `
             <div id="${this.page}" class="page-container">
-                <header class="header">
-                    <div class="nav">
-                        <h1>Inventory</h1>
-                        <button id="backToCharacter" class="btn">Back to Character</button>
-                    </div>
-                </header>
+                <div class="inventory-header-wrapper">
+                    <div></div>
+                    <div class="inventory-header-heading">INVENTORY</div>
+                    <button id="backToCharacter" class="text-button">BACK</button>
+                </div>
 
-                <div class="card">
-                    <h2>Your Items</h2>
-                    <p>Inventory implementation coming soon...</p>
+                <div class="">
+                    Hmmm....
                 </div>
             </div>
         `;

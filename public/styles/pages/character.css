@@ -4,6 +4,7 @@
     flex-direction: column;
     color: var(--accent-color);
     font-size: 24px;
+    padding: 20px;
 
     .character-header-wrapper {
         display: flex;
@@ -11,8 +12,13 @@
         justify-content: end;
     }
 
-    .character-header-wrapper, .character-footer-wrapper {
-        padding: 20px;
+    .character-header-wrapper {
+        padding-bottom: 20px;
+        height: 81px;
+    } 
+    
+    .character-footer-wrapper {
+        padding-top: 20px;
     }
 
     .character-menu-wrapper {

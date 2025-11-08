@@ -36,7 +36,7 @@ class ShopPage extends Page {
     initializeUI() {
         const template = `
             <div id="${this.page}" class="page-container">
-                <div class="page-items-container">
+                <div class="items-container">
                     <div class="items-header-wrapper">
                         <div class="profile-preview-wrapper">
                             <div class="profile-image-wrapper">
@@ -58,8 +58,8 @@ class ShopPage extends Page {
                         Items will go here
                     </div>
                 </div>
-                <div class="page-cart-container">
-                    <div class="cart-container">
+                <div class="cart-container">
+                    <div class="cart-wrapper">
                         <div class="cart-heading">
                             SHOPPING CART
                         </div>

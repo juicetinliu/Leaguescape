@@ -1,18 +1,22 @@
 #inventory {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 2rem;
-    gap: 2rem;
+    color: var(--accent-color);
+    font-size: 18px;
+    padding: 20px;
 
-    .inventory-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 1rem;
+    .inventory-header-wrapper {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 20px;
+        height: 81px;
+        border-bottom: 1px solid var(--accent-color);
     }
 
-    .inventory-item {
-        border: 1px solid var(--border-color);
-        border-radius: var(--border-radius);
-        padding: 1rem;
+    .inventory-header-heading {
+        font-size: 30px;
     }
 }

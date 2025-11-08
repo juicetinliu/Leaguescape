@@ -36,16 +36,14 @@ class BankPage extends Page {
     initializeUI() {
         const template = `
             <div id="${this.page}" class="page-container">
-                <header class="header">
-                    <div class="nav">
-                        <h1>Bank</h1>
-                        <button id="backToCharacter" class="btn">Back to Character</button>
-                    </div>
-                </header>
+                <div class="bank-header-wrapper">
+                    <div></div>
+                    <div class="bank-header-heading">THE BANK</div>
+                    <button id="backToCharacter" class="text-button">BACK</button>
+                </div>
 
-                <div class="card">
-                    <h2>Banking Interface</h2>
-                    <p>Banking implementation coming soon...</p>
+                <div class="">
+                    Hmmm....
                 </div>
             </div>
         `;
