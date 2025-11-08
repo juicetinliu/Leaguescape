@@ -1,18 +1,77 @@
 #shop {
+    flex: 1;
     display: flex;
-    flex-direction: column;
-    padding: 2rem;
-    gap: 2rem;
+    flex-direction: row;
+    color: var(--accent-color);
+    font-size: 18px;
 
-    .items-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 1rem;
+    .page-items-container, .page-cart-container {
+        flex: 1 0 auto;
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
     }
 
-    .item-card {
-        border: 1px solid var(--border-color);
-        border-radius: var(--border-radius);
-        padding: 1rem;
+    .items-header-wrapper {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--accent-color);
+    }
+
+    .items-header-heading, .cart-heading {
+        font-size: 30px;
+    }
+
+    .profile-preview-wrapper {
+        display: flex;
+        flex-direction: row;
+        gap: 20px;
+    }
+
+    .profile-info-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: start;
+        gap: 4px;
+        justify-content: center;
+    }
+
+    .profile-image-wrapper {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: 1px solid var(--accent-color);
+    }
+
+    .cart-container {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--accent-color);
+        background-color: var(--background-secondary-color);
+        padding: 10px;
+        flex: 1;
+    }
+
+    .cart-heading {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--accent-color);
+    }
+
+    .cart-items-wrapper {
+        flex: 1;
+    }
+
+    .cart-footer {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
     }
 }

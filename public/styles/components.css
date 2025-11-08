@@ -17,7 +17,7 @@ button.text-button:hover {
 input.text-form-input {
     border: 2px solid var(--accent-color);
     color: white;
-    background-color: #1D2328;
+    background-color: var(--background-secondary-color);
     font-size: 18px;
     padding: 10px;
 }

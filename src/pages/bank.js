@@ -55,6 +55,9 @@ class BankPage extends Page {
 
 
     attachEventListeners() {
+        document.getElementById('backToCharacter').addEventListener('click', () => {
+            router.navigate(`${PAGES.character}&gameId=${this.currentGame.gameId}&characterId=${this.currentCharacter.characterId}`);
+        });
                 
         if(this.currentGame.gameId) {
             this.gameUnsubscribe = GameService.onGameSnapshot(this.currentGame.gameId, async (gameData) => {

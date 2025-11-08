@@ -36,16 +36,42 @@ class ShopPage extends Page {
     initializeUI() {
         const template = `
             <div id="${this.page}" class="page-container">
-                <header class="header">
-                    <div class="nav">
-                        <h1>Shop</h1>
-                        <button id="backToCharacter" class="btn">Back to Character</button>
+                <div class="page-items-container">
+                    <div class="items-header-wrapper">
+                        <div class="profile-preview-wrapper">
+                            <div class="profile-image-wrapper">
+                                <img src=""/>
+                            </div>
+                            <div class="profile-info-wrapper">
+                                <div class="profile-name-text">
+                                    ${this.currentCharacter.name}
+                                </div>
+                                <div class="profile-gold-display">
+                                    ${this.currentCharacter.gold}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="items-header-heading">ALL ITEMS</div>
+                        <button id="backToCharacter" class="text-button">BACK</button>
                     </div>
-                </header>
-
-                <div class="card">
-                    <h2>Available Items</h2>
-                    <p>Shop implementation coming soon...</p>
+                    <div>
+                        Items will go here
+                    </div>
+                </div>
+                <div class="page-cart-container">
+                    <div class="cart-container">
+                        <div class="cart-heading">
+                            SHOPPING CART
+                        </div>
+                        <div class="cart-items-wrapper">
+                            Items will go here
+                        </div>
+                        <div class="cart-total-wrapper">
+                        </div>
+                        <div class="cart-footer">
+                            <button id="purchaseCart" class="text-button">PURCHASE</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -55,6 +81,9 @@ class ShopPage extends Page {
 
 
     attachEventListeners() {
+        document.getElementById('backToCharacter').addEventListener('click', () => {
+            router.navigate(`${PAGES.character}&gameId=${this.currentGame.gameId}&characterId=${this.currentCharacter.characterId}`);
+        });
                 
         if(this.currentGame.gameId) {
             this.gameUnsubscribe = GameService.onGameSnapshot(this.currentGame.gameId, async (gameData) => {

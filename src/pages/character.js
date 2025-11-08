@@ -41,10 +41,10 @@ class CharacterPage extends Page {
                 </div>
 
                 <div class="character-menu-wrapper">
-                    <div class="character-menu-header">
+                    <div class="character-menu-heading">
                         Welcome to Piltover Academy.
                     </div>
-                    <div class="character-menu-subheader">
+                    <div class="character-menu-subheading">
                         Please select your mode.
                     </div>
                     

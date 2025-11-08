@@ -4,7 +4,8 @@
     --primary-color: #49351A;
     --secondary-color: #0a0a0a;
     --accent-color: #BAA477;
-    --background-color: #ffffff;
+    --background-color: #01222A;
+    --background-secondary-color: #1D2328;
     --text-color: #4a4a4a;
     --error-color: #ff3860;
     --success-color: #23d160;
@@ -24,7 +25,6 @@ body {
     font-family: var(--font-family);
     color: var(--text-color);
     background-color: var(--background-color);
-    line-height: 1.5;
 }
 
 /* App container */
@@ -32,15 +32,7 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background-color: #01222A;
-}
-
-/* Common classes */
-.container {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 1rem;
+    background-color: var(--background-color);
 }
 
 .btn {
@@ -68,12 +60,5 @@ body {
 }
 
 .hidden {
-    display: none;
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-    .container {
-        padding: 0 0.5rem;
-    }
+    display: none !important;
 }
