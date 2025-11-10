@@ -1,17 +1,21 @@
 /* Global styles */
 :root {
     /* Color variables */
-    --primary-color: #49351A;
-    --secondary-color: #0a0a0a;
-    --accent-color: #BAA477;
-    --background-color: #01222A;
-    --background-secondary-color: #1D2328;
-    --text-color: #4a4a4a;
+    --primary-color: #baa477;
+    --accent-color: #48e6c7; /* Selections, notifications/etc. */
+    --app-background-color: #01222A; /* Actual background */
+    --background-primary-color: #49351a; /* Submit buttons, etc. */
+    --background-secondary-color: #1d2328; /* Buttons etc. */
+    --background-accent-color: #08383a; /* Background for accents */
+    --text-color: #e4decf;
     --error-color: #ff3860;
     --success-color: #23d160;
 
-    /* Typography */
-    --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    /* Typography (https://fonts.google.com/specimen/Vollkorn) */
+    --font-family: "Vollkorn", serif;
+    font-optical-sizing: auto;
+    font-weight: 100;
+    font-style: normal;
 }
 
 /* Reset */
@@ -24,7 +28,7 @@
 body {
     font-family: var(--font-family);
     color: var(--text-color);
-    background-color: var(--background-color);
+    background-color: var(--app-background-color);
 }
 
 /* App container */
@@ -32,7 +36,7 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background-color: var(--background-color);
+    background-color: var(--app-background-color);
 }
 
 .btn {
@@ -40,7 +44,7 @@ body {
     padding: 0.5rem 1rem;
     border: none;
     border-radius: 4px;
-    background-color: var(--accent-color);
+    background-color: var(--primary-color);
     color: white;
     cursor: pointer;
     text-decoration: none;

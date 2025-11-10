@@ -1,12 +1,13 @@
 /* Component styles */
 
 button.text-button {
-    border: 2px solid var(--accent-color);
-    color: white;
+    border: 2px solid var(--primary-color);
+    color: var(--text-color);
+    font-family: var(--font-family);
     font-size: 18px;
-    background-color: #1D2328;
+    background-color: var(--background-secondary-color);
     padding: 10px 20px;
-    min-width: 120px;
+    min-width: 150px;
 }
 
 button.text-button:hover {
@@ -15,8 +16,9 @@ button.text-button:hover {
 }
 
 input.text-form-input {
-    border: 2px solid var(--accent-color);
-    color: white;
+    border: 2px solid var(--primary-color);
+    color: var(--text-color);
+    font-family: var(--font-family);
     background-color: var(--background-secondary-color);
     font-size: 18px;
     padding: 10px;
@@ -25,7 +27,7 @@ input.text-form-input {
 
 /* Header */
 .header {
-    background-color: var(--secondary-color);
+    background-color: var(--background-primary-color);
     padding: 1rem 0;
     color: white;
 }
@@ -56,7 +58,7 @@ input.text-form-input {
 
 /* Cards */
 .card {
-    background: white;
+    background: var(--background-secondary-color);
     border-radius: 4px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     padding: 1rem;
@@ -102,7 +104,7 @@ input.text-form-input {
 .bank-balance {
     font-size: 1.5rem;
     font-weight: bold;
-    color: var(--accent-color);
+    color: var(--primary-color);
     margin-bottom: 1rem;
 }
 

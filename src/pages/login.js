@@ -34,7 +34,7 @@ class LoginPage extends Page {
         const template = `
             <div id="${this.page}" class="page-container">
                 <div class="login-header-wrapper">
-                    <button id="backToUser" class="login-exit-button text-button">Exit</button>
+                    <button id="backToUser" class="login-exit-button text-button">EXIT</button>
                 </div>
 
                 <div class="login-wrapper">

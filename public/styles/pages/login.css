@@ -2,7 +2,7 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    color: var(--accent-color);
+    color: var(--primary-color);
     font-size: 18px;
 
     .login-header-wrapper {
@@ -29,7 +29,7 @@
     }
 
     #login-submit-button {
-        background-color: var(--primary-color);
+        background-color: var(--background-primary-color);
     }
 
     #login-submit-button:hover {
@@ -40,7 +40,7 @@
         width: 250px;
         height: 250px;
         border-radius: 50%;
-        border: 1px solid var(--accent-color);
+        border: 2px solid var(--primary-color);
     }
 
     .login-wrapper, .login-card, .form-submit-wrapper, .login-error-message-placeholder {
