@@ -359,44 +359,73 @@ class AdminPage extends Page {
     async editCharacter(character) {
         const characterModal = document.getElementById('characterModal');
         const form = document.getElementById('characterForm');
-        
+        const characterNameParts = character.name ? character.name.split(' ') : [""];
+        const characterFirstName = characterNameParts[0];
+        const characterLastName = characterNameParts.slice(1).join(" ");
+
         form.innerHTML = `
             <div class="form-group">
-                <label>Name</label>
-                <input type="text" id="characterName" value="${character.name || ''}" required>
+                <label>FIRST NAME:</label>
+                <input type="text" id="characterFirstName" value="${characterFirstName || ''}" required>
             </div>
             <div class="form-group">
-                <label>Account Number</label>
+                <label>LAST NAME:</label>
+                <input type="text" id="characterLastName" value="${characterLastName || ''}">
+            </div>
+            <div class="form-group">
+                <label>USER ID:</label>
+                <input type="text" id="userId" value="${character.userId || ''}" required>
+            </div>
+            <div class="form-group">
+                <label>ACCOUNT NUMBER:</label>
                 <input type="text" id="accountNumber" value="${character.accountNumber || ''}" required>
             </div>
             <div class="form-group">
-                <label>Account Password</label>
+                <label>ACCOUNT PASSWORD:</label>
                 <input type="text" id="accountPassword" value="${character.accountPassword || ''}" required>
             </div>
             <div class="form-group">
-                <label>Starting Gold</label>
+                <label>SECURITY QUESTION:</label>
+                <input type="text" id="securityQuestion" value="${character.securityQuestion || ''}" required>
+            </div>
+            <div class="form-group">
+                <label>SECURITY ANSWER:</label>
+                <input type="text" id="securityAnswer" value="${character.securityAnswer || ''}" required>
+            </div>
+            <div class="form-group">
+                <label>STARTING BANK BALANCE:</label>
                 <input type="number" id="startingGold" value="${character.startingGold || 0}" required>
             </div>
+            <div class="form-group">
+                <label>CAN ACCESS SECRET:</label>
+                <input type="checkbox" id="canAccessSecret" ${character.canAccessSecret ? 'checked' : ''}>
+            </div>
             <div class="form-actions">
-                <button type="submit" class="btn">Save</button>
-                <button type="button" class="btn" id="cancelCharacter">Cancel</button>
+                <button type="submit" class="btn">SAVE</button>
+                <button type="button" class="btn" id="cancelCharacter">CANCEL</button>
             </div>
         `;
 
         form.onsubmit = async (e) => {
             e.preventDefault();
-            const updatedCharacter = {
-                name: document.getElementById('characterName').value,
+            const characterData = {
+                name: document.getElementById('characterFirstName').value + ' ' + document.getElementById('characterLastName').value,
+                userId: document.getElementById('userId').value,
                 accountNumber: document.getElementById('accountNumber').value,
                 accountPassword: document.getElementById('accountPassword').value,
+                securityQuestion: document.getElementById('securityQuestion').value,
+                securityAnswer: document.getElementById('securityAnswer').value,
                 startingGold: parseInt(document.getElementById('startingGold').value),
-                gold: parseInt(document.getElementById('startingGold').value)
+                gold: parseInt(document.getElementById('startingGold').value),
+                // profileImage: ,
+                // emblemImage: ,
+                canAccessSecret: document.getElementById('canAccessSecret').checked
             };
 
             if (character.characterId) {
-                await GameService.updateCharacter(this.currentGame.gameId, character.characterId, updatedCharacter);
+                await GameService.updateCharacter(this.currentGame.gameId, character.characterId, characterData);
             } else {
-                await GameService.createCharacter(this.currentGame.gameId, updatedCharacter);
+                await GameService.createCharacter(this.currentGame.gameId, characterData);
             }
 
             characterModal.style.display = 'none';
