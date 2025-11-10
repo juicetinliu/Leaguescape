@@ -8,7 +8,7 @@
     --background-secondary-color: #1d2328; /* Buttons etc. */
     --background-accent-color: #08383a; /* Background for accents */
     --text-color: #e4decf;
-    --error-color: #ff3860;
+    --error-color: #830000;
     --success-color: #23d160;
 
     /* Typography (https://fonts.google.com/specimen/Vollkorn) */
@@ -33,7 +33,7 @@ body {
 
 /* App container */
 #app {
-    min-height: 100vh;
+    height: 100vh;
     display: flex;
     flex-direction: column;
     background-color: var(--app-background-color);

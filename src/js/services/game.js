@@ -30,14 +30,14 @@ class GameService {
 
         // Create player record in game's players subcollection using userId as the document ID
         await setDoc(doc(db, `games/${gameId}/players`, userId), {
-            playerName: username
+            playerName: username,
+            loginMode: 'normal'
         });
 
         const privateDetailsRef = doc(db, `games/${gameId}/players/${userId}/privateDetails`, 'data');
         await setDoc(privateDetailsRef, {
             isBanned: false,
-            assumedCharacterId: '',
-            loginMode: 'normal'
+            assumedCharacterId: ''
         });
 
         return game;
@@ -51,16 +51,21 @@ class GameService {
     async isPlayer(gameId, userId) {
         let hasJoined = false;
         try {
-            const playerDoc = await getDoc(doc(db, `games/${gameId}/players`, userId));
+            const playerDoc = await getDoc(this.createPlayerRef(gameId, userId));
             hasJoined = playerDoc.exists();
         } catch (error) {
-            // If there's an error (e.g., permission denied), we can assume they aren't a player
+            // If there's an error (e.g., permission denied), we can assume they aren't a player - e.g. they got kicked.
         }
         return hasJoined;
     }
 
     async getGame(gameId) {
         return await Game.get(gameId);
+    }
+
+    async getPlayerData(gameId, playerId) {
+        const playerData = await getDoc(this.createPlayerRef(gameId, playerId));
+        return playerData.data();
     }
 
     onGameSnapshot(gameId, callback) {
@@ -161,7 +166,7 @@ class GameService {
 
     async updatePlayerLoginMode(gameId, playerId, loginMode) {
         // This should only be called by admin, firestore rules will enforce this
-        const playerRef = this.createPlayerPrivateDataRef(gameId, playerId)
+        const playerRef = this.createPlayerRef(gameId, playerId);
         await updateDoc(playerRef, {
             loginMode: loginMode
         });

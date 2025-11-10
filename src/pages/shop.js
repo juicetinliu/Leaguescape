@@ -2,6 +2,7 @@ import Page from '../js/models/Page.js';
 import AuthService from '../js/services/auth.js';
 import GameService from '../js/services/game.js';
 import MessageService from '../js/services/message.js';
+import StoreService from '../js/services/store.js';
 import { MessageType } from '../js/models/MessageTypes.js';
 import { router } from '../js/utils/router.js';
 import { PAGES, GAME_STATE } from '../js/models/Enums.js';
@@ -12,9 +13,13 @@ class ShopPage extends Page {
         super(PAGES.shop);
         this.currentGame = null;
         this.currentCharacter = null;
-        
+        this.canAccessSecretShop = false;
+        this.items = [];
+        this.cart = new Map();
+
         this.gameUnsubscribe = null;
         this.playerMessageUnsubscribe = null;
+        this.itemsUnsubscribe = null;
     }
 
     async show() {
@@ -29,8 +34,11 @@ class ShopPage extends Page {
             return;
         }
 
+        const playerData = await GameService.getPlayerData(this.currentGame.gameId, AuthService.currentUser.authId);
+        this.canAccessSecretShop = this.currentCharacter.canAccessSecret && (playerData.loginMode === 'secret');
+
         this.initializeUI();
-        this.attachEventListeners();
+        await this.attachEventListeners();
     }
 
     initializeUI() {
@@ -54,9 +62,7 @@ class ShopPage extends Page {
                         <div class="items-header-heading">ALL ITEMS</div>
                         <button id="backToCharacter" class="text-button">BACK</button>
                     </div>
-                    <div>
-                        Items will go here
-                    </div>
+                    <div id="itemsGrid" class="items-grid"></div>
                 </div>
                 <div class="cart-container">
                     <div class="cart-wrapper">
@@ -80,10 +86,12 @@ class ShopPage extends Page {
     }
 
 
-    attachEventListeners() {
+    async attachEventListeners() {
         document.getElementById('backToCharacter').addEventListener('click', () => {
             router.navigate(`${PAGES.character}&gameId=${this.currentGame.gameId}&characterId=${this.currentCharacter.characterId}`);
         });
+
+        document.getElementById('purchaseCart').addEventListener('click', () => this.handlePurchase());
                 
         if(this.currentGame.gameId) {
             this.gameUnsubscribe = GameService.onGameSnapshot(this.currentGame.gameId, async (gameData) => {
@@ -92,7 +100,15 @@ class ShopPage extends Page {
                 }
             });
             this.setupPlayerMessageUnsubscribe();
+            this.setupItemsUnsubscribe();
         }
+    }
+
+    async setupItemsUnsubscribe() {
+        this.itemsUnsubscribe = StoreService.onItemsSnapshot(this.currentGame.gameId, async (items) => {
+            this.items = items;
+            await this.loadItems();
+        }, this.canAccessSecretShop);
     }
         
     async setupPlayerMessageUnsubscribe() {
@@ -112,15 +128,126 @@ class ShopPage extends Page {
         }
     }
 
+    async loadItems() {
+        console.log('Loading Items');
+        const grid = document.getElementById('itemsGrid');
+        
+        const itemsHtml = this.items.map(item => {
+            const itemLocked = !item.checkPrerequisites(this.currentCharacter);
+            const itemOutOfStock = item.quantity == 0;
+            return `
+            <div class="item-wrapper ${itemLocked ? 'item-locked' : ''} ${itemOutOfStock ? 'item-oos' : ''}" id="${item.itemId}">
+                <div class="item-add-to-cart-wrapper wrapper">
+                    <button class="add-to-cart" data-item-id="${item.itemId}"></button>
+                </div>
+                <div class="item-number-wrapper wrapper">
+                    <span class="item-number">${item.itemNumber}</span>
+                </div>
+                <div class="divider"></div>
+                <div class="item-info-wrapper wrapper">
+                    <div class="item-name-wrapper">
+                        <span class="item-name">${item.name}</span>
+                    </div>
+                    <div class="item-description-wrapper">
+                        <span class="item-description">${itemLocked ? 'This item cannot be purchased.' : item.description}</span>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <div class="item-quantity-wrapper wrapper">
+                    <span class="item-quantity">${item.quantity}</span>
+                </div>
+                <div class="divider"></div>
+                <div class="item-price-wrapper wrapper">
+                    <span class="item-price">${item.price}</span>
+                </div>
+            </div>
+        `;
+        }).join('');
+
+        grid.innerHTML = itemsHtml;
+
+        document.querySelectorAll('.add-to-cart').forEach(button => {
+            button.addEventListener('click', () => this.addToCart(button.dataset.itemId));
+        });
+    }
+
+    addToCart(itemId) {
+        const item = this.items.find(i => i.itemId === itemId);
+        if (!item || !item.isAvailable()) return;
+
+        const currentQuantity = this.cart.get(itemId) || 0;
+        if (currentQuantity + 1 > item.quantity) return;
+
+        if (!item.checkPrerequisites(this.currentCharacter)) return;
+
+        this.cart.set(itemId, currentQuantity + 1);
+        this.updateCartDisplay();
+    }
+
+    updateCartDisplay() {
+        const cartItems = document.querySelector('.cart-items-wrapper');
+        let total = 0;
+
+        const cartHtml = Array.from(this.cart.entries()).map(([itemId, quantity]) => {
+            const item = this.items.find(i => i.itemId === itemId);
+            const itemTotal = item.price * quantity;
+            total += itemTotal;
+
+            return `
+                <div class="cart-item">
+                    <div class="cart-item-info">
+                        <span>${item.name}</span>
+                        <span>${quantity} × ${item.price}</span>
+                    </div>
+                    <span>${itemTotal} gold</span>
+                </div>
+            `;
+        }).join('');
+
+        cartItems.innerHTML = cartHtml;
+        document.querySelector('.cart-total-wrapper').innerHTML = `
+            <div class="cart-total">
+                <span>Total:</span>
+                <span>${total} gold</span>
+            </div>
+        `;
+    }
+
+    async handlePurchase() {
+        if (this.cart.size === 0) return;
+
+        for (const [itemId, quantity] of this.cart.entries()) {
+            const item = this.items.find(i => i.itemId === itemId);
+            try {
+                await StoreService.purchaseItem(this.currentGame.gameId, this.currentCharacter, item, quantity);
+            } catch (error) {
+                console.error('Purchase failed:', error);
+                alert(error.message);
+                return;
+            }
+        }
+
+        this.cart.clear();
+        this.updateCartDisplay();
+        this.items = await StoreService.getAvailableItems(this.currentGame.gameId, this.currentCharacter, this.canAccessSecretShop);
+        this.loadItems();
+    }
+
     cleanup() {
         super.cleanup();
         this.currentCharacter = null;
+        this.canAccessSecretShop = false;
+        this.items = [];
+        this.cart.clear();
 
         if (this.gameUnsubscribe) {
             this.gameUnsubscribe();
         }
         if (this.playerMessageUnsubscribe) {
             this.playerMessageUnsubscribe();
+        }
+        if (this.itemsUnsubscribe) {
+            this.itemsUnsubscribe();
         }
     }
 }

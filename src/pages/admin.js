@@ -183,9 +183,9 @@ class AdminPage extends Page {
             <div class="player-item">
                 <span>${player.playerName || 'Unnamed Player'}</span>
                 <select class="login-mode-select" data-player-id="${player.playerId}">
-                    <option value="normal" ${player.privateDetails.loginMode === 'normal' ? 'selected' : ''}>Normal</option>
-                    <option value="secret" ${player.privateDetails.loginMode === 'secret' ? 'selected' : ''}>Secret</option>
-                    <option value="inventory" ${player.privateDetails.loginMode === 'inventory' ? 'selected' : ''}>Inventory</option>
+                    <option value="normal" ${player.loginMode === 'normal' ? 'selected' : ''}>Normal</option>
+                    <option value="secret" ${player.loginMode === 'secret' ? 'selected' : ''}>Secret</option>
+                    <option value="inventory" ${player.loginMode === 'inventory' ? 'selected' : ''}>Inventory</option>
                 </select>
                 <button class="btn kick-player" data-player-id="${player.playerId}">Kick</button>
                 <button class="btn ban-player" data-player-id="${player.playerId}">Ban</button>

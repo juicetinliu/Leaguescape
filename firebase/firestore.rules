@@ -23,6 +23,16 @@ service cloud.firestore {
       return isActivePlayer(gameId) &&
              get(/databases/$(database)/documents/games/$(gameId)/players/$(request.auth.uid)/privateDetails/data).data.assumedCharacterId != '';
     }
+
+    // Only call after hasAssumedCharacter() check.
+    function canAssumedCharacterViewSecretItems(gameId) {
+      let assumedCharacterId = get(/databases/$(database)/documents/games/$(gameId)/players/$(request.auth.uid)/privateDetails/data).data.assumedCharacterId;
+      return assumedCharacterId != '' && get(/databases/$(database)/documents/games/$(gameId)/characters/$(assumedCharacterId)).data.canAccessSecret == true;
+    }
+
+    function canPlayerViewSecretItems(gameId) {
+      return get(/databases/$(database)/documents/games/$(gameId)/players/$(request.auth.uid)).data.loginMode == 'secret';
+    }
     
     function hasAssumedThisCharacter(gameId, characterId) {
       // Check if player has assumed this specific character and is active
@@ -48,7 +58,7 @@ service cloud.firestore {
         // All active players in the game can read other players' public data (like playerName for lobby)
         allow read: if isAuthenticated() && (isAdmin(gameId) || isActivePlayer(gameId));
         // A player can create their own public profile when they join
-        allow create: if isAuthenticated() && request.auth.uid == playerId;
+        allow create: if isAuthenticated() && (request.auth.uid == playerId && request.resource.data.loginMode == 'normal');
         allow update: if isAuthenticated() && (isAdmin(gameId) || 
                       // A player can update ONLY their own playerName
                       (request.auth.uid == playerId &&
@@ -60,7 +70,7 @@ service cloud.firestore {
           // Only the admin can read/update/delete private data (e.g., ban status, assigned character)
           allow read: if isAuthenticated() && isAdmin(gameId);
           // A player should be able to create default private data when they join
-          allow create: if isAuthenticated() && (request.auth.uid == playerId && detailId == 'data' && request.resource.data.isBanned == false && request.resource.data.assumedCharacterId == '' && request.resource.data.loginMode == 'normal');
+          allow create: if isAuthenticated() && (request.auth.uid == playerId && detailId == 'data' && request.resource.data.isBanned == false && request.resource.data.assumedCharacterId == '');
           allow update: if isAdmin(gameId);
           allow delete: if isAdmin(gameId);
         }
@@ -86,14 +96,18 @@ service cloud.firestore {
       
       // Item rules
       match /items/{itemId} {
-        allow read: if isAdmin(gameId) || hasAssumedCharacter(gameId);
+        allow read: if isAdmin(gameId) || (hasAssumedCharacter(gameId) && ((
+          resource.data.isSecret == true &&
+            canPlayerViewSecretItems(gameId) &&
+            canAssumedCharacterViewSecretItems(gameId)) || 
+          resource.data.isSecret == false));
         allow write: if isAdmin(gameId);
       }
-      
+
       // Action rules
       match /actions/{actionId} {
         allow read: if isAdmin(gameId);
-        allow create: if isAdmin(gameId) && isActivePlayer(gameId);
+        allow create: if isAdmin(gameId) || isActivePlayer(gameId);
         allow update: if false;
         allow delete: if false;
       }
