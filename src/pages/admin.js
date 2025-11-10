@@ -386,11 +386,11 @@ class AdminPage extends Page {
             </div>
             <div class="form-group">
                 <label>SECURITY QUESTION:</label>
-                <input type="text" id="securityQuestion" value="${character.securityQuestion || ''}" required>
+                <textarea type="text" id="securityQuestion">${character.securityQuestion || ''}</textarea>
             </div>
             <div class="form-group">
                 <label>SECURITY ANSWER:</label>
-                <input type="text" id="securityAnswer" value="${character.securityAnswer || ''}" required>
+                <input type="text" id="securityAnswer" value="${character.securityAnswer || ''}">
             </div>
             <div class="form-group">
                 <label>STARTING BANK BALANCE:</label>
@@ -417,9 +417,10 @@ class AdminPage extends Page {
                 securityAnswer: document.getElementById('securityAnswer').value,
                 startingGold: parseInt(document.getElementById('startingGold').value),
                 gold: parseInt(document.getElementById('startingGold').value),
-                // profileImage: ,
-                // emblemImage: ,
+                // profileImage: , soon!
+                // emblemImage: , soon!
                 canAccessSecret: document.getElementById('canAccessSecret').checked
+                //items - TODO: support starting items?
             };
 
             if (character.characterId) {
@@ -445,20 +446,32 @@ class AdminPage extends Page {
         
         form.innerHTML = `
             <div class="form-group">
-                <label>Name</label>
+                <label>ITEM ID:</label>
+                <input type="number" id="itemNumber" value="${item.itemNumber || 0}" required>
+            </div>
+            <div class="form-group">
+                <label>NAME:</label>
                 <input type="text" id="itemName" value="${item.name || ''}" required>
             </div>
             <div class="form-group">
-                <label>Description</label>
+                <label>DESCRIPTION:</label>
                 <textarea id="itemDescription">${item.description || ''}</textarea>
             </div>
             <div class="form-group">
-                <label>Price</label>
+                <label>QUANTITY IN SHOP:</label>
+                <input type="number" id="itemQuantity" value="${item.quantity || 0}" required>
+            </div>
+            <div class="form-group">
+                <label>PRICE:</label>
                 <input type="number" id="itemPrice" value="${item.price || 0}" required>
             </div>
             <div class="form-group">
-                <label>Quantity</label>
-                <input type="number" id="itemQuantity" value="${item.quantity || 0}" required>
+                <label>PREREQS:</label>
+                <input type="text" id="itemPrereqs" value="${item.prereqs || ''}">
+            </div>
+            <div class="form-group">
+                <label>IS SECRET ITEM:</label>
+                <input type="checkbox" id="itemIsSecret" ${item.isSecret ? 'checked' : ''}>
             </div>
             <div class="form-actions">
                 <button type="submit" class="btn">Save</button>
@@ -469,10 +482,13 @@ class AdminPage extends Page {
         form.onsubmit = async (e) => {
             e.preventDefault();
             const updatedItem = {
+                itemNumber: parseInt(document.getElementById('itemNumber').value),
                 name: document.getElementById('itemName').value,
                 description: document.getElementById('itemDescription').value,
+                quantity: parseInt(document.getElementById('itemQuantity').value),
                 price: parseInt(document.getElementById('itemPrice').value),
-                quantity: parseInt(document.getElementById('itemQuantity').value)
+                prereqs: document.getElementById('itemPrereqs').value,
+                isSecret: document.getElementById('itemIsSecret').checked,
             };
 
             if (item.itemId) {

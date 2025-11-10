@@ -65,7 +65,7 @@ input.text-form-input {
 }
 
 /* Game elements */
-.profile-card {
+.profile-card, .item-card {
     display: flex;
     align-items: center;
     padding: 1rem;
