@@ -65,7 +65,6 @@ class GameService {
 
     onGameSnapshot(gameId, callback) {
         return onSnapshot(doc(db, 'games', gameId), async (gameDoc) => {
-            
             await callback(gameDoc.data());
         });
     }

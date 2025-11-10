@@ -20,13 +20,13 @@ class IndexPage extends Page {
                 <div class="card">
                     <h1>Welcome to Leaguescape</h1>
                     <div class="form-group">
-                        <button id="loginAnonymous" class="btn">Continue as Guest</button>
+                        <button id="loginAnonymous" class="text-button">Continue as Guest</button>
                     </div>
                     <div class="form-group">
-                        <button id="loginGoogle" class="btn">Sign in with Google</button>
+                        <button id="loginGoogle" class="text-button">Sign in with Google</button>
                     </div>
                     <div class="form-group">
-                        <a href="/?page=${PAGES.info}" class="btn">Learn More</a>
+                        <button id="learnMore" class="text-button">Learn More</button>
                     </div>
                 </div>
             </div>
@@ -54,6 +54,10 @@ class IndexPage extends Page {
             } catch (error) {
                 console.error('Error signing in with Google:', error);
             }
+        });
+
+        document.getElementById('learnMore').addEventListener('click', async () => {
+            router.navigate(PAGES.info);
         });
     }
 

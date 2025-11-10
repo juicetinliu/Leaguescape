@@ -1,4 +1,5 @@
 import Page from '../js/models/Page.js';
+import { router } from '../js/utils/router.js';
 import { PAGES } from '../js/models/Enums.js';
 
 class InfoPage extends Page {
@@ -9,6 +10,7 @@ class InfoPage extends Page {
     show() {
         super.show();
         this.initializeUI();
+        this.attachEventListeners();
     }
     
     initializeUI() {
@@ -47,13 +49,20 @@ class InfoPage extends Page {
                     </ul>
 
                     <div class="form-group">
-                        <a href="/" class="btn">Back to Login</a>
+                        <button id="backToIndex" class="text-button">BACK</button>
                     </div>
                 </div>
             </div>
         `;
         
         document.querySelector('#app').innerHTML = template;
+    }
+
+
+    attachEventListeners() {
+        document.getElementById('backToIndex').addEventListener('click', async () => {
+            router.navigate(PAGES.index);
+        });
     }
 
     cleanup() {

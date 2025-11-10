@@ -59,9 +59,8 @@ input.text-form-input {
 /* Cards */
 .card {
     background: var(--background-secondary-color);
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    padding: 1rem;
+    border: 2px solid var(--primary-color);
+    padding: 20px;
     margin-bottom: 1rem;
 }
 
@@ -130,7 +129,7 @@ input.text-form-input {
 }
 
 .modal-content {
-    background: white;
+    background: var(--background-secondary-color);
     padding: 2rem;
     border-radius: 4px;
     max-width: 500px;

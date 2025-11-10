@@ -24,19 +24,19 @@ class UserPage extends Page {
                     <div class="nav">
                         <div>
                             <span>Welcome, <span id="username">Loading...</span></span>
-                            <button id="editUsername" class="btn">Edit Name</button>
+                            <button id="editUsername" class="text-button">Edit Name</button>
                         </div>
-                        <button id="logout" class="btn">Logout</button>
+                        <button id="logout" class="text-button">Logout</button>
                     </div>
                 </header>
 
                 <div class="card">
                     <h2>Game Actions</h2>
                     <div class="form-group">
-                        <button id="createGame" class="btn">Create New Game</button>
+                        <button id="createGame" class="text-button">Create New Game</button>
                     </div>
                     <div class="form-group">
-                        <button id="joinGame" class="btn">Join Existing Game</button>
+                        <button id="joinGame" class="text-button">Join Existing Game</button>
                     </div>
                 </div>
 
@@ -54,8 +54,8 @@ class UserPage extends Page {
                             <input type="text" id="gameId" class="form-input">
                         </div>
                         <div class="form-group">
-                            <button id="submitJoin" class="btn">Join</button>
-                            <button id="cancelJoin" class="btn">Cancel</button>
+                            <button id="submitJoin" class="text-button">Join</button>
+                            <button id="cancelJoin" class="text-button">Cancel</button>
                         </div>
                     </div>
                 </div>
@@ -80,7 +80,7 @@ class UserPage extends Page {
                     <h3>Game ${game.gameId}</h3>
                     <p>State: ${game.gameState}</p>
                     <p>Role: ${game.adminId === AuthService.currentUser.authId ? 'Admin' : 'Player'}</p>
-                    <button class="btn enter-game" data-game-id="${game.gameId}">Enter Game</button>
+                    <button class="text-button enter-game" data-game-id="${game.gameId}">Enter Game</button>
                 </div>
             `).join('');
 
