@@ -51,20 +51,20 @@ class ShopPage extends Page {
                 <div class="items-container">
                     <div class="items-header-wrapper">
                         <div class="profile-preview-wrapper wrapper">
-                            <div class="profile-image-wrapper">
+                            <div class="profile-image-wrapper ${this.canAccessSecretShop ? 'flickering' : ''}">
                                 <img src=""/>
                             </div>
                             <div class="profile-info-wrapper">
                                 <div class="profile-name-text">
-                                    ${this.canAccessSecretShop ? flickeringSymbols(15, 'profile-name') : this.currentCharacter.name}
+                                    ${this.canAccessSecretShop ? flickeringSymbols(10, 'profile-name') : this.currentCharacter.name}
                                 </div>
-                                <div class="profile-gold-display">
+                                <div class="profile-gold-display ${this.canAccessSecretShop ? 'flickering' : ''}">
                                     ${this.currentCharacter.gold}
                                     ${gold}
                                 </div>
                             </div>
                         </div>
-                        <div class="items-header-heading wrapper">${this.canAccessSecretShop ? flickeringSymbols(10, 'items-heading') : 'ALL ITEMS'}</div>
+                        <div class="items-header-heading wrapper">${this.canAccessSecretShop ? flickeringSymbols(9, 'items-heading') : 'ALL ITEMS'}</div>
                         <div class="back-button-wrapper wrapper">
                             <button id="backToCharacter" class="text-button">BACK</button>
                         </div>
@@ -117,9 +117,8 @@ class ShopPage extends Page {
             this.setupItemsUnsubscribe();
         }
 
-        this.flickeringSymbolsProfileNameInterval = flickeringSymbolsInterval(15, 'profile-name', 234);
-        this.flickeringSymbolsItemsHeadingInterval = flickeringSymbolsInterval(10, 'items-heading', 890);
-        
+        this.flickeringSymbolsProfileNameInterval = flickeringSymbolsInterval(10, 'profile-name', 456);
+        this.flickeringSymbolsItemsHeadingInterval = flickeringSymbolsInterval(9, 'items-heading', 890);
     }
 
     async setupItemsUnsubscribe() {
@@ -226,36 +225,42 @@ class ShopPage extends Page {
         const cartItems = document.querySelector('.cart-items-wrapper');
         let total = 0;
 
-        const cartHtml = Array.from(this.cart.entries()).map(([itemId, quantity]) => {
+        const cartSize = this.cart.size;
+
+        const cartHtml = Array.from(this.cart.entries()).map(([itemId, quantity], index) => {
             const item = this.items.find(i => i.itemId === itemId);
             const itemTotal = item.price * quantity;
             total += itemTotal;
 
-            return `
-                <div class="cart-item-wrapper">
-                    <div class="cart-item-info">
-                        <div class="cart-item-name-wrapper wrapper">
-                            <span class="cart-item-name">${item.name}</span>
-                            <span class="cart-item-number">Item #${item.itemNumber}</span>
-                        </div>
-                        <div class="cart-item-stepper-wrapper wrapper">
-                            <div class="cart-item-stepper">
-                                <button class="cart-item-minus" data-item-id="${itemId}">-</button>
-                                <div class="cart-quantity" data-item-id="${itemId}">${quantity}</div>
-                                <button class="cart-item-plus" data-item-id="${itemId}" ${quantity >= item.quantity ? 'disabled' : ''}>+</button>
+            return { 
+                itemNumber: item.itemNumber,
+                html: `
+                    <div class="cart-item-wrapper">
+                        <div class="cart-item-info">
+                            <div class="cart-item-name-wrapper wrapper">
+                                <span class="cart-item-name">${item.name}</span>
+                                <span class="cart-item-number">Item #${item.itemNumber}</span>
+                            </div>
+                            <div class="cart-item-stepper-wrapper wrapper">
+                                <div class="cart-item-stepper">
+                                    <button class="cart-item-minus" data-item-id="${itemId}">-</button>
+                                    <div class="cart-quantity" data-item-id="${itemId}">${quantity}</div>
+                                    <button class="cart-item-plus" data-item-id="${itemId}" ${quantity >= item.quantity ? 'disabled' : ''}>+</button>
+                                </div>
+                            </div>
+                            <div class="cart-item-price-wrapper wrapper">
+                                <span class="cart-item-price">${item.price}</span>
+                                ${gold}
                             </div>
                         </div>
-                        <div class="cart-item-price-wrapper wrapper">
-                            <span class="cart-item-price">${item.price}</span>
-                            ${gold}
+                        <div class="cart-item-description-wrapper wrapper"> 
+                            <span class="cart-item-description">${item.description}</span>
                         </div>
                     </div>
-                    <div class="cart-item-description-wrapper wrapper"> 
-                        <span class="cart-item-description">${item.description}</span>
-                    </div>
-                </div>
-            `;
-        }).join('');
+                `
+            }
+        }).sort((a, b) => {return a.itemNumber - b.itemNumber})
+        .map((itemNumberAndHtml) => { return itemNumberAndHtml.html }).join('');
 
         cartItems.innerHTML = cartHtml;
         document.querySelector('.cart-total-amount-wrapper').innerHTML = `

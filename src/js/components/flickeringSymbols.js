@@ -19,7 +19,7 @@ export function flickeringSymbolsInterval(length, id, delay = 1000) {
     return setInterval(() => {
         let text = document.getElementById(id).innerHTML;
         // document.getElementById(id).innerHTML = fullFlicker(length);
-        document.getElementById(id).innerHTML = flickerOneCharAtATime(id, text);
+        document.getElementById(id).innerHTML = flickerOneCharAtATime(id, text, delay);
     }, delay);
 }
 
@@ -32,15 +32,16 @@ export function flickeringSymbolsInterval(length, id, delay = 1000) {
 //     return replaceStringAt(text, randomCharIndex, generateRandomString(1));
 // }
 
-
-function flickerOneCharAtATime(id, text) {
+function flickerOneCharAtATime(id, text, totalDelay) {
     const randomCharIndex = Math.floor(Math.random() * text.length);
-    const randomAmount = Math.floor(Math.random() * 10);
+    const randomAmount = 5 + Math.floor(Math.random() * 5);
+    // A nice flicker occurs around 20ms per char change.
+    const flickerTimeGap = Math.min(Math.floor(totalDelay / randomAmount), 20);
     for(let i = 0; i < randomAmount; i++) {
         setTimeout(() => {
             let text = document.getElementById(id).innerHTML;
             document.getElementById(id).innerHTML = replaceStringAt(text, randomCharIndex, generateRandomString(1));
-        }, i * 30);
+        }, i * flickerTimeGap);
     }
     
     return replaceStringAt(text, randomCharIndex, generateRandomString(1));

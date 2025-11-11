@@ -160,6 +160,10 @@ input.text-form-input {
     }
 }
 
+.flickering {
+    animation: flickering 3s linear infinite;
+}
+
 .flickering-symbols {
     animation: flickering 1.67s linear infinite;
     font-family: monospace;
@@ -169,7 +173,7 @@ input.text-form-input {
     0%, 19.9%, 22%, 62.9%, 64%, 64.9%, 70%, 100% {
         opacity: 0.99;
     }
-    20%, 21.9%, 63%, 63.9%, 65%, 69.9%, 99.9% {
+    20%, 21.9%, 63%, 63.9%, 65%, 69.9% {
         opacity: 0.4;
     }
 }
