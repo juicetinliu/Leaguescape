@@ -8,6 +8,7 @@ import { router } from '../js/utils/router.js';
 import { PAGES, GAME_STATE } from '../js/models/Enums.js';
 import { gameRouter } from '../js/utils/gamerouter.js';
 import { gold } from '../js/components/staticComponents.js'
+import { flickeringSymbols, flickeringSymbolsInterval } from '../js/components/flickeringSymbols.js'
 
 class ShopPage extends Page {
     constructor() {
@@ -21,6 +22,8 @@ class ShopPage extends Page {
         this.gameUnsubscribe = null;
         this.playerMessageUnsubscribe = null;
         this.itemsUnsubscribe = null;
+        this.flickeringSymbolsProfileNameInterval = null;
+        this.flickeringSymbolsItemsHeadingInterval = null;
     }
 
     async show() {
@@ -47,21 +50,24 @@ class ShopPage extends Page {
             <div id="${this.page}" class="page-container">
                 <div class="items-container">
                     <div class="items-header-wrapper">
-                        <div class="profile-preview-wrapper">
+                        <div class="profile-preview-wrapper wrapper">
                             <div class="profile-image-wrapper">
                                 <img src=""/>
                             </div>
                             <div class="profile-info-wrapper">
                                 <div class="profile-name-text">
-                                    ${this.currentCharacter.name}
+                                    ${this.canAccessSecretShop ? flickeringSymbols(15, 'profile-name') : this.currentCharacter.name}
                                 </div>
                                 <div class="profile-gold-display">
                                     ${this.currentCharacter.gold}
+                                    ${gold}
                                 </div>
                             </div>
                         </div>
-                        <div class="items-header-heading">ALL ITEMS</div>
-                        <button id="backToCharacter" class="text-button">BACK</button>
+                        <div class="items-header-heading wrapper">${this.canAccessSecretShop ? flickeringSymbols(10, 'items-heading') : 'ALL ITEMS'}</div>
+                        <div class="back-button-wrapper wrapper">
+                            <button id="backToCharacter" class="text-button">BACK</button>
+                        </div>
                     </div>
                     <div id="itemsGrid" class="items-grid">
                         Items will go here
@@ -110,6 +116,10 @@ class ShopPage extends Page {
             this.setupPlayerMessageUnsubscribe();
             this.setupItemsUnsubscribe();
         }
+
+        this.flickeringSymbolsProfileNameInterval = flickeringSymbolsInterval(15, 'profile-name', 234);
+        this.flickeringSymbolsItemsHeadingInterval = flickeringSymbolsInterval(10, 'items-heading', 890);
+        
     }
 
     async setupItemsUnsubscribe() {
@@ -318,6 +328,12 @@ class ShopPage extends Page {
         }
         if (this.itemsUnsubscribe) {
             this.itemsUnsubscribe();
+        }
+        if (this.flickeringSymbolsProfileNameInterval) {
+            clearInterval(this.flickeringSymbolsProfileNameInterval);
+        }
+        if (this.flickeringSymbolsItemsHeadingInterval) {
+            clearInterval(this.flickeringSymbolsItemsHeadingInterval);
         }
     }
 }

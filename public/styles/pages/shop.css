@@ -30,6 +30,17 @@
         padding-bottom: 20px;
         border-bottom: 1px solid var(--primary-color);
         margin-bottom: 20px;
+        .wrapper {
+            flex: 1 1 33%;
+        }
+        .items-header-heading {
+            display: flex;
+            justify-content: center;
+        }
+        .back-button-wrapper {
+            display: flex;
+            justify-content: end;
+        }
     }
 
     .items-header-heading, .cart-heading {
@@ -51,7 +62,12 @@
     }
     
     .profile-gold-display {
-        color: var(--text-color)
+        color: var(--text-color);
+        display: flex;
+        align-items: center;
+        flex-direction: row;
+        gap: 5px;
+    }
     }
 
     .profile-image-wrapper {
@@ -95,7 +111,6 @@
         border-color: var(--accent-color);
         .add-to-cart {
             border-color: var(--accent-color);
-            background: var(--text-color);
         }
         .divider {
             border-color: var(--accent-color);
