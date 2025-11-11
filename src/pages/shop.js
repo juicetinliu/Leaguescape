@@ -7,6 +7,7 @@ import { MessageType } from '../js/models/MessageTypes.js';
 import { router } from '../js/utils/router.js';
 import { PAGES, GAME_STATE } from '../js/models/Enums.js';
 import { gameRouter } from '../js/utils/gamerouter.js';
+import { gold } from '../js/components/staticComponents.js'
 
 class ShopPage extends Page {
     constructor() {
@@ -62,7 +63,9 @@ class ShopPage extends Page {
                         <div class="items-header-heading">ALL ITEMS</div>
                         <button id="backToCharacter" class="text-button">BACK</button>
                     </div>
-                    <div id="itemsGrid" class="items-grid"></div>
+                    <div id="itemsGrid" class="items-grid">
+                        Items will go here
+                    </div>
                 </div>
                 <div class="cart-container">
                     <div class="cart-wrapper">
@@ -73,6 +76,11 @@ class ShopPage extends Page {
                             Items will go here
                         </div>
                         <div class="cart-total-wrapper">
+                            <div class="cart-total-label-wrapper">
+                                <span class="cart-total-label">TOTAL</span>
+                            </div>
+                            <div class="cart-total-amount-wrapper">
+                            </div>
                         </div>
                         <div class="cart-footer">
                             <button id="purchaseCart" class="text-button">PURCHASE</button>
@@ -108,6 +116,7 @@ class ShopPage extends Page {
         this.itemsUnsubscribe = StoreService.onItemsSnapshot(this.currentGame.gameId, async (items) => {
             this.items = items;
             await this.loadItems();
+            this.updateCartDisplay();
         }, this.canAccessSecretShop);
     }
         
@@ -136,9 +145,9 @@ class ShopPage extends Page {
             const itemLocked = !item.checkPrerequisites(this.currentCharacter);
             const itemOutOfStock = item.quantity == 0;
             return `
-            <div class="item-wrapper ${itemLocked ? 'item-locked' : ''} ${itemOutOfStock ? 'item-oos' : ''}" id="${item.itemId}">
+            <div class="item-wrapper ${itemLocked ? 'item-locked' : ''} ${itemOutOfStock ? 'item-oos' : ''}" id="item-wrapper-${item.itemId}">
                 <div class="item-add-to-cart-wrapper wrapper">
-                    <button class="add-to-cart" data-item-id="${item.itemId}"></button>
+                    <button class="add-to-cart" data-item-id="${item.itemId}" ${itemLocked || itemOutOfStock ? 'disabled' : ''}></button>
                 </div>
                 <div class="item-number-wrapper wrapper">
                     <span class="item-number">${item.itemNumber}</span>
@@ -180,6 +189,7 @@ class ShopPage extends Page {
 
         if (!item.checkPrerequisites(this.currentCharacter)) return;
 
+        document.getElementById(`item-wrapper-${item.itemId}`).classList.add('selected');
         this.cart.set(itemId, currentQuantity + 1);
         this.updateCartDisplay();
     }
@@ -194,21 +204,32 @@ class ShopPage extends Page {
             total += itemTotal;
 
             return `
-                <div class="cart-item">
+                <div class="cart-item-wrapper">
                     <div class="cart-item-info">
-                        <span>${item.name}</span>
-                        <span>${quantity} × ${item.price}</span>
+                        <div class="cart-item-name-wrapper wrapper">
+                            <span class="cart-item-name">${item.name}</span>
+                            <span class="cart-item-number">Item #${item.itemNumber}</span>
+                        </div>
+                        <div class="cart-item-stepper-wrapper wrapper">
+                            Stepper goes here
+                        </div>
+                        <div class="cart-item-price-wrapper wrapper">
+                            <span class="cart-item-price">${item.price}</span>
+                            ${gold}
+                        </div>
                     </div>
-                    <span>${itemTotal} gold</span>
+                    <div class="cart-item-description-wrapper wrapper"> 
+                        <span class="cart-item-description">${item.description}</span>
+                    </div>
                 </div>
             `;
         }).join('');
 
         cartItems.innerHTML = cartHtml;
-        document.querySelector('.cart-total-wrapper').innerHTML = `
+        document.querySelector('.cart-total-amount-wrapper').innerHTML = `
             <div class="cart-total">
-                <span>Total:</span>
-                <span>${total} gold</span>
+                <span class="cart-item-total-price">${total}</span>
+                ${gold}
             </div>
         `;
     }
