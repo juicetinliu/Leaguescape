@@ -16,6 +16,12 @@ class GameRouter {
             [GAME_STATE.RUNNING]: PAGES.login,
             [GAME_STATE.END]: PAGES.credits
         };
+
+        this.validGamePagesForLoginMode = {
+            inventory: [PAGES.login, PAGES.character, PAGES.inventory],
+            secret: [PAGES.login, PAGES.character, PAGES.shop, PAGES.bank, PAGES.inventory],
+            normal: [PAGES.login, PAGES.character, PAGES.shop, PAGES.bank, PAGES.inventory]
+        }
     }
     
     /**
@@ -45,15 +51,14 @@ class GameRouter {
             return false;
         }
 
-        if (this.validGamePagesByState[currentGame.gameState].some(page => currentPage === page)) {
-            return currentGame;
-        } else {
+        if (!this.validGamePagesByState[currentGame.gameState].some(page => currentPage === page)) {
             router.navigate(this.defaultGamePageByState[currentGame.gameState] + `&gameId=${gameId}`);
             return false;
         }
+        return currentGame;
     }
 
-    async handleCharacterGamePageShow(gameId) {
+    async handleCharacterGamePageShow(gameId, currentPage) {
         const characterId = new URLSearchParams(window.location.search).get('characterId');
         let currentCharacter = null;
         try {
@@ -63,6 +68,13 @@ class GameRouter {
         }
         if (!currentCharacter) {
             router.navigate(`${PAGES.login}&gameId=${gameId}`);
+            return false;
+        }
+
+        const playerId = AuthService.currentUser.authId;
+        const playerData = await GameService.getPlayerData(gameId, playerId);
+        if(!this.validGamePagesForLoginMode[playerData.loginMode].some(page => currentPage === page)) {
+            router.navigate(`${PAGES.character}&gameId=${gameId}&characterId=${characterId}`);
             return false;
         }
         return currentCharacter;

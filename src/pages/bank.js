@@ -24,7 +24,7 @@ class BankPage extends Page {
             return;
         }
 
-        this.currentCharacter = await gameRouter.handleCharacterGamePageShow(this.currentGame.gameId);
+        this.currentCharacter = await gameRouter.handleCharacterGamePageShow(this.currentGame.gameId, this.page);
         if (!this.currentCharacter) {
             return;
         }
