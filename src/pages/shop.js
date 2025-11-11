@@ -116,6 +116,7 @@ class ShopPage extends Page {
         this.itemsUnsubscribe = StoreService.onItemsSnapshot(this.currentGame.gameId, async (items) => {
             this.items = items;
             await this.loadItems();
+            this.updateCartBasedOnItems();
             this.updateCartDisplay();
         }, this.canAccessSecretShop);
     }
@@ -143,7 +144,7 @@ class ShopPage extends Page {
         
         const itemsHtml = this.items.map(item => {
             const itemLocked = !item.checkPrerequisites(this.currentCharacter);
-            const itemOutOfStock = item.quantity == 0;
+            const itemOutOfStock = !item.isAvailable();
             return `
             <div class="item-wrapper ${itemLocked ? 'item-locked' : ''} ${itemOutOfStock ? 'item-oos' : ''}" id="item-wrapper-${item.itemId}">
                 <div class="item-add-to-cart-wrapper wrapper">
@@ -192,6 +193,19 @@ class ShopPage extends Page {
         document.getElementById(`item-wrapper-${item.itemId}`).classList.add('selected');
         this.cart.set(itemId, currentQuantity + 1);
         this.updateCartDisplay();
+    }
+
+    updateCartBasedOnItems() {
+        Array.from(this.cart.entries()).map(([itemId, quantity]) => {
+            const item = this.items.find(i => i.itemId === itemId);
+            if(!item || !item.isAvailable()) {
+                this.cart.delete(itemId);
+            } else if(!item.checkPrerequisites(this.currentCharacter)) {
+                this.cart.delete(itemId);
+            } else if (quantity > item.quantity) {
+                this.cart.set(itemId, item.quantity);
+            }
+        });
     }
 
     updateCartDisplay() {

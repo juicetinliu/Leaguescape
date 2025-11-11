@@ -102,7 +102,7 @@
         }
     }
 
-    /* swap to grid later! */
+    /* swap to display:grid later! */
     .item-wrapper {
         border: 2px solid var(--primary-color);
         display: flex;
