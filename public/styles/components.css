@@ -11,7 +11,7 @@ button.text-button {
 }
 
 button.text-button:hover {
-    background-color: #70767b;
+    background-color: var(--background-secondary-color-inverse);
     cursor: pointer;
 }
 

@@ -6,6 +6,7 @@
     --app-background-color: #01222A; /* Actual background */
     --background-primary-color: #49351a; /* Submit buttons, etc. */
     --background-secondary-color: #1d2328; /* Buttons etc. */
+    --background-secondary-color-inverse: #70767b; /* Button highlights */
     --background-accent-color: #08383a; /* Background for accents */
     --text-color: #e4decf;
     --error-color: #830000;

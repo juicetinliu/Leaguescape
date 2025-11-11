@@ -33,7 +33,7 @@
     }
 
     #login-submit-button:hover {
-        background-color: #70767b;
+        background-color: var(--background-secondary-color-inverse);
     }
 
     .login-emblem {

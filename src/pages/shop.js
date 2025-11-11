@@ -115,8 +115,8 @@ class ShopPage extends Page {
     async setupItemsUnsubscribe() {
         this.itemsUnsubscribe = StoreService.onItemsSnapshot(this.currentGame.gameId, async (items) => {
             this.items = items;
-            await this.loadItems();
             this.updateCartBasedOnItems();
+            await this.loadItems();
             this.updateCartDisplay();
         }, this.canAccessSecretShop);
     }
@@ -145,8 +145,9 @@ class ShopPage extends Page {
         const itemsHtml = this.items.map(item => {
             const itemLocked = !item.checkPrerequisites(this.currentCharacter);
             const itemOutOfStock = !item.isAvailable();
+            const itemInCart = this.cart.get(item.itemId) > 0;
             return `
-            <div class="item-wrapper ${itemLocked ? 'item-locked' : ''} ${itemOutOfStock ? 'item-oos' : ''}" id="item-wrapper-${item.itemId}">
+            <div class="item-wrapper ${itemLocked ? 'item-locked' : ''} ${itemOutOfStock ? 'item-oos' : ''} ${itemInCart ? 'selected' : ''}" id="item-wrapper-${item.itemId}">
                 <div class="item-add-to-cart-wrapper wrapper">
                     <button class="add-to-cart" data-item-id="${item.itemId}" ${itemLocked || itemOutOfStock ? 'disabled' : ''}></button>
                 </div>
@@ -177,21 +178,24 @@ class ShopPage extends Page {
         grid.innerHTML = itemsHtml;
 
         document.querySelectorAll('.add-to-cart').forEach(button => {
-            button.addEventListener('click', () => this.addToCart(button.dataset.itemId));
+            button.addEventListener('click', () => this.toggleItemInCart(button.dataset.itemId));
         });
     }
 
-    addToCart(itemId) {
-        const item = this.items.find(i => i.itemId === itemId);
-        if (!item || !item.isAvailable()) return;
-
+    toggleItemInCart(itemId) {
         const currentQuantity = this.cart.get(itemId) || 0;
-        if (currentQuantity + 1 > item.quantity) return;
 
-        if (!item.checkPrerequisites(this.currentCharacter)) return;
-
-        document.getElementById(`item-wrapper-${item.itemId}`).classList.add('selected');
-        this.cart.set(itemId, currentQuantity + 1);
+        if(currentQuantity == 0) {
+            const item = this.items.find(i => i.itemId === itemId);
+            if (!item || !item.isAvailable()) return;
+            if (!item.checkPrerequisites(this.currentCharacter)) return;
+            
+            document.getElementById(`item-wrapper-${item.itemId}`).classList.add('selected');
+            this.cart.set(itemId, 1);
+        } else {
+            this.cart.delete(itemId);
+            document.getElementById(`item-wrapper-${itemId}`).classList.remove('selected');
+        }
         this.updateCartDisplay();
     }
 
@@ -225,7 +229,11 @@ class ShopPage extends Page {
                             <span class="cart-item-number">Item #${item.itemNumber}</span>
                         </div>
                         <div class="cart-item-stepper-wrapper wrapper">
-                            Stepper goes here
+                            <div class="cart-item-stepper">
+                                <button class="cart-item-minus" data-item-id="${itemId}">-</button>
+                                <div class="cart-quantity" data-item-id="${itemId}">${quantity}</div>
+                                <button class="cart-item-plus" data-item-id="${itemId}" ${quantity >= item.quantity ? 'disabled' : ''}>+</button>
+                            </div>
                         </div>
                         <div class="cart-item-price-wrapper wrapper">
                             <span class="cart-item-price">${item.price}</span>
@@ -246,6 +254,33 @@ class ShopPage extends Page {
                 ${gold}
             </div>
         `;
+
+        document.querySelectorAll('.cart-item-minus').forEach(btn => {
+            const itemId = btn.dataset.itemId;
+            btn.addEventListener('click', () => {
+                const current = this.cart.get(itemId) || 0;
+                if (current <= 1) {
+                    // remove item
+                    this.cart.delete(itemId);
+                    document.getElementById(`item-wrapper-${itemId}`).classList.remove('selected');
+                } else {
+                    this.cart.set(itemId, current - 1);
+                }
+                this.updateCartDisplay();
+            });
+        });
+
+        document.querySelectorAll('.cart-item-plus').forEach(btn => {
+            const itemId = btn.dataset.itemId;
+            btn.addEventListener('click', () => {
+                const current = this.cart.get(itemId) || 0;
+                const item = this.items.find(i => i.itemId === itemId);
+                if (!item) return;
+                if (current + 1 > item.quantity) return; // can't exceed stock
+                this.cart.set(itemId, current + 1);
+                this.updateCartDisplay();
+            });
+        });
     }
 
     async handlePurchase() {
