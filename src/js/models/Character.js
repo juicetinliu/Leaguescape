@@ -16,7 +16,7 @@ class Character {
         this.startingGold = data.startingGold || 0;
         this.canAccessSecret = data.canAccessSecret || false;
         this.gold = data.gold || 0;
-        this.items = data.items || [];
+        this.items = data.items || {}; //itemId and quantity
     }
 
     static async create(gameId, characterData) {
@@ -63,13 +63,30 @@ class Character {
         });
     }
 
-    async addItem(itemId) {
-        if (!this.items.includes(itemId)) {
-            this.items.push(itemId);
-            await updateDoc(doc(db, `games/${this.gameId}/characters`, this.characterId), {
-                items: this.items
-            });
-        }
+    // Unnecessary?
+    // async addItem(itemId, quantity = 1) {
+    //     const itemQuantity = this.items[itemId] || 0;
+    //     this.items[itemId] = itemQuantity + quantity;
+    //     await updateDoc(doc(db, `games/${this.gameId}/characters`, this.characterId), {
+    //         items: this.items
+    //     });
+    // }
+
+    async addItems(itemsMap) {
+        Object.entries(itemsMap).map(([itemId, quantity]) => {
+            const itemQuantity = this.items[itemId] || 0;
+            this.items[itemId] = itemQuantity + quantity;
+        });
+        await updateDoc(doc(db, `games/${this.gameId}/characters`, this.characterId), {
+            items: this.items
+        });
+    }
+
+    async deleteAllItems() {
+        this.items = {};
+        await updateDoc(doc(db, `games/${this.gameId}/characters`, this.characterId), {
+            items: this.items
+        });
     }
 }
 

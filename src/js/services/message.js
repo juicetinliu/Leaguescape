@@ -6,7 +6,6 @@ import Item from '../models/Item.js';
 import Action from '../models/Action.js';
 import Message from '../models/Message.js';
 import { MessageTo, MessageType } from '../models/MessageTypes.js';
-import ActionType from '../models/ActionType.js';
 import AuthService from '../services/auth.js';
 
 class MessageService {

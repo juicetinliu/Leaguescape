@@ -1,7 +1,6 @@
 import { db } from '../config/firebase.js';
 import { collection, getDocs, query, where, or, orderBy, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 import Item from '../models/Item.js';
-import ActionType from '../models/ActionType.js';
 import GameService from './game.js';
 
 class StoreService {
@@ -38,61 +37,6 @@ class StoreService {
                 await callback(items);
             }
         )
-    }
-
-    async purchaseItem(gameId, character, item, quantity = 1) {
-        // Validate prerequisites
-        if (!item.checkPrerequisites(character)) {
-            throw new Error('Prerequisites not met');
-        }
-
-        // Check quantity available
-        if (!item.isAvailable() || item.quantity < quantity) {
-            throw new Error('Item not available in requested quantity');
-        }
-
-        // Check if character has enough gold
-        const totalCost = item.price * quantity;
-        if (character.gold < totalCost) {
-            throw new Error('Insufficient funds');
-        }
-
-        // Process transaction
-        await character.updateGold(-totalCost);
-        await item.updateQuantity(-quantity);
-        await character.addItem(item.itemId);
-
-        // Log the transaction
-        await GameService.logAction(gameId,
-            { 
-                characterId: character.characterId,
-                actionType: ActionType.PURCHASE_ITEM,
-                actionDetails: `${item.itemId},${quantity}`
-            }
-        );
-
-        return {
-            success: true,
-            newBalance: character.gold,
-            itemsPurchased: quantity
-        };
-    }
-
-    async getCharacterInventory(gameId, character) {
-        if (!character.items || character.items.length === 0) return [];
-
-        const itemsRef = collection(db, `games/${gameId}/items`);
-        const querySnapshot = await getDocs(itemsRef);
-
-        const inventory = [];
-        querySnapshot.forEach(doc => {
-            const item = new Item(gameId, doc.id, doc.data());
-            if (character.items.includes(item.itemId)) {
-                inventory.push(item);
-            }
-        });
-
-        return inventory;
     }
 }
 

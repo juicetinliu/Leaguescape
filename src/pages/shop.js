@@ -9,6 +9,7 @@ import { PAGES, GAME_STATE } from '../js/models/Enums.js';
 import { gameRouter } from '../js/utils/gamerouter.js';
 import { gold } from '../js/components/staticComponents.js'
 import { flickeringSymbols, flickeringSymbolsInterval } from '../js/components/flickeringSymbols.js'
+import CharacterHandlerService from '../js/services/handlers/characterHandler.js';
 
 class ShopPage extends Page {
     constructor() {
@@ -17,7 +18,7 @@ class ShopPage extends Page {
         this.currentCharacter = null;
         this.canAccessSecretShop = false;
         this.items = [];
-        this.cart = new Map();
+        this.cart = {};
 
         this.gameUnsubscribe = null;
         this.playerMessageUnsubscribe = null;
@@ -89,7 +90,7 @@ class ShopPage extends Page {
                             </div>
                         </div>
                         <div class="cart-footer">
-                            <button id="purchaseCart" class="text-button">PURCHASE</button>
+                            <button id="purchaseCart" class="text-button primary">PURCHASE</button>
                         </div>
                     </div>
                 </div>
@@ -117,8 +118,10 @@ class ShopPage extends Page {
             this.setupItemsUnsubscribe();
         }
 
-        this.flickeringSymbolsProfileNameInterval = flickeringSymbolsInterval(10, 'profile-name', 456);
-        this.flickeringSymbolsItemsHeadingInterval = flickeringSymbolsInterval(9, 'items-heading', 890);
+        if(this.canAccessSecretShop) {
+            this.flickeringSymbolsProfileNameInterval = flickeringSymbolsInterval(10, 'profile-name', 456);
+            this.flickeringSymbolsItemsHeadingInterval = flickeringSymbolsInterval(9, 'items-heading', 890);
+        }
     }
 
     async setupItemsUnsubscribe() {
@@ -147,14 +150,14 @@ class ShopPage extends Page {
         }
     }
 
-    async loadItems() {
+    loadItems() {
         console.log('Loading Items');
         const grid = document.getElementById('itemsGrid');
         
         const itemsHtml = this.items.map(item => {
             const itemLocked = !item.checkPrerequisites(this.currentCharacter);
             const itemOutOfStock = !item.isAvailable();
-            const itemInCart = this.cart.get(item.itemId) > 0;
+            const itemInCart = this.cart[item.itemId] > 0;
             return `
             <div class="item-wrapper ${itemLocked ? 'item-locked' : ''} ${itemOutOfStock ? 'item-oos' : ''} ${itemInCart ? 'selected' : ''}" id="item-wrapper-${item.itemId}">
                 <div class="item-add-to-cart-wrapper wrapper">
@@ -192,7 +195,7 @@ class ShopPage extends Page {
     }
 
     toggleItemInCart(itemId) {
-        const currentQuantity = this.cart.get(itemId) || 0;
+        const currentQuantity = this.cart[itemId] || 0;
 
         if(currentQuantity == 0) {
             const item = this.items.find(i => i.itemId === itemId);
@@ -200,23 +203,23 @@ class ShopPage extends Page {
             if (!item.checkPrerequisites(this.currentCharacter)) return;
             
             document.getElementById(`item-wrapper-${item.itemId}`).classList.add('selected');
-            this.cart.set(itemId, 1);
+            this.cart[itemId] = 1;
         } else {
-            this.cart.delete(itemId);
+            delete this.cart[itemId];
             document.getElementById(`item-wrapper-${itemId}`).classList.remove('selected');
         }
         this.updateCartDisplay();
     }
 
     updateCartBasedOnItems() {
-        Array.from(this.cart.entries()).map(([itemId, quantity]) => {
+        Object.entries(this.cart).map(([itemId, quantity]) => {
             const item = this.items.find(i => i.itemId === itemId);
             if(!item || !item.isAvailable()) {
-                this.cart.delete(itemId);
+                delete this.cart[itemId];
             } else if(!item.checkPrerequisites(this.currentCharacter)) {
-                this.cart.delete(itemId);
+                delete this.cart[itemId];
             } else if (quantity > item.quantity) {
-                this.cart.set(itemId, item.quantity);
+                this.cart[itemId] = item.quantity;
             }
         });
     }
@@ -225,9 +228,7 @@ class ShopPage extends Page {
         const cartItems = document.querySelector('.cart-items-wrapper');
         let total = 0;
 
-        const cartSize = this.cart.size;
-
-        const cartHtml = Array.from(this.cart.entries()).map(([itemId, quantity], index) => {
+        const cartHtml = Object.entries(this.cart).map(([itemId, quantity]) => {
             const item = this.items.find(i => i.itemId === itemId);
             const itemTotal = item.price * quantity;
             total += itemTotal;
@@ -273,13 +274,13 @@ class ShopPage extends Page {
         document.querySelectorAll('.cart-item-minus').forEach(btn => {
             const itemId = btn.dataset.itemId;
             btn.addEventListener('click', () => {
-                const current = this.cart.get(itemId) || 0;
-                if (current <= 1) {
+                const currentQuantity = this.cart[itemId] || 0;
+                if (currentQuantity <= 1) {
                     // remove item
-                    this.cart.delete(itemId);
+                    delete this.cart[itemId];
                     document.getElementById(`item-wrapper-${itemId}`).classList.remove('selected');
                 } else {
-                    this.cart.set(itemId, current - 1);
+                    this.cart[itemId] = currentQuantity - 1;
                 }
                 this.updateCartDisplay();
             });
@@ -288,11 +289,11 @@ class ShopPage extends Page {
         document.querySelectorAll('.cart-item-plus').forEach(btn => {
             const itemId = btn.dataset.itemId;
             btn.addEventListener('click', () => {
-                const current = this.cart.get(itemId) || 0;
+                const currentQuantity = this.cart[itemId] || 0;
                 const item = this.items.find(i => i.itemId === itemId);
                 if (!item) return;
-                if (current + 1 > item.quantity) return; // can't exceed stock
-                this.cart.set(itemId, current + 1);
+                if (currentQuantity + 1 > item.quantity) return; // can't exceed stock
+                this.cart[itemId] = currentQuantity + 1;
                 this.updateCartDisplay();
             });
         });
@@ -301,21 +302,11 @@ class ShopPage extends Page {
     async handlePurchase() {
         if (this.cart.size === 0) return;
 
-        for (const [itemId, quantity] of this.cart.entries()) {
-            const item = this.items.find(i => i.itemId === itemId);
-            try {
-                await StoreService.purchaseItem(this.currentGame.gameId, this.currentCharacter, item, quantity);
-            } catch (error) {
-                console.error('Purchase failed:', error);
-                alert(error.message);
-                return;
-            }
-        }
+        await CharacterHandlerService.purchaseCart(this.currentGame.gameId, this.currentCharacter.characterId, this.cart);
 
-        this.cart.clear();
-        this.updateCartDisplay();
-        this.items = await StoreService.getAvailableItems(this.currentGame.gameId, this.currentCharacter, this.canAccessSecretShop);
+        this.cart = {}
         this.loadItems();
+        this.updateCartDisplay();
     }
 
     cleanup() {
@@ -323,7 +314,7 @@ class ShopPage extends Page {
         this.currentCharacter = null;
         this.canAccessSecretShop = false;
         this.items = [];
-        this.cart.clear();
+        this.cart = {};
 
         if (this.gameUnsubscribe) {
             this.gameUnsubscribe();

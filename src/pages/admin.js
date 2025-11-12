@@ -5,9 +5,10 @@ import MessageService from '../js/services/message.js';
 import { MessageTo, MessageType } from '../js/models/MessageTypes.js';
 import { router } from '../js/utils/router.js';
 import { PAGES, GAME_STATE } from '../js/models/Enums.js';
+import AdminHandlerService from '../js/services/handlers/adminHandler.js';
 
 const TABS = {
-    PROFILES: 'profiles',
+    CHARACTERS: 'characters',
     ITEMS: 'items',
     BANK: 'bank'
 }
@@ -16,10 +17,13 @@ class AdminPage extends Page {
     constructor() {
         super(PAGES.admin);
         this.currentGame = null;
-        this.activeTab = TABS.PROFILES;
+        this.activeTab = TABS.CHARACTERS;
         this.gamePlayersUnsubscribe = null;
+        this.gameItemsUnsubscribe = null;
+        this.gameCharactersUnsubscribe = null;
         this.adminMessageUnsubscribe = null;
 
+        this.players = [];
         this.characters = [];
         this.items = [];
     }
@@ -37,6 +41,9 @@ class AdminPage extends Page {
             router.navigate(PAGES.user);
             return;
         }
+
+        this.items = await GameService.getGameItems(this.currentGame.gameId);
+        // We don't need to initialize characters - as it is the first tab that gets loaded. SHOULD GET THE SNAPSHOTS WORKING
 
         this.initializeUI();
         this.attachEventListeners();
@@ -71,7 +78,7 @@ class AdminPage extends Page {
 
                 <div class="card">
                     <div class="tabs">
-                        <button class="tab-btn active" data-tab="${TABS.PROFILES}">Profiles</button>
+                        <button class="tab-btn active" data-tab="${TABS.CHARACTERS}">Characters</button>
                         <button class="tab-btn" data-tab="${TABS.ITEMS}">Items</button>
                         <button class="tab-btn" data-tab="${TABS.BANK}">Bank</button>
                     </div>
@@ -171,6 +178,12 @@ class AdminPage extends Page {
             this.gamePlayersUnsubscribe = GameService.onGamePlayersSnapshot(this.currentGame.gameId, async (gameLobbyData) => {
                 await this.loadLobby(gameLobbyData);
             });
+            // this.gameCharactersUnsubscribe = GameService.onGameCharactersSnapshot(this.currentGame.gameId, async (gameCharactersData) => {
+            //     await this.loadCharacters(document.getElementById('tabContent'), gameCharactersData);
+            // });
+            // this.gameItemsUnsubscribe = GameService.onGameItemsSnapshot(this.currentGame.gameId, async (gameItemsData) => {
+            //     await this.loadItems(document.getElementById('tabContent'), gameItemsData);
+            // });
 
             this.setupAdminMessageListener()
         }
@@ -178,8 +191,8 @@ class AdminPage extends Page {
 
     async loadLobby(gamePlayers) {
         const lobbyContent = document.getElementById('lobbyContent');
-        const players = gamePlayers ? gamePlayers : await GameService.getGamePlayers(this.currentGame.gameId);
-        const playersHtml = players.map(player => `
+        this.players = gamePlayers ? gamePlayers : await GameService.getGamePlayers(this.currentGame.gameId);
+        const playersHtml = this.players.map(player => `
             <div class="player-item">
                 <span>${player.playerName || 'Unnamed Player'}</span>
                 <select class="login-mode-select" data-player-id="${player.playerId}">
@@ -218,8 +231,8 @@ class AdminPage extends Page {
     async loadActiveTab() {
         const content = document.getElementById('tabContent');
         switch (this.activeTab) {
-            case TABS.PROFILES:
-                await this.loadProfiles(content);
+            case TABS.CHARACTERS:
+                await this.loadCharacters(content);
                 break;
             case TABS.ITEMS:
                 await this.loadItems(content);
@@ -230,8 +243,8 @@ class AdminPage extends Page {
         }
     }
 
-    async loadItems(container) {
-        this.items = await GameService.getGameItems(this.currentGame.gameId);
+    async loadItems(container, gameItemsData) {
+        this.items = gameItemsData ? gameItemsData : await GameService.getGameItems(this.currentGame.gameId);
         
         const grid = document.createElement('div');
         grid.className = 'items-grid';
@@ -276,8 +289,8 @@ class AdminPage extends Page {
         container.appendChild(grid);
     }
 
-    async loadProfiles(container) {
-        this.characters = await GameService.getGameCharacters(this.currentGame.gameId);
+    async loadCharacters(container, gameCharactersData) {
+        this.characters = gameCharactersData ? gameCharactersData : await GameService.getGameCharacters(this.currentGame.gameId);
         
         const grid = document.createElement('div');
         grid.className = 'profile-grid';
@@ -362,6 +375,7 @@ class AdminPage extends Page {
         const characterNameParts = character.name ? character.name.split(' ') : [""];
         const characterFirstName = characterNameParts[0];
         const characterLastName = characterNameParts.slice(1).join(" ");
+        const isUpdate = !!character.characterId; //otherwise this is for creating!
 
         form.innerHTML = `
             <div class="form-group">
@@ -396,6 +410,11 @@ class AdminPage extends Page {
                 <label>STARTING BANK BALANCE:</label>
                 <input type="number" id="startingGold" value="${character.startingGold || 0}" required>
             </div>
+            ${isUpdate ? 
+                `<div class="form-group">
+                    <label>CURRENT BANK BALANCE:</label>
+                    <input type="number" id="actualGold" value="${character.gold || 0}" required>
+                </div>` : ''}
             <div class="form-group">
                 <label>CAN ACCESS SECRET:</label>
                 <input type="checkbox" id="canAccessSecret" ${character.canAccessSecret ? 'checked' : ''}>
@@ -416,21 +435,21 @@ class AdminPage extends Page {
                 securityQuestion: document.getElementById('securityQuestion').value,
                 securityAnswer: document.getElementById('securityAnswer').value,
                 startingGold: parseInt(document.getElementById('startingGold').value),
-                gold: parseInt(document.getElementById('startingGold').value),
+                gold: parseInt(document.getElementById(isUpdate ? 'actualGold' : 'startingGold').value),
                 // profileImage: , soon!
                 // emblemImage: , soon!
                 canAccessSecret: document.getElementById('canAccessSecret').checked
                 //items - TODO: support starting items?
             };
 
-            if (character.characterId) {
+            if (isUpdate) {
                 await GameService.updateCharacter(this.currentGame.gameId, character.characterId, characterData);
             } else {
                 await GameService.createCharacter(this.currentGame.gameId, characterData);
             }
 
             characterModal.style.display = 'none';
-            this.loadProfiles(document.getElementById('tabContent'));
+            this.loadCharacters(document.getElementById('tabContent'));
         };
 
         document.getElementById('cancelCharacter').onclick = () => {
@@ -519,7 +538,7 @@ class AdminPage extends Page {
     async deleteCharacter(characterId) {
         if (confirm('Are you sure you want to delete this character?')) {
             await GameService.deleteCharacter(this.currentGame.gameId, characterId);
-            this.loadProfiles(document.getElementById('tabContent'));
+            this.loadCharacters(document.getElementById('tabContent'));
         }
     }
 
@@ -564,9 +583,14 @@ class AdminPage extends Page {
     async processAdminMessage(message) {
         console.log(message);
         await message.markAsProcessed();
+        const player = this.players.find(player => { return player.playerId === message.playerId});
+        if(!player) throw 'No player found, treating it as an invalid message.';
+        
+        const playerId = player.playerId;
+        const gameId = this.currentGame.gameId;
+
         if (message.messageType === MessageType.LOGIN_ATTEMPT) {
             const { accountNumber, accountPassword } = message.messageDetails;
-            const playerId = message.playerId;
 
             const character = this.characters.find(c => 
                 c.accountNumber === accountNumber && 
@@ -574,21 +598,31 @@ class AdminPage extends Page {
             );
 
             if (character) {
-                await GameService.adminHandlePlayerLogIn(this.currentGame.gameId, playerId, character.characterId, true);
+                await AdminHandlerService.handlePlayerLogIn(gameId, playerId, character.characterId, true);
             }
         } else if (message.messageType === MessageType.LOGOUT_ATTEMPT) {
             const { characterId } = message.messageDetails;
-            const playerId = message.playerId;
 
             if (characterId) {
-                await GameService.adminHandlePlayerLogOut(this.currentGame.gameId, playerId, characterId, true);
+                await AdminHandlerService.handlePlayerLogOut(gameId, playerId, characterId, true);
             }
+        } else if (message.messageType === MessageType.PURCHASE_ATTEMPT) {
+            const { characterId, cart } = message.messageDetails;
+            const character = this.characters.find(character => { return character.characterId === characterId });
+            
+            const { approved, rejectionReason, approvedItems, totalPrice } = await AdminHandlerService.checkPlayerCartPurchaseRequirements(gameId, player, character, cart, this.items);
+            
+            await AdminHandlerService.handlePlayerCartPurchaseRequest(gameId, playerId, characterId, approvedItems, totalPrice, approved, rejectionReason);
         }
         
     }
 
     cleanup() {
         super.cleanup();
+        this.players = [];
+        this.characters = [];
+        this.items = [];
+
         if (this.gamePlayersUnsubscribe) {
             this.gamePlayersUnsubscribe();
         }

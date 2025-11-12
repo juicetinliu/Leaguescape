@@ -50,22 +50,6 @@ class Message {
         return message;
     }
 
-    // static async getUnprocessedToPlayerMessages(gameId, playerId) {
-    //     const messageRef = collection(db, `games/${gameId}/players/${playerId}/${MessageTo.PLAYER}`);
-    //     const q = query(messageRef, where('processed', '==', false), orderBy('activityTime', 'desc'));
-    //     const snapshot = await getDocs(q);
-        
-    //     return snapshot.docs.map(doc => new Message(gameId, doc.id, doc.data()));
-    // }
-
-    // static async getUnprocessedToAdminMessages(gameId) {
-    //     const messageRef = collection(db, `games/${gameId}/${MessageTo.ADMIN}`);
-    //     const q = query(messageRef, where('processed', '==', false), orderBy('activityTime', 'desc'));
-    //     const snapshot = await getDocs(q);
-        
-    //     return snapshot.docs.map(doc => new Message(gameId, doc.id, doc.data()));
-    // }
-
     async markAsProcessed() {
         this.processed = true;
         if(this.messageTo === MessageTo.ADMIN) {

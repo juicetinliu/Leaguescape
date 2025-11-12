@@ -8,11 +8,16 @@ button.text-button {
     background-color: var(--background-secondary-color);
     padding: 10px 20px;
     min-width: 150px;
+    cursor: pointer;
 }
 
 button.text-button:hover {
     background-color: var(--background-secondary-color-inverse);
-    cursor: pointer;
+}
+
+button.primary {
+    background-color: var(--background-accent-color);
+    color: var(--accent-color);
 }
 
 input.text-form-input {

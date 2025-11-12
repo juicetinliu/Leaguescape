@@ -51,9 +51,9 @@ States only progress from `[Setup]` -> `[Running]` -> `[End]`, and NOT backwards
 - /players
     * playerId - same as the /users authId!
     - playerName (string) - initially set based on username, can be edited in game.
+    - loginMode (string<`normal`|`secret`|`inventory`>) - dictates the mode which the player will enter through the `Login` page (can only be changed by the [admin]!)
     - privateDetails/'data'/isBanned (boolean) - if true, [user] cannot access the game. This can be set by the [admin] to ban a specific [user].
     - privateDetails/'data'/assumedCharacterId (string) - empty if not a character, characterId if [player] successfully becomes a [*character]
-    - privateDetails/'data'/loginMode (string<`normal`|`secret`|`inventory`>) - dictates the mode which the player will enter through the `Login` page
 - /items - all fields only modifiable by the [admin] unless said otherwise.
     * itemId - uuid
     - itemNumber (number) - display field
@@ -77,14 +77,14 @@ States only progress from `[Setup]` -> `[Running]` -> `[End]`, and NOT backwards
     - startingGold (number) - starting amount of [gold] for the [*character] once the [game] is `[running]`
     - canAccessSecret (boolean) - if the character gets access to the secret shop
     - gold (number) - actual current gold balance while the [game] is `[running]`. Since purchases are 'approved' by the admin, we do NOT allow modification by other roles.
-    - items (array<string>) - list of owned items by itemId
+    - items (Map<string,string>) - list of owned items by itemId and quantity
     - ??? - more fields TBD.
 - /actions - message bus + activity log for later!
     * actionId - uuid
     - playerId (string) - playerId - who did this action.
     - characterId (string) - who did this action. Can be empty if it was the admin who performed this or if it was something non-character specific like logging in.
-    - actionType (string<`enterGame`|`exitGame`|`loginCharacter`|`logoutCharacter`|`purchaseItem`|`withdrawGold`|`depositGold`|`purchaseItemStatus`|`withdrawGoldStatus`|`depositGoldtatus`|`playerUpdated`|`itemUpdated`|`characterUpdated`>) - 
-    - actionDetails (string) - delims + message (or no content if not necessary). E.g. `purchaseItem` includes itemId and quantity.
+    - actionType (string<`enterGame`|`exitGame`|`loginCharacter`|`logoutCharacter`|`purchaseItem`|`withdrawGold`|`depositGold`|`playerUpdated`|`itemUpdated`|`characterUpdated`>) - 
+    - actionDetails (string) - delims + message (or no content if not necessary). E.g. `purchaseItem` includes itemIds and quantities.
     - activityTime (timestamp) - timestamp for when the action was taken
 
 # Pages

@@ -10,6 +10,9 @@ export const MessageType = {
     LOGOUT_ATTEMPT: 'logoutAttempt',
     LOGOUT_SUCCESS: 'logoutSuccess',
     LOGOUT_FAILURE: 'logoutFailure',
+    PURCHASE_ATTEMPT: 'purchaseAttempt',
+    PURCHASE_SUCCESS: 'purchaseSuccess',
+    PURCHASE_FAILURE: 'purchaseFailure',
 }
 
 export default { MessageType, MessageTo };

@@ -6,6 +6,7 @@ import { MessageType } from '../js/models/MessageTypes.js';
 import { router } from '../js/utils/router.js';
 import { PAGES, GAME_STATE } from '../js/models/Enums.js';
 import { gameRouter } from '../js/utils/gamerouter.js';
+import PlayerHandlerService from '../js/services/handlers/playerHandler.js';
 
 class LoginPage extends Page {
     constructor() {
@@ -75,7 +76,7 @@ class LoginPage extends Page {
             const accountPassword = document.getElementById('accountPassword').value;
 
             try {
-                await GameService.playerLogIn(this.currentGame.gameId, accountNumber, accountPassword);
+                await PlayerHandlerService.logIn(this.currentGame.gameId, accountNumber, accountPassword);
             } catch (error) {
                 console.error('Login error:', error);
                 alert('An error occurred during login');

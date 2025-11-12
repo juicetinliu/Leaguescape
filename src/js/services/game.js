@@ -148,7 +148,7 @@ class GameService {
             assumedCharacterId: characterId
         });
         await this.logAction(gameId, {
-            actionType: ActionType.ASSUME_CHARACTER,
+            actionType: ActionType.LOGIN_CHARACTER,
             characterId: characterId,
         }, playerId);
     }
@@ -159,7 +159,7 @@ class GameService {
             assumedCharacterId: ''
         });
         await this.logAction(gameId, {
-            actionType: ActionType.UNASSUME_CHARACTER,
+            actionType: ActionType.LOGOUT_CHARACTER,
             characterId: characterId,
         }, playerId);
     }
@@ -169,73 +169,6 @@ class GameService {
         const playerRef = this.createPlayerRef(gameId, playerId);
         await updateDoc(playerRef, {
             loginMode: loginMode
-        });
-    }
-
-
-    async adminHandlePlayerLogOut(gameId, playerId, characterId, approved, rejectionReason = "") {
-        if (approved) {
-            await this.clearPlayerAssumedCharacter(gameId, playerId, characterId);
-            await MessageService.sendAdminMessageToPlayer(gameId, {
-                messageType: MessageType.LOGOUT_SUCCESS
-            }, playerId);
-        } else {
-            await MessageService.sendAdminMessageToPlayer(gameId, {
-                messageType: MessageType.LOGOUT_FAILURE,
-                messageDetails: { 
-                    rejectionReason: rejectionReason 
-                }
-            }, playerId);
-        }
-    }
-
-    async adminHandlePlayerLogIn(gameId, playerId, characterId, approved, rejectionReason = "") {
-        if (approved) {
-            await this.updatePlayerAssumedCharacter(gameId, playerId, characterId);
-            await MessageService.sendAdminMessageToPlayer(gameId, {
-                messageType: MessageType.LOGIN_SUCCESS,
-                messageDetails: { 
-                    characterId: characterId 
-                }
-            }, playerId);
-        } else {
-            await MessageService.sendAdminMessageToPlayer(gameId, {
-                messageType: MessageType.LOGIN_FAILURE,
-                messageDetails: { 
-                    rejectionReason: rejectionReason 
-                }
-            }, playerId);
-        }
-    }
-
-    // Login page actions
-    async playerLogIn(gameId, accountNumber, accountPassword) {
-        await this.logAction(gameId, {
-            actionType: ActionType.LOGIN_CHARACTER,
-            actionDetails: { 
-                accountNumber: accountNumber, 
-                accountPassword: accountPassword 
-            }
-        });
-        await MessageService.sendPlayerMessageToAdmin(gameId, {
-            messageType: MessageType.LOGIN_ATTEMPT,
-            messageDetails: {
-                accountNumber: accountNumber, 
-                accountPassword: accountPassword 
-            }
-        });
-    }
-
-    async playerLogOut(gameId, characterId) {
-        await this.logAction(gameId, {
-            actionType: ActionType.LOGOUT_CHARACTER,
-            characterId: characterId
-        });
-        await MessageService.sendPlayerMessageToAdmin(gameId, {
-            messageType: MessageType.LOGOUT_ATTEMPT,
-            messageDetails: {
-                characterId: characterId
-            }
         });
     }
 
@@ -317,6 +250,24 @@ class GameService {
     async updateCharacter(gameId, characterId, characterData) {
         const character = await Character.get(gameId, characterId);
         await character.update(characterData);
+    }
+
+    async addToCharacterItems(gameId, playerId, characterId, itemsMap, totalPrice) {
+        const character = await Character.get(gameId, characterId);
+        await character.addItems(itemsMap);
+        await this.logAction(gameId, {
+            actionType: ActionType.PURCHASE_ITEMS,
+            characterId: characterId,
+            actionDetails: {
+                items: itemsMap,
+                totalPrice: totalPrice
+            }
+        }, playerId);
+    }
+
+    async clearCharacterItems(gameId, playerId, characterId) {
+        const character = await Character.get(gameId, characterId);
+        await character.deleteAllItems();
     }
 
     async updateItem(gameId, itemId, itemData) {

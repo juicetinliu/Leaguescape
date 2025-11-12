@@ -6,6 +6,7 @@ import { MessageType } from '../js/models/MessageTypes.js';
 import { router } from '../js/utils/router.js';
 import { PAGES, GAME_STATE } from '../js/models/Enums.js';
 import { gameRouter } from '../js/utils/gamerouter.js';
+import CharacterHandlerService from '../js/services/handlers/characterHandler.js';
 
 class CharacterPage extends Page {
     constructor() {
@@ -92,7 +93,7 @@ class CharacterPage extends Page {
 
     attachEventListeners() {
         document.getElementById('logoutCharacter').addEventListener('click', async () => {
-            await GameService.playerLogOut(this.currentGame.gameId, this.currentCharacter.characterId);
+            await CharacterHandlerService.logOut(this.currentGame.gameId, this.currentCharacter.characterId);
         });
 
         document.getElementById('goToShop').addEventListener('click', () => {
