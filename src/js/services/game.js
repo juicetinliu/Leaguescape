@@ -200,11 +200,11 @@ class GameService {
         });
     }
 
-    async getGamePlayers(gameId) {
+    async getGamePlayers(gameId, fetchPrivateDetails = true) {
         const playersRef = collection(db, `games/${gameId}/players`);
         const players = await getDocs(playersRef);
         return await Promise.all(players.docs.map(async (doc) => {
-            return await this.getPlayerDetails(gameId, doc);
+            return await this.getPlayerDetails(gameId, doc, fetchPrivateDetails);
         }));
     }
 
@@ -253,9 +253,27 @@ class GameService {
         await character.update(characterData);
     }
 
-    async addToCharacterItems(gameId, playerId, characterId, itemsMap, totalPrice) {
+    async updateCharacterGold(gameId, characterId, amount) {
+        const character = await Character.get(gameId, characterId);
+        await character.updateGold(amount);
+    }
+
+    async addToCharacterItems(gameId, characterId, itemsMap) {
         const character = await Character.get(gameId, characterId);
         await character.addItems(itemsMap);
+    }
+
+    async clearCharacterItems(gameId, playerId, characterId) {
+        const character = await Character.get(gameId, characterId);
+        await character.deleteAllItems();
+    }
+
+    async purchaseItemsCharacter(gameId, playerId, characterId, itemsMap, totalPrice) {
+        await this.updateCharacterGold(gameId, characterId, -totalPrice);
+        await Promise.all(Object.entries(itemsMap).map(async ([itemId, itemDetails]) => {
+            return await this.updateItemQuantity(gameId, itemId, -itemDetails.quantity);
+        }));
+        await this.addToCharacterItems(gameId, characterId, itemsMap);
         await this.logAction(gameId, {
             actionType: ActionType.PURCHASE_ITEMS,
             characterId: characterId,
@@ -264,11 +282,6 @@ class GameService {
                 totalPrice: totalPrice
             }
         }, playerId);
-    }
-
-    async clearCharacterItems(gameId, playerId, characterId) {
-        const character = await Character.get(gameId, characterId);
-        await character.deleteAllItems();
     }
 
     async getGameItems(gameId) {
@@ -291,6 +304,11 @@ class GameService {
     async updateItem(gameId, itemId, itemData) {
         const item = await Item.get(gameId, itemId);
         await item.update(itemData);
+    }
+
+    async updateItemQuantity(gameId, itemId, amount) {
+        const item = await Item.get(gameId, itemId);
+        await item.updateQuantity(amount);
     }
 
     getCurrentGameId() {

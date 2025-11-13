@@ -88,7 +88,7 @@ class LobbyPage extends Page {
     }
 
     async updatePlayersList(gamePlayers) {
-        const players = gamePlayers ? gamePlayers : await GameService.getGamePlayers(this.currentGame.gameId);
+        const players = gamePlayers ? gamePlayers : await GameService.getGamePlayers(this.currentGame.gameId, false);
         const list = document.getElementById('playersList');
         
         list.innerHTML = players.map(player => `

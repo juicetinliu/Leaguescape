@@ -48,27 +48,58 @@ class AdminHandlerService {
         let output = { approved: false, rejectionReason: '', approvedItems: {}, totalPrice: 0 };
 
         // first check if the player is the character
-        console.log(gameId, player, character, cart, availableItems);
+        if(player.privateDetails.assumedCharacterId !== character.characterId) {
+            output.rejectionReason = 'Player did not assume this character'
+            return output;
+        }
+        
+        // Then check if the items are in stock and all reqs are met - remove anything unmet!
+        let approvedItems = {};
+        let totalPrice = 0;
+        Object.entries(cart).map(([itemId, quantity]) => {
+            const item = availableItems.find(i => i.itemId === itemId);
+            let itemTotalPrice = 0;
+            if(!item || !item.isAvailable()) {
+                delete approvedItems[itemId];
+            } else if(!item.checkPrerequisites(character)) {
+                delete approvedItems[itemId];
+            } else if (quantity > item.quantity) {
+                approvedItems[itemId] = {
+                    quantity: item.quantity,
+                    price: item.price
+                }
+                itemTotalPrice = item.price * item.quantity;
+            } else {
+                approvedItems[itemId] = {
+                    quantity: quantity,
+                    price: item.price
+                }
+                itemTotalPrice = item.price * quantity;
+            }
+            totalPrice += itemTotalPrice;
+        });
 
-        // Then check if the items are in stock and all reqs are met - remove anything unmet.
+        // Then check if the character has enough gold for the remaining items
+        if(character.gold < totalPrice) {
+            output.rejectionReason = 'Insufficient Gold'
+            return output
+        }
 
-        // Then check if the player has enough gold for the remaining items
-
-        // 
         output.approved = true;
-        output.approvedItems = cart;
-        output.totalPrice = 0;
+        output.approvedItems = approvedItems;
+        output.totalPrice = totalPrice;
 
         return output;
     }
 
-    async handlePlayerCartPurchaseRequest(gameId, playerId, characterId, cart, totalPrice, approved, rejectionReason = "") {
+    async handlePlayerCartPurchaseRequest(gameId, playerId, characterId, approvedItems, totalPrice, approved, rejectionReason = "") {
         if (approved) {
-            await GameService.addToCharacterItems(gameId, playerId, characterId, cart, totalPrice);
+            await GameService.purchaseItemsCharacter(gameId, playerId, characterId, approvedItems, totalPrice);
             await MessageService.sendAdminMessageToPlayer(gameId, {
                 messageType: MessageType.PURCHASE_SUCCESS,
                 messageDetails: { 
-                    //no details?
+                    approvedItems: approvedItems,
+                    totalPrice: totalPrice
                 }
             }, playerId);
         } else {

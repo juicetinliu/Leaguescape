@@ -198,8 +198,10 @@ class AdminPage extends Page {
                     <option value="inventory" ${player.loginMode === 'inventory' ? 'selected' : ''}>Inventory</option>
                 </select>
                 <button class="btn kick-player" data-player-id="${player.playerId}">Kick</button>
-                <button class="btn ban-player" data-player-id="${player.playerId}">Ban</button>
-                <button class="btn unban-player" data-player-id="${player.playerId}">UnBan</button>
+                ${!player.privateDetails.isBanned ?
+                    `<button class="btn ban-player" data-player-id="${player.playerId}">Ban</button>`
+                    : `<button class="btn unban-player" data-player-id="${player.playerId}">UnBan</button>`
+                }
             </div>
         `).join('');
 
@@ -505,7 +507,7 @@ class AdminPage extends Page {
                 description: document.getElementById('itemDescription').value,
                 quantity: parseInt(document.getElementById('itemQuantity').value),
                 price: parseInt(document.getElementById('itemPrice').value),
-                prereqs: document.getElementById('itemPrereqs').value,
+                prereqs: document.getElementById('itemPrereqs').value, // Probably should make this into some selection CX. Currently requires list of itemIds which is hard to translate!
                 isSecret: document.getElementById('itemIsSecret').checked,
             };
 
@@ -558,14 +560,14 @@ class AdminPage extends Page {
     async banPlayer(playerId) {
         if (confirm('Are you sure you want to ban this player?')) {
             await GameService.banPlayer(this.currentGame.gameId, playerId);
-            // await this.loadLobby(); // Not necessary as onSnapshot will handle updates
+            await this.loadLobby(); // necessary - onSnapshot only handles updates to player data, not privateDetails!
         }
     }
 
     async unBanPlayer(playerId) {
         if (confirm('Are you sure you want to unban this player?')) {
             await GameService.unBanPlayer(this.currentGame.gameId, playerId);
-            // await this.loadLobby(); // Not necessary as onSnapshot will handle updates
+            await this.loadLobby(); // necessary - onSnapshot only handles updates to player data, not privateDetails!
         }
     }
 
@@ -582,11 +584,11 @@ class AdminPage extends Page {
     async processAdminMessage(message) {
         console.log(message);
         await message.markAsProcessed();
+        const gameId = this.currentGame.gameId;
         const player = this.players.find(player => { return player.playerId === message.playerId});
         if(!player) throw 'No player found, treating it as an invalid message.';
         
         const playerId = player.playerId;
-        const gameId = this.currentGame.gameId;
 
         if (message.messageType === MessageType.LOGIN_ATTEMPT) {
             const { accountNumber, accountPassword } = message.messageDetails;
@@ -599,12 +601,14 @@ class AdminPage extends Page {
             if (character) {
                 await AdminHandlerService.handlePlayerLogIn(gameId, playerId, character.characterId, true);
             }
+            this.players = await GameService.getGamePlayers(gameId);
         } else if (message.messageType === MessageType.LOGOUT_ATTEMPT) {
             const { characterId } = message.messageDetails;
 
             if (characterId) {
                 await AdminHandlerService.handlePlayerLogOut(gameId, playerId, characterId, true);
             }
+            this.players = await GameService.getGamePlayers(gameId);
         } else if (message.messageType === MessageType.PURCHASE_ATTEMPT) {
             const { characterId, cart } = message.messageDetails;
             const character = this.characters.find(character => { return character.characterId === characterId });

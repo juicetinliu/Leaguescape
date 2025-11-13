@@ -47,7 +47,9 @@ class Item {
     }
 
     async updateQuantity(amount) {
-        this.quantity = Math.max(0, this.quantity + amount);
+        const balance = this.quantity + amount;
+        if(balance < 0) throw 'Item cannot end up with negative quantity!'
+        this.quantity = balance;
         await updateDoc(doc(db, `games/${this.gameId}/items`, this.itemId), {
             quantity: this.quantity
         });
@@ -62,7 +64,7 @@ class Item {
         if (this.prereqs === 'LOCKED') return false;
         
         const requiredItems = this.prereqs.split(',');
-        return requiredItems.every(item => character.items.includes(item));
+        return requiredItems.every(itemId => Object.keys(character.items).includes(itemId));
     }
 }
 

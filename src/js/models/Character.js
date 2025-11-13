@@ -57,7 +57,9 @@ class Character {
     }
 
     async updateGold(amount) {
-        this.gold = Math.max(0, this.gold + amount);
+        const balance = this.gold + amount;
+        if(balance < 0) throw 'Character cannot end up in debt!'
+        this.gold = balance
         await updateDoc(doc(db, `games/${this.gameId}/characters`, this.characterId), {
             gold: this.gold
         });
@@ -73,9 +75,9 @@ class Character {
     // }
 
     async addItems(itemsMap) {
-        Object.entries(itemsMap).map(([itemId, quantity]) => {
+        Object.entries(itemsMap).map(([itemId, itemDetails]) => {
             const itemQuantity = this.items[itemId] || 0;
-            this.items[itemId] = itemQuantity + quantity;
+            this.items[itemId] = itemQuantity + itemDetails.quantity;
         });
         await updateDoc(doc(db, `games/${this.gameId}/characters`, this.characterId), {
             items: this.items

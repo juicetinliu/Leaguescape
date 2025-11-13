@@ -300,13 +300,13 @@ class ShopPage extends Page {
     }
 
     async handlePurchase() {
-        if (this.cart.size === 0) return;
+        if (Object.entries(this.cart).length === 0) return;
 
         await CharacterHandlerService.purchaseCart(this.currentGame.gameId, this.currentCharacter.characterId, this.cart);
 
-        this.cart = {}
-        this.loadItems();
-        this.updateCartDisplay();
+        this.cart = {} //reset cart to empty map
+        this.loadItems(); //load items to update selections baesd on empty map
+        this.updateCartDisplay(); //load cart to update cart based on empty map
     }
 
     cleanup() {
