@@ -19,6 +19,40 @@ class GameService {
         return doc(db, `games/${gameId}/players/${playerId}/privateDetails/data`);
     }
 
+    onGameSnapshot(gameId, callback) {
+        return onSnapshot(doc(db, 'games', gameId), async (gameDoc) => {
+            await callback(gameDoc.data());
+        });
+    }
+
+    onGamePlayersSnapshot(gameId, callback, fetchPrivateDetails = true) {
+        return onSnapshot(collection(db, `games/${gameId}/players`), async (players) => {
+            const playerDetails = await Promise.all(players.docs.map(async (doc) => {
+                return await this.getPlayerDetails(gameId, doc, fetchPrivateDetails);
+            }))
+
+            await callback(playerDetails);
+        });
+    }
+    
+    onGameCharactersSnapshot(gameId, callback) {
+        return onSnapshot(collection(db, `games/${gameId}/characters`), async (charactersData) => {
+            const characters = charactersData.docs.map(doc => 
+                new Character(gameId, doc.id, doc.data())
+            ); 
+            await callback(characters);
+        });
+    }
+
+    onGameItemsSnapshot(gameId, callback) {
+        return onSnapshot(collection(db, `games/${gameId}/items`), async (itemsData) => {
+            const items = itemsData.docs.map(doc => 
+                new Item(gameId, doc.id, doc.data())
+            ); 
+            await callback(items);
+        });
+    }
+
     async createGame(adminId) {
         const game = await Game.create(adminId);
         return game;
@@ -66,12 +100,6 @@ class GameService {
     async getPlayerData(gameId, playerId) {
         const playerData = await getDoc(this.createPlayerRef(gameId, playerId));
         return playerData.data();
-    }
-
-    onGameSnapshot(gameId, callback) {
-        return onSnapshot(doc(db, 'games', gameId), async (gameDoc) => {
-            await callback(gameDoc.data());
-        });
     }
 
     async getUserGames(userId) {
@@ -199,16 +227,6 @@ class GameService {
             privateDetails: privateDetails }
     }
 
-    onGamePlayersSnapshot(gameId, callback, fetchPrivateDetails = true) {
-        return onSnapshot(collection(db, `games/${gameId}/players`), async (players) => {
-            const playerDetails = await Promise.all(players.docs.map(async (doc) => {
-                return await this.getPlayerDetails(gameId, doc, fetchPrivateDetails);
-            }))
-
-            await callback(playerDetails);
-        });
-    }
-
     async getGameCharacters(gameId) {
         const charactersRef = collection(db, `games/${gameId}/characters`);
         const characters = await getDocs(charactersRef);
@@ -221,30 +239,13 @@ class GameService {
         return await Character.get(gameId, characterId);
     }
 
-    async getGameItems(gameId) {
-        const itemsRef = collection(db, `games/${gameId}/items`);
-        const items = await getDocs(itemsRef);
-        return items.docs.map(doc => 
-            new Item(gameId, doc.id, doc.data())
-        );
-    }
-
     async createCharacter(gameId, characterData) {
         return await Character.create(gameId, characterData);
-    }
-
-    async createItem(gameId, itemData) {
-        return await Item.create(gameId, itemData);
     }
 
     async deleteCharacter(gameId, characterId) {
         const character = await Character.get(gameId, characterId);
         await character.delete();
-    }
-
-    async deleteItem(gameId, itemId) {
-        const item = await Item.get(gameId, itemId);
-        await item.delete();
     }
 
     async updateCharacter(gameId, characterId, characterData) {
@@ -268,6 +269,23 @@ class GameService {
     async clearCharacterItems(gameId, playerId, characterId) {
         const character = await Character.get(gameId, characterId);
         await character.deleteAllItems();
+    }
+
+    async getGameItems(gameId) {
+        const itemsRef = collection(db, `games/${gameId}/items`);
+        const items = await getDocs(itemsRef);
+        return items.docs.map(doc => 
+            new Item(gameId, doc.id, doc.data())
+        );
+    }
+
+    async createItem(gameId, itemData) {
+        return await Item.create(gameId, itemData);
+    }
+
+    async deleteItem(gameId, itemId) {
+        const item = await Item.get(gameId, itemId);
+        await item.delete();
     }
 
     async updateItem(gameId, itemId, itemData) {

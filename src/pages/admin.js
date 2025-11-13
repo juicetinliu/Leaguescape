@@ -42,13 +42,10 @@ class AdminPage extends Page {
             return;
         }
 
-        this.items = await GameService.getGameItems(this.currentGame.gameId);
-        // We don't need to initialize characters - as it is the first tab that gets loaded. SHOULD GET THE SNAPSHOTS WORKING
-
         this.initializeUI();
         this.attachEventListeners();
         // this.loadLobby(); // Not necessary as onSnapshot will handle updates
-        this.loadActiveTab();
+        // this.loadActiveTab(); // Not necessary as onSnapshot will update the first tab!
     }
 
     initializeUI() {
@@ -178,12 +175,12 @@ class AdminPage extends Page {
             this.gamePlayersUnsubscribe = GameService.onGamePlayersSnapshot(this.currentGame.gameId, async (gameLobbyData) => {
                 await this.loadLobby(gameLobbyData);
             });
-            // this.gameCharactersUnsubscribe = GameService.onGameCharactersSnapshot(this.currentGame.gameId, async (gameCharactersData) => {
-            //     await this.loadCharacters(document.getElementById('tabContent'), gameCharactersData);
-            // });
-            // this.gameItemsUnsubscribe = GameService.onGameItemsSnapshot(this.currentGame.gameId, async (gameItemsData) => {
-            //     await this.loadItems(document.getElementById('tabContent'), gameItemsData);
-            // });
+            this.gameCharactersUnsubscribe = GameService.onGameCharactersSnapshot(this.currentGame.gameId, async (gameCharactersData) => {
+                await this.loadCharacters(this.activeTab === TABS.CHARACTERS ? document.getElementById('tabContent') : null, gameCharactersData);
+            });
+            this.gameItemsUnsubscribe = GameService.onGameItemsSnapshot(this.currentGame.gameId, async (gameItemsData) => {
+                await this.loadItems(this.activeTab === TABS.ITEMS ? document.getElementById('tabContent') : null, gameItemsData);
+            });
 
             this.setupAdminMessageListener()
         }
@@ -232,10 +229,10 @@ class AdminPage extends Page {
         const content = document.getElementById('tabContent');
         switch (this.activeTab) {
             case TABS.CHARACTERS:
-                await this.loadCharacters(content);
+                await this.loadCharacters(content, this.characters);
                 break;
             case TABS.ITEMS:
-                await this.loadItems(content);
+                await this.loadItems(content, this.items);
                 break;
             case TABS.BANK:
                 await this.loadBank(content);
@@ -245,7 +242,8 @@ class AdminPage extends Page {
 
     async loadItems(container, gameItemsData) {
         this.items = gameItemsData ? gameItemsData : await GameService.getGameItems(this.currentGame.gameId);
-        
+        if(!container) return; //only load the data!
+
         const grid = document.createElement('div');
         grid.className = 'items-grid';
         
@@ -291,7 +289,8 @@ class AdminPage extends Page {
 
     async loadCharacters(container, gameCharactersData) {
         this.characters = gameCharactersData ? gameCharactersData : await GameService.getGameCharacters(this.currentGame.gameId);
-        
+        if(!container) return; //only load the data!
+
         const grid = document.createElement('div');
         grid.className = 'profile-grid';
         
@@ -449,7 +448,7 @@ class AdminPage extends Page {
             }
 
             characterModal.style.display = 'none';
-            this.loadCharacters(document.getElementById('tabContent'));
+            // this.loadCharacters(document.getElementById('tabContent')); // Not necessary as onSnapshot will handle updates
         };
 
         document.getElementById('cancelCharacter').onclick = () => {
@@ -517,7 +516,7 @@ class AdminPage extends Page {
             }
 
             itemModal.style.display = 'none';
-            this.loadItems(document.getElementById('tabContent'));
+            // this.loadItems(document.getElementById('tabContent')); // Not necessary as onSnapshot will handle updates
         };
 
         document.getElementById('cancelItem').onclick = () => {
@@ -538,14 +537,14 @@ class AdminPage extends Page {
     async deleteCharacter(characterId) {
         if (confirm('Are you sure you want to delete this character?')) {
             await GameService.deleteCharacter(this.currentGame.gameId, characterId);
-            this.loadCharacters(document.getElementById('tabContent'));
+            // this.loadCharacters(document.getElementById('tabContent')); // Not necessary as onSnapshot will handle updates
         }
     }
 
     async deleteItem(itemId) {
         if (confirm('Are you sure you want to delete this item?')) {
             await GameService.deleteItem(this.currentGame.gameId, itemId);
-            this.loadItems(document.getElementById('tabContent'));
+            // this.loadItems(document.getElementById('tabContent')); // Not necessary as onSnapshot will handle updates
         }
     }
 
@@ -572,7 +571,7 @@ class AdminPage extends Page {
 
     async setupAdminMessageListener() {
         this.adminMessageUnsubscribe = MessageService.onUnprocessedAdminMessagesSnapshot(this.currentGame.gameId, async (messages) => {
-            // process the last message - the listener will update as messages get processed.
+            // process the last message (oldest) - the listener will update as messages get processed.
             if (messages && messages.length > 0) {
                 const message = messages[messages.length - 1];
                 await this.processAdminMessage(message);
@@ -628,6 +627,12 @@ class AdminPage extends Page {
         }
         if (this.adminMessageUnsubscribe) {
             this.adminMessageUnsubscribe();
+        }
+        if (this.gameCharactersUnsubscribe){ 
+            this.gameCharactersUnsubscribe();
+        }
+        if (this.gameItemsUnsubscribe){ 
+            this.gameItemsUnsubscribe();
         }
     }
 }

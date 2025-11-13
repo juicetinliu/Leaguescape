@@ -19,9 +19,6 @@ class LoginPage extends Page {
 
     async show() {
         super.show();
-        this.gameUnsubscribe = null;
-        this.playerMessageUnsubscribe = null;
-        
         this.currentGame = await gameRouter.handlePlayerGamePageShow(this.page);
         if (!this.currentGame) {
             return;
@@ -95,7 +92,7 @@ class LoginPage extends Page {
     
     async setupPlayerMessageUnsubscribe() {
         this.playerMessageUnsubscribe = MessageService.onUnprocessedPlayerMessagesSnapshot(this.currentGame.gameId, async (messages) => {
-            // process the last message - the listener will update as messages get processed.
+            // process the last message (oldest) - the listener will update as messages get processed.
             if (messages && messages.length > 0) {
                 const message = messages[messages.length - 1];
                 await this.processPlayerMessage(message);
