@@ -158,6 +158,7 @@ input.text-form-input {
         background: var(--primary-color);
         top: 0px;
         right: 0px;
+        z-index: 100;
     }
     .lower {
         bottom: 0px;

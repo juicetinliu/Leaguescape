@@ -16,6 +16,7 @@ class ShopPage extends Page {
         super(PAGES.shop);
         this.currentGame = null;
         this.currentCharacter = null;
+        this.playerData = {};
         this.canAccessSecretShop = false;
         this.items = [];
         this.cart = {};
@@ -23,6 +24,8 @@ class ShopPage extends Page {
         this.gameUnsubscribe = null;
         this.playerMessageUnsubscribe = null;
         this.itemsUnsubscribe = null;
+        this.characterUnsubscribe = null;
+        this.playerDataUnsubscribe = null
         this.flickeringSymbolsProfileNameInterval = null;
         this.flickeringSymbolsItemsHeadingInterval = null;
     }
@@ -34,13 +37,15 @@ class ShopPage extends Page {
             return;
         }
 
-        this.currentCharacter = await gameRouter.handleCharacterGamePageShow(this.currentGame.gameId, this.page);
+        const gameId = this.currentGame.gameId;
+        this.currentCharacter = await gameRouter.handleCharacterGamePageShow(gameId, this.page);
         if (!this.currentCharacter) {
             return;
         }
 
-        const playerData = await GameService.getPlayerData(this.currentGame.gameId, AuthService.currentUser.authId);
-        this.canAccessSecretShop = this.currentCharacter.canAccessSecret && (playerData.loginMode === 'secret');
+        // Even though the snapshot listeners will update this, we do the fetch first to avoid a flicker (immediate refresh due to initial canAccessSecretShop value being different)
+        this.playerData = await GameService.getPlayerData(gameId, AuthService.currentUser.authId);
+        this.canAccessSecretShop = this.currentCharacter.canAccessSecret && (this.playerData.loginMode === 'secret');
 
         this.initializeUI();
         await this.attachEventListeners();
@@ -56,10 +61,10 @@ class ShopPage extends Page {
                                 <img src=""/>
                             </div>
                             <div class="profile-info-wrapper">
-                                <div class="profile-name-text">
+                                <div id="characterName" class="profile-name-text">
                                     ${this.canAccessSecretShop ? flickeringSymbols(10, 'profile-name') : this.currentCharacter.name}
                                 </div>
-                                <div class="profile-gold-display ${this.canAccessSecretShop ? 'flickering' : ''}">
+                                <div id="characterGold" class="profile-gold-display ${this.canAccessSecretShop ? 'flickering' : ''}">
                                     ${this.currentCharacter.gold}
                                     ${gold}
                                 </div>
@@ -101,7 +106,7 @@ class ShopPage extends Page {
     }
 
 
-    async attachEventListeners() {
+    attachEventListeners() {
         document.getElementById('backToCharacter').addEventListener('click', () => {
             router.navigate(`${PAGES.character}&gameId=${this.currentGame.gameId}&characterId=${this.currentCharacter.characterId}`);
         });
@@ -109,13 +114,15 @@ class ShopPage extends Page {
         document.getElementById('purchaseCart').addEventListener('click', () => this.handlePurchase());
                 
         if(this.currentGame.gameId) {
-            this.gameUnsubscribe = GameService.onGameSnapshot(this.currentGame.gameId, async (gameData) => {
+            const gameId = this.currentGame.gameId;
+            this.gameUnsubscribe = GameService.onGameSnapshot(gameId, async (gameData) => {
                 if (gameData.gameState !== GAME_STATE.RUNNING) {
                     window.location.reload();
                 }
             });
-            this.setupPlayerMessageUnsubscribe();
-            this.setupItemsUnsubscribe();
+            this.setupPlayerMessageUnsubscribe(gameId);
+            this.setupItemsUnsubscribe(gameId);
+            this.setupCharacterPlayerUnsubscribes(gameId);
         }
 
         if(this.canAccessSecretShop) {
@@ -124,17 +131,32 @@ class ShopPage extends Page {
         }
     }
 
-    async setupItemsUnsubscribe() {
-        this.itemsUnsubscribe = StoreService.onItemsSnapshot(this.currentGame.gameId, async (items) => {
+    setupCharacterPlayerUnsubscribes(gameId) {
+        this.characterUnsubscribe = GameService.onCharacterSnapshot(gameId, this.currentCharacter.characterId, async (character) => {
+            this.currentCharacter = character;
+            this.loadCharacterData();
+            // run flows that depend on character data changes (e.g. prereqs!)
+            this.updateCartBasedOnItemsAndPrereqs();
+            await this.loadItems();
+            this.updateCartDisplay();
+        });
+        this.playerDataUnsubscribe = GameService.onPlayerSnapshot(gameId, AuthService.currentUser.authId, async (playerData) => {
+            this.playerData = playerData;
+            this.loadPlayerData();
+        });
+    }
+
+    setupItemsUnsubscribe(gameId) {
+        this.itemsUnsubscribe = StoreService.onItemsSnapshot(gameId, async (items) => {
             this.items = items;
-            this.updateCartBasedOnItems();
+            this.updateCartBasedOnItemsAndPrereqs();
             await this.loadItems();
             this.updateCartDisplay();
         }, this.canAccessSecretShop);
     }
         
-    async setupPlayerMessageUnsubscribe() {
-        this.playerMessageUnsubscribe = MessageService.onUnprocessedPlayerMessagesSnapshot(this.currentGame.gameId, async (messages) => {
+    setupPlayerMessageUnsubscribe(gameId) {
+        this.playerMessageUnsubscribe = MessageService.onUnprocessedPlayerMessagesSnapshot(gameId, async (messages) => {
             // process the last message (oldest) - the listener will update as messages get processed.
             if (messages && messages.length > 0) {
                 const message = messages[messages.length - 1];
@@ -148,6 +170,38 @@ class ShopPage extends Page {
         await message.markAsProcessed();
         if (message.messageType === MessageType.LOGOUT_SUCCESS) {
         }
+    }
+
+    loadCharacterData() {
+        if(this.reloadIfSecretShopAccessChanged()) return;
+        // Now update everything that depends on character data! Gold/Name/Etc.
+
+        if(!this.canAccessSecretShop) {
+            const characterNameDiv = document.getElementById('characterName');
+            characterNameDiv.innerHTML = this.currentCharacter.name;
+        }
+        const characterGoldDiv = document.getElementById('characterGold');
+        characterGoldDiv.innerHTML = `
+            ${this.currentCharacter.gold}
+            ${gold}
+        `;
+
+        //TODO: Update Profile Image too!
+    }
+
+    loadPlayerData() {
+        if(this.reloadIfSecretShopAccessChanged()) return;
+        // nothing else to update? (Player data only includes name and login mode)
+    }
+
+    reloadIfSecretShopAccessChanged() {
+        const canAccessSecretShop = this.currentCharacter.canAccessSecret && (this.playerData.loginMode === 'secret');
+        if (this.canAccessSecretShop !== canAccessSecretShop) {
+            // access changed - force a refresh to get the right snapshot listeners/items/CX!
+            window.location.reload();
+            return true;
+        }
+        return false;
     }
 
     loadItems() {
@@ -211,7 +265,7 @@ class ShopPage extends Page {
         this.updateCartDisplay();
     }
 
-    updateCartBasedOnItems() {
+    updateCartBasedOnItemsAndPrereqs() {
         Object.entries(this.cart).map(([itemId, quantity]) => {
             const item = this.items.find(i => i.itemId === itemId);
             if(!item || !item.isAvailable()) {
@@ -312,6 +366,7 @@ class ShopPage extends Page {
     cleanup() {
         super.cleanup();
         this.currentCharacter = null;
+        this.playerData = {};
         this.canAccessSecretShop = false;
         this.items = [];
         this.cart = {};
@@ -324,6 +379,12 @@ class ShopPage extends Page {
         }
         if (this.itemsUnsubscribe) {
             this.itemsUnsubscribe();
+        }
+        if (this.characterUnsubscribe) {
+            this.characterUnsubscribe();
+        }
+        if (this.playerDataUnsubscribe) {
+            this.playerDataUnsubscribe();
         }
         if (this.flickeringSymbolsProfileNameInterval) {
             clearInterval(this.flickeringSymbolsProfileNameInterval);

@@ -53,6 +53,20 @@ class GameService {
         });
     }
 
+    onPlayerSnapshot(gameId, playerId, callback) {
+        return onSnapshot(this.createPlayerRef(gameId, playerId), async (playerData) => {
+            await callback(playerData.data());
+        });
+    }
+    
+    // Could try passing in character instead to save memory?
+    onCharacterSnapshot(gameId, characterId, callback) {
+        return onSnapshot(doc(db, `games/${gameId}/characters`, characterId), async (characterData) => {
+            const character = new Character(gameId, characterData.id, characterData.data())
+            await callback(character);
+        });
+    }
+
     async createGame(adminId) {
         const game = await Game.create(adminId);
         return game;
