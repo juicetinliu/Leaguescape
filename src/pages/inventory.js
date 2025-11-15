@@ -37,13 +37,20 @@ class InventoryPage extends Page {
         const template = `
             <div id="${this.page}" class="page-container">
                 <div class="inventory-header-wrapper">
-                    <div></div>
-                    <div class="inventory-header-heading">INVENTORY</div>
-                    <button id="backToCharacter" class="text-button">BACK</button>
+                    <div class="wrapper"></div>
+                    <div class="inventory-header-heading wrapper">INVENTORY</div>
+                    <div class="back-button-wrapper wrapper">
+                        <button id="backToCharacter" class="text-button">BACK</button>
+                    </div>
                 </div>
 
-                <div class="">
-                    Hmmm....
+                <div class="inventory-content-wrapper">
+                    <div class="inventory-content-heading">
+                        PLEASE WAIT
+                    </div>
+                    <div class="inventory-content-message">
+                        The shop keeper will be with you shortly.
+                    </div>
                 </div>
             </div>
         `;

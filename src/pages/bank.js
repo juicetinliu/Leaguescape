@@ -6,6 +6,7 @@ import { MessageType } from '../js/models/MessageTypes.js';
 import { router } from '../js/utils/router.js';
 import { PAGES, GAME_STATE } from '../js/models/Enums.js';
 import { gameRouter } from '../js/utils/gamerouter.js';
+import { gold } from '../js/components/staticComponents.js'
 
 class BankPage extends Page {
     constructor() {
@@ -37,13 +38,32 @@ class BankPage extends Page {
         const template = `
             <div id="${this.page}" class="page-container">
                 <div class="bank-header-wrapper">
-                    <div></div>
-                    <div class="bank-header-heading">THE BANK</div>
-                    <button id="backToCharacter" class="text-button">BACK</button>
+                    <div class="wrapper"></div>
+                    <div class="bank-header-heading wrapper">THE BANK</div>
+                    <div class="back-button-wrapper wrapper">
+                        <button id="backToCharacter" class="text-button">BACK</button>
+                    </div>
                 </div>
 
-                <div class="">
-                    Hmmm....
+                <div class="bank-content-wrapper">
+                    <div class="bank-profile-content-wrapper">
+                        <div class="profile-image-wrapper">
+                            <img src=""/>
+                        </div>
+                        <div class="profile-bank-info-wrapper">
+                            <div id="characterName" class="profile-name-text">
+                                ${this.currentCharacter.name}
+                            </div>
+                            <div id="characterGold" class="profile-gold-display">
+                                ${this.currentCharacter.gold}
+                                ${gold}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bank-actions-content-wrapper">
+                        <button id="depositGold" class="text-button">DEPOSIT GOLD</button>
+                        <button id="withdrawGold" class="text-button">WITHDRAW GOLD</button>
+                    </div>
                 </div>
             </div>
         `;

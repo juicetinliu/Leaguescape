@@ -14,9 +14,93 @@
         padding-bottom: 20px;
         height: 81px;
         border-bottom: 1px solid var(--primary-color);
+        
+        .wrapper {
+            flex: 1 1 33%;
+        }
+
+        .bank-header-heading {
+            font-size: 30px;
+            display: flex;
+            justify-content: center;
+        }
+        .back-button-wrapper {
+            display: flex;
+            justify-content: end;
+        }
     }
 
-    .bank-header-heading {
-        font-size: 30px;
+
+    .bank-content-wrapper {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    }
+
+    .bank-profile-content-wrapper, .bank-actions-content-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: row;
+        font-size: 50px;
+        width: 100%;
+
+        /* 2x sized gold */
+        .gold {
+            width: 46px;
+            height: 38px;
+
+            .upper, .lower {
+                width: 40px;
+                height: 26px;
+                border-width: 4px;
+            }
+        }
+    }
+
+    .bank-profile-content-wrapper { 
+        padding: 40px 0px;
+        gap: 40px;
+        border-bottom: 1px solid var(--primary-color);
+    } 
+    .bank-actions-content-wrapper { 
+        flex: 1; 
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        gap: 40px;
+
+        button.text-button {
+            width: 250px;
+            background-color: var(--background-primary-color);
+        }
+        button.text-button:hover {
+            background-color: var(--background-secondary-color-inverse);
+        }
+    }
+
+    .profile-bank-info-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: start;
+        gap: 4px;
+        justify-content: center;
+    }
+    
+    .profile-gold-display {
+        color: var(--text-color);
+        display: flex;
+        align-items: center;
+        flex-direction: row;
+        gap: 10px;
+    }
+
+    .profile-image-wrapper {
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        border: 2px solid var(--primary-color);
     }
 }

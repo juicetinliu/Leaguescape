@@ -48,7 +48,7 @@ class ShopPage extends Page {
         this.canAccessSecretShop = this.currentCharacter.canAccessSecret && (this.playerData.loginMode === 'secret');
 
         this.initializeUI();
-        await this.attachEventListeners();
+        this.attachEventListeners();
     }
 
     initializeUI() {
@@ -70,7 +70,7 @@ class ShopPage extends Page {
                                 </div>
                             </div>
                         </div>
-                        <div class="items-header-heading wrapper">${this.canAccessSecretShop ? flickeringSymbols(9, 'items-heading') : 'ALL ITEMS'}</div>
+                        <div class="items-header-heading wrapper">${this.canAccessSecretShop ? flickeringSymbols(9, 'flickering-items-header-heading') : 'THE SHOP'}</div>
                         <div class="back-button-wrapper wrapper">
                             <button id="backToCharacter" class="text-button">BACK</button>
                         </div>
@@ -127,7 +127,7 @@ class ShopPage extends Page {
 
         if(this.canAccessSecretShop) {
             this.flickeringSymbolsProfileNameInterval = flickeringSymbolsInterval(10, 'profile-name', 456);
-            this.flickeringSymbolsItemsHeadingInterval = flickeringSymbolsInterval(9, 'items-heading', 890);
+            this.flickeringSymbolsItemsHeadingInterval = flickeringSymbolsInterval(9, 'flickering-items-header-heading', 890);
         }
     }
 

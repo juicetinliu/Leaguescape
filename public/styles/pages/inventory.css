@@ -14,9 +14,38 @@
         padding-bottom: 20px;
         height: 81px;
         border-bottom: 1px solid var(--primary-color);
+        margin-bottom: 20px;
+
+        .wrapper {
+            flex: 1 1 33%;
+        }
+
+        .inventory-header-heading {
+            font-size: 30px;
+            display: flex;
+            justify-content: center;
+        }
+        .back-button-wrapper {
+            display: flex;
+            justify-content: end;
+        }
     }
 
-    .inventory-header-heading {
+    .inventory-content-wrapper {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    }
+    
+    .inventory-content-heading {
+        font-weight: bold;
         font-size: 30px;
+        margin-bottom: 40px;
+    }
+
+    .inventory-content-message {
+        font-size: 24px;
     }
 }
