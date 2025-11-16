@@ -111,6 +111,81 @@ class AdminHandlerService {
             }, playerId);
         }
     }
+
+    async checkGoldActionRequirements(gameId, player, character, isDeposit, amount) {
+        let output = { approved: false, rejectionReason: '', isDeposit: isDeposit, amount: 0 };
+
+        // first check if the player is the character
+        if(player.privateDetails.assumedCharacterId !== character.characterId) {
+            output.rejectionReason = 'Player did not assume this character'
+            return output;
+        }
+
+        let currentBalance = character.gold;
+
+        if (!Number.isInteger(amount)) {
+            output.rejectionReason = "Gold must be a whole number"
+            return output;
+        }
+        let inputAmount = parseInt(amount);
+        let newBalance = 0;
+        if (inputAmount < 0) {
+            output.rejectionReason = "Gold must be non-negative";
+            return output;
+        } else {
+            newBalance = isDeposit 
+                ? currentBalance + inputAmount
+                : currentBalance - inputAmount;
+        }
+
+        if(newBalance < 0 && !isDeposit) {
+            output.rejectionReason = "Insufficient funds for withdrawal"
+            return output;
+        }
+        if(inputAmount == 0) {
+            output.rejectionReason = "No amount requested"
+            return output;
+        }
+        output.approved = true;
+        output.amount = inputAmount;
+        return output;
+    }
+
+
+
+    async handlePlayerGoldActionRequest(gameId, playerId, characterId, approvedAmount, isDeposit, approved, rejectionReason = "") {
+        if (approved) {
+            if (isDeposit) {
+                await GameService.depositGoldCharacter(gameId, playerId, characterId, approvedAmount);
+            } else {
+                await GameService.withdrawGoldCharacter(gameId, playerId, characterId, approvedAmount);
+            }
+            await MessageService.sendAdminMessageToPlayer(gameId, {
+                messageType: isDeposit 
+                    ? MessageType.DEPOSIT_SUCCESS 
+                    : MessageType.WITHDRAW_SUCCESS,
+                messageDetails: { 
+                    approvedAmount: approvedAmount
+                }
+            }, playerId);
+        } else {
+            await MessageService.sendAdminMessageToPlayer(gameId, {
+                messageType: MessageType.WITHDRAW_FAILURE,
+                messageDetails: { 
+                    rejectionReason: rejectionReason 
+                }
+            }, playerId);
+        }
+    }
+
+
+    async handlePlayerWithdrawRequest(gameId, playerId, characterId, approvedAmount, approved, rejectionReason = "") {
+        return await this.handlePlayerGoldActionRequest(gameId, playerId, characterId, approvedAmount, approved, rejectionReason, false);
+    }
+
+    async handlePlayerDepositRequest(gameId, playerId, characterId, approvedAmount, approved, rejectionReason = "") {
+        return await this.handlePlayerGoldActionRequest(gameId, playerId, characterId, approvedAmount, approved, rejectionReason, true);
+    }
 }
 
 export default new AdminHandlerService();

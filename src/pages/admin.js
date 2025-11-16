@@ -616,6 +616,22 @@ class AdminPage extends Page {
             const { approved, rejectionReason, approvedItems, totalPrice } = await AdminHandlerService.checkPlayerCartPurchaseRequirements(gameId, player, character, cart, this.items);
             
             await AdminHandlerService.handlePlayerCartPurchaseRequest(gameId, playerId, characterId, approvedItems, totalPrice, approved, rejectionReason);
+        } else if (message.messageType === MessageType.WITHDRAW_ATTEMPT) {
+            const { characterId, amount } = message.messageDetails;
+            const character = this.characters.find(character => { return character.characterId === characterId });
+
+            const { approved, rejectionReason, isDeposit, approvedAmount = amount } = await AdminHandlerService.checkGoldActionRequirements(gameId, player, character, false, amount);
+
+            await AdminHandlerService.handlePlayerGoldActionRequest(gameId, playerId, characterId, approvedAmount, isDeposit, approved, rejectionReason);
+            
+
+        } else if (message.messageType === MessageType.DEPOSIT_ATTEMPT) {
+            const { characterId, amount } = message.messageDetails;
+            const character = this.characters.find(character => { return character.characterId === characterId });
+
+            const { approved, rejectionReason, isDeposit, approvedAmount = amount } = await AdminHandlerService.checkGoldActionRequirements(gameId, player, character, true, amount);
+
+            await AdminHandlerService.handlePlayerGoldActionRequest(gameId, playerId, characterId, approvedAmount, isDeposit, approved, rejectionReason);
         }
         
     }

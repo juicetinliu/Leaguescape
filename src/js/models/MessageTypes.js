@@ -13,6 +13,12 @@ export const MessageType = {
     PURCHASE_ATTEMPT: 'purchaseAttempt',
     PURCHASE_SUCCESS: 'purchaseSuccess',
     PURCHASE_FAILURE: 'purchaseFailure',
+    DEPOSIT_ATTEMPT: 'depositAttempt',
+    DEPOSIT_SUCCESS: 'depositSuccess',
+    DEPOSIT_FAILURE: 'depositFailure',
+    WITHDRAW_ATTEMPT: 'withdrawAttempt',
+    WITHDRAW_SUCCESS: 'withdrawSuccess',
+    WITHDRAW_FAILURE: 'withdrawFailure'
 }
 
 export default { MessageType, MessageTo };

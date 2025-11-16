@@ -8,10 +8,15 @@ button.text-button {
     background-color: var(--background-secondary-color);
     padding: 10px 20px;
     min-width: 150px;
+}
+button:not(:disabled) {
     cursor: pointer;
 }
+button:disabled {
+    opacity: 0.5;
+}
 
-button.text-button:hover {
+button.text-button:hover:not(:disabled) {
     background-color: var(--background-secondary-color-inverse);
 }
 

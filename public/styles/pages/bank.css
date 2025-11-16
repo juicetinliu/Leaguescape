@@ -69,7 +69,7 @@
         }
     }
 
-    .bank-gold-content-wrapper {
+    .bank-gold-content-wrapper, .gold-preview-amount-wrapper {
         display: flex;
         align-items: center;
         justify-content: center;
@@ -102,14 +102,54 @@
         align-items: center;
         justify-content: center;
         flex-direction: column;
-        gap: 40px;
 
+        .bank-actions-buttons {
+            flex: 1; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .bank-actions-form {
+            flex: 1; 
+            display: flex;
+            align-items: center;
+            justify-content: start;
+            flex-direction: column;
+            width: 100%;
+            gap: 40px;
+        }
+
+        .gold-form-wrapper {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gold-amount-input-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+        
         button.text-button {
             width: 250px;
+        }
+        #goldActionsSubmit,
+        .bank-actions-buttons > button.text-button {
             background-color: var(--background-primary-color);
         }
-        button.text-button:hover {
+        #goldActionsSubmit:hover:not(:disabled), 
+        .bank-actions-buttons > button.text-button:hover:not(:disabled){
             background-color: var(--background-secondary-color-inverse);
+        }
+
+        .form-actions-wrapper {
+            display: flex;
+            gap: 20px;
         }
     }
 }

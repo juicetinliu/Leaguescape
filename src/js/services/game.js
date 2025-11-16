@@ -298,6 +298,28 @@ class GameService {
         }, playerId);
     }
 
+    async depositGoldCharacter(gameId, playerId, characterId, amount) {
+        await this.updateCharacterGold(gameId, characterId, amount);
+        await this.logAction(gameId, {
+            actionType: ActionType.DEPOSIT_GOLD,
+            characterId: characterId,
+            actionDetails: {
+                amount: amount
+            }
+        }, playerId);
+    }
+
+    async withdrawGoldCharacter(gameId, playerId, characterId, amount) {
+        await this.updateCharacterGold(gameId, characterId, -amount);
+        await this.logAction(gameId, {
+            actionType: ActionType.WITHDRAW_GOLD,
+            characterId: characterId,
+            actionDetails: {
+                amount: amount
+            }
+        }, playerId);
+    }
+
     async getGameItems(gameId) {
         const itemsRef = collection(db, `games/${gameId}/items`);
         const items = await getDocs(itemsRef);

@@ -19,6 +19,28 @@ class CharacterHandlerService {
         });
     }
 
+    async withdrawGold(gameId, characterId, goldAmount) {
+        // No action logged. This is a request!
+        await MessageService.sendPlayerMessageToAdmin(gameId, {
+            messageType: MessageType.WITHDRAW_ATTEMPT,
+            messageDetails: {
+                characterId: characterId,
+                amount: goldAmount
+            }
+        });
+    }
+
+    async depositGold(gameId, characterId, goldAmount) {
+        // No action logged. This is a request!
+        await MessageService.sendPlayerMessageToAdmin(gameId, {
+            messageType: MessageType.DEPOSIT_ATTEMPT,
+            messageDetails: {
+                characterId: characterId,
+                amount: goldAmount
+            }
+        });
+    }
+
     async purchaseCart(gameId, characterId, cart = {}) {
         // No action logged. This is a request!
         await MessageService.sendPlayerMessageToAdmin(gameId, {
