@@ -51,13 +51,29 @@ class BankPage extends Page {
                             <img src=""/>
                         </div>
                         <div class="profile-bank-info-wrapper">
+                            <div class="profile-name-heading heading">
+                                FULL NAME:
+                            </div>
                             <div id="characterName" class="profile-name-text">
                                 ${this.currentCharacter.name}
                             </div>
-                            <div id="characterGold" class="profile-gold-display">
-                                ${this.currentCharacter.gold}
-                                ${gold}
+                        </div>
+                        <div class="profile-bank-info-wrapper">
+                            <div class="profile-name-heading heading">
+                                ACCOUNT NUMBER:
                             </div>
+                            <div id="characterName" class="profile-name-text">
+                                ${this.currentCharacter.accountNumber}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bank-gold-content-wrapper">
+                        <div class="account-balance-heading heading">
+                            CURRENT BALANCE:
+                        </div>
+                        <div id="characterGold" class="profile-gold-display">
+                            ${this.currentCharacter.gold}
+                            ${gold}
                         </div>
                     </div>
                     <div class="bank-actions-content-wrapper">
