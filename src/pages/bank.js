@@ -16,6 +16,7 @@ class BankPage extends Page {
         
         this.gameUnsubscribe = null;
         this.playerMessageUnsubscribe = null;
+        this.characterUnsubscribe = null;
     }
 
     async show() {
@@ -59,10 +60,10 @@ class BankPage extends Page {
                             </div>
                         </div>
                         <div class="profile-bank-info-wrapper">
-                            <div class="profile-name-heading heading">
+                            <div class="profile-account-number-heading heading">
                                 ACCOUNT NUMBER:
                             </div>
-                            <div id="characterName" class="profile-name-text">
+                            <div id="characterAccountNumber" class="profile-account-number-text">
                                 ${this.currentCharacter.accountNumber}
                             </div>
                         </div>
@@ -94,17 +95,27 @@ class BankPage extends Page {
         });
                 
         if(this.currentGame.gameId) {
-            this.gameUnsubscribe = GameService.onGameSnapshot(this.currentGame.gameId, async (gameData) => {
+            const gameId = this.currentGame.gameId;
+            this.gameUnsubscribe = GameService.onGameSnapshot(gameId, async (gameData) => {
                 if (gameData.gameState !== GAME_STATE.RUNNING) {
                     window.location.reload();
                 }
             });
-            this.setupPlayerMessageUnsubscribe();
+            this.setupPlayerMessageUnsubscribe(gameId);
+            this.setupCharacterUnsubscribe(gameId)
         }
     }
+
+    setupCharacterUnsubscribe(gameId) {
+        this.characterUnsubscribe = GameService.onCharacterSnapshot(gameId, this.currentCharacter.characterId, async (character) => {
+            this.currentCharacter = character;
+            this.loadCharacterData();
+        });
+    }
+    
         
-    async setupPlayerMessageUnsubscribe() {
-        this.playerMessageUnsubscribe = MessageService.onUnprocessedPlayerMessagesSnapshot(this.currentGame.gameId, async (messages) => {
+    setupPlayerMessageUnsubscribe(gameId) {
+        this.playerMessageUnsubscribe = MessageService.onUnprocessedPlayerMessagesSnapshot(gameId, async (messages) => {
             // process the last message (oldest) - the listener will update as messages get processed.
             if (messages && messages.length > 0) {
                 const message = messages[messages.length - 1];
@@ -120,6 +131,20 @@ class BankPage extends Page {
         }
     }
 
+    loadCharacterData() {
+        const characterNameDiv = document.getElementById('characterName');
+        characterNameDiv.innerHTML = this.currentCharacter.name;
+        const characterAccountNumberDiv = document.getElementById('characterAccountNumber');
+        characterAccountNumberDiv.innerHTML = this.currentCharacter.accountNumber;
+        const characterGoldDiv = document.getElementById('characterGold');
+        characterGoldDiv.innerHTML = `
+            ${this.currentCharacter.gold}
+            ${gold}
+        `;
+
+        //TODO: Update Profile Image too!
+    }
+
     cleanup() {
         super.cleanup();
         this.currentCharacter = null;
@@ -129,6 +154,9 @@ class BankPage extends Page {
         }
         if (this.playerMessageUnsubscribe) {
             this.playerMessageUnsubscribe();
+        }
+        if (this.characterUnsubscribe) {
+            this.characterUnsubscribe();
         }
     }
 }
