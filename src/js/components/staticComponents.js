@@ -4,3 +4,8 @@ export const gold = `
         <div class="lower"></div>
     </div>
 `;
+
+
+export const spinner = `
+<div class="spinner"></div>
+`
