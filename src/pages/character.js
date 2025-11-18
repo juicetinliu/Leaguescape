@@ -15,9 +15,11 @@ class CharacterPage extends Page {
         super(PAGES.character);
         this.currentGame = null;
         this.currentCharacter = null;
+        this.playerData = {};
         this.isLoading = false;
         
         this.gameUnsubscribe = null;
+        this.playerDataUnsubscribe = null
         this.playerMessageUnsubscribe = null;
     }
 
@@ -28,10 +30,14 @@ class CharacterPage extends Page {
             return;
         }
 
-        this.currentCharacter = await gameRouter.handleCharacterGamePageShow(this.currentGame.gameId, this.page);
+        const gameId = this.currentGame.gameId;
+        this.currentCharacter = await gameRouter.handleCharacterGamePageShow(gameId, this.page);
         if (!this.currentCharacter) {
             return;
         }
+
+        // Even though the snapshot listeners will update this, we do the fetch first to avoid a flicker (immediate refresh due to initial canAccessSecretShop value being different)
+        this.playerData = await GameService.getPlayerData(gameId, AuthService.currentUser.authId);
 
         this.initializeUI();
         this.attachEventListeners();
@@ -56,7 +62,8 @@ class CharacterPage extends Page {
                     </div>
                     
                     <div class="character-menu-buttons-wrapper">
-                        <div id="go-to-${PAGES.shop}" class="character-menu-button">
+                        ${this.playerData.loginMode === 'inventory' ? '' :
+                        `<div id="go-to-${PAGES.shop}" class="character-menu-button">
                             <div class="character-menu-button-image">
                                 <img src="">
                                 <div id="${PAGES.shop}-spinner" class="overlay-spinner hidden">
@@ -77,7 +84,7 @@ class CharacterPage extends Page {
                             <div class="character-menu-button-label">
                                 THE BANK
                             </div>
-                        </div>
+                        </div>`}
                         <div id="go-to-${PAGES.inventory}" class="character-menu-button">
                             <div class="character-menu-button-image">
                                 <img src="">
@@ -119,27 +126,29 @@ class CharacterPage extends Page {
             }
         });
 
-        document.getElementById(`go-to-${PAGES.shop}`).addEventListener('click', () => {
-            if(this.isLoading) return;
+        if(this.playerData.loginMode !== 'inventory') {
+            document.getElementById(`go-to-${PAGES.shop}`).addEventListener('click', () => {
+                if(this.isLoading) return;
 
-            this.toggleNavigationLoading(true, PAGES.shop);
-            try {
-                router.navigate(`${PAGES.shop}&gameId=${this.currentGame.gameId}&characterId=${this.currentCharacter.characterId}`);
-            } catch (e) {
-                this.toggleNavigationLoading(false, PAGES.shop);
-            }
-        });
+                this.toggleNavigationLoading(true, PAGES.shop);
+                try {
+                    router.navigate(`${PAGES.shop}&gameId=${this.currentGame.gameId}&characterId=${this.currentCharacter.characterId}`);
+                } catch (e) {
+                    this.toggleNavigationLoading(false, PAGES.shop);
+                }
+            });
 
-        document.getElementById(`go-to-${PAGES.bank}`).addEventListener('click', () => {
-            if(this.isLoading) return;
+            document.getElementById(`go-to-${PAGES.bank}`).addEventListener('click', () => {
+                if(this.isLoading) return;
 
-            this.toggleNavigationLoading(true, PAGES.bank);
-            try {
-                router.navigate(`${PAGES.bank}&gameId=${this.currentGame.gameId}&characterId=${this.currentCharacter.characterId}`);
-            } catch (e) {
-                this.toggleNavigationLoading(false, PAGES.bank);
-            }
-        });
+                this.toggleNavigationLoading(true, PAGES.bank);
+                try {
+                    router.navigate(`${PAGES.bank}&gameId=${this.currentGame.gameId}&characterId=${this.currentCharacter.characterId}`);
+                } catch (e) {
+                    this.toggleNavigationLoading(false, PAGES.bank);
+                }
+            });
+        }
 
         document.getElementById(`go-to-${PAGES.inventory}`).addEventListener('click', () => {
             if(this.isLoading) return;
@@ -153,17 +162,27 @@ class CharacterPage extends Page {
         });
                 
         if(this.currentGame.gameId) {
-            this.gameUnsubscribe = GameService.onGameSnapshot(this.currentGame.gameId, async (gameData) => {
+            const gameId = this.currentGame.gameId;
+            this.gameUnsubscribe = GameService.onGameSnapshot(gameId, async (gameData) => {
                 if (gameData.gameState !== GAME_STATE.RUNNING) {
                     window.location.reload();
                 }
             });
-            this.setupPlayerMessageUnsubscribe();
+            this.setupPlayerMessageUnsubscribe(gameId);
+
+            this.playerDataUnsubscribe = GameService.onPlayerSnapshot(gameId, AuthService.currentUser.authId, async (playerData) => {
+                if(this.playerData.loginMode && (this.playerData.loginMode !== playerData.loginMode)) {
+                    window.location.reload();
+                    return;
+                }
+
+                this.playerData = playerData;
+            });
         }
     }
         
-    async setupPlayerMessageUnsubscribe() {
-        this.playerMessageUnsubscribe = MessageService.onUnprocessedPlayerMessagesSnapshot(this.currentGame.gameId, async (messages) => {
+    async setupPlayerMessageUnsubscribe(gameId) {
+        this.playerMessageUnsubscribe = MessageService.onUnprocessedPlayerMessagesSnapshot(gameId, async (messages) => {
             // process the last message (oldest) - the listener will update as messages get processed.
             if (messages && messages.length > 0) {
                 const message = messages[messages.length - 1];
@@ -208,6 +227,7 @@ class CharacterPage extends Page {
     cleanup() {
         super.cleanup();
         this.currentCharacter = null;
+        this.playerData = {};
         this.isLoading = false;
 
         if (this.gameUnsubscribe) {
@@ -215,6 +235,9 @@ class CharacterPage extends Page {
         }
         if (this.playerMessageUnsubscribe) {
             this.playerMessageUnsubscribe();
+        }
+        if (this.playerDataUnsubscribe) {
+            this.playerDataUnsubscribe();
         }
     }
 }

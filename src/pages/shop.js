@@ -141,6 +141,10 @@ class ShopPage extends Page {
             this.updateCartDisplay();
         });
         this.playerDataUnsubscribe = GameService.onPlayerSnapshot(gameId, AuthService.currentUser.authId, async (playerData) => {
+            if(playerData.loginMode == 'inventory') {
+                window.location.reload();
+                return;
+            }
             this.playerData = playerData;
             this.loadPlayerData();
         });
