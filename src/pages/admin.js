@@ -600,8 +600,10 @@ class AdminPage extends Page {
 
             if (character) {
                 await AdminHandlerService.handlePlayerLogIn(gameId, playerId, character.characterId, true);
+                this.players = await GameService.getGamePlayers(gameId);
+            } else {
+                await AdminHandlerService.handlePlayerLogIn(gameId, playerId, null, false, 'Invalid Credentials');
             }
-            this.players = await GameService.getGamePlayers(gameId);
         } else if (message.messageType === MessageType.LOGOUT_ATTEMPT) {
             const { characterId } = message.messageDetails;
 

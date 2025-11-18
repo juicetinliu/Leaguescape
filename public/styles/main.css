@@ -9,7 +9,8 @@
     --background-secondary-color-inverse: #70767b; /* Button highlights */
     --background-accent-color: #08383a; /* Background for accents */
     --text-color: #e4decf;
-    --error-color: #830000;
+    --text-error-color: #ff1616;
+    --background-error-color: #830000;
     --success-color: #23d160;
 
     /* Typography (https://fonts.google.com/specimen/Vollkorn) */
@@ -57,7 +58,11 @@ body {
 }
 
 .error {
-    color: var(--error-color);
+    background-color: var(--background-error-color);
+}
+
+.error-text {
+    color: var(--text-error-color);
 }
 
 .success {

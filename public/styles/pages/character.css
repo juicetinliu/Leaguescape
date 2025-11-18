@@ -16,6 +16,14 @@
         padding-bottom: 20px;
         height: 80px;
     } 
+
+    #logout-loading-wrapper {
+        height: 51px;
+        width: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
     
     .character-footer-wrapper {
         padding-top: 20px;
@@ -48,6 +56,7 @@
     }
 
     .character-menu-button {
+        position: relative;
         flex-direction: column;
         gap: 10px;
     }
@@ -57,6 +66,7 @@
         height: 250px;
         border-radius: 50%;
         border: 2px solid var(--primary-color);
+        overflow: hidden;
     }
     
     .character-menu-button-label, .character-menu-heading, .character-menu-subheading {
@@ -74,5 +84,22 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
+    }
+
+    .overlay-spinner {
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 250px;
+        height: 250px;
+
+
+        .spinner {
+            width: 80px;
+            height: 80px;
+        }
     }
 }

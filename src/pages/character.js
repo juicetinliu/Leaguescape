@@ -7,12 +7,15 @@ import { router } from '../js/utils/router.js';
 import { PAGES, GAME_STATE } from '../js/models/Enums.js';
 import { gameRouter } from '../js/utils/gamerouter.js';
 import CharacterHandlerService from '../js/services/handlers/characterHandler.js';
+import { spinner } from '../js/components/staticComponents.js';
+import bank from './bank.js';
 
 class CharacterPage extends Page {
     constructor() {
         super(PAGES.character);
         this.currentGame = null;
         this.currentCharacter = null;
+        this.isLoading = false;
         
         this.gameUnsubscribe = null;
         this.playerMessageUnsubscribe = null;
@@ -38,7 +41,10 @@ class CharacterPage extends Page {
         const template = `
             <div id="${this.page}" class="page-container">
                 <div class="character-header-wrapper">
-                    <button id="logoutCharacter" class="text-button">LOG OUT</button>
+                    <button id="logout-button" class="text-button">LOG OUT</button>
+                    <div id="logout-loading-wrapper" class="hidden">
+                        ${spinner}
+                    </div>
                 </div>
 
                 <div class="character-menu-wrapper">
@@ -50,25 +56,34 @@ class CharacterPage extends Page {
                     </div>
                     
                     <div class="character-menu-buttons-wrapper">
-                        <div id="goToShop" class="character-menu-button">
+                        <div id="go-to-${PAGES.shop}" class="character-menu-button">
                             <div class="character-menu-button-image">
                                 <img src="">
+                                <div id="${PAGES.shop}-spinner" class="overlay-spinner hidden">
+                                    ${spinner}
+                                </div>
                             </div>
                             <div class="character-menu-button-label">
                                 THE SHOP
                             </div>
                         </div>
-                        <div id="goToBank" class="character-menu-button">
+                        <div id="go-to-${PAGES.bank}" class="character-menu-button">
                             <div class="character-menu-button-image">
                                 <img src="">
+                                <div id="${PAGES.bank}-spinner" class="overlay-spinner hidden">
+                                    ${spinner}
+                                </div>
                             </div>
                             <div class="character-menu-button-label">
                                 THE BANK
                             </div>
                         </div>
-                        <div id="goToInventory" class="character-menu-button">
+                        <div id="go-to-${PAGES.inventory}" class="character-menu-button">
                             <div class="character-menu-button-image">
                                 <img src="">
+                                <div id="${PAGES.inventory}-spinner" class="overlay-spinner hidden">
+                                    ${spinner}
+                                </div>
                             </div>
                             <div class="character-menu-button-label">
                                 THE INVENTORY
@@ -92,20 +107,49 @@ class CharacterPage extends Page {
     }
 
     attachEventListeners() {
-        document.getElementById('logoutCharacter').addEventListener('click', async () => {
-            await CharacterHandlerService.logOut(this.currentGame.gameId, this.currentCharacter.characterId);
+        document.getElementById('logout-button').addEventListener('click', async () => {
+            this.toggleLogoutLoading(true);
+
+            try {
+                await CharacterHandlerService.logOut(this.currentGame.gameId, this.currentCharacter.characterId);
+            } catch (e) {
+                console.error('Login error:', error);
+                alert('An error occurred during logout');
+                this.toggleLogoutLoading(false);
+            }
         });
 
-        document.getElementById('goToShop').addEventListener('click', () => {
-            router.navigate(`${PAGES.shop}&gameId=${this.currentGame.gameId}&characterId=${this.currentCharacter.characterId}`);
+        document.getElementById(`go-to-${PAGES.shop}`).addEventListener('click', () => {
+            if(this.isLoading) return;
+
+            this.toggleNavigationLoading(true, PAGES.shop);
+            try {
+                router.navigate(`${PAGES.shop}&gameId=${this.currentGame.gameId}&characterId=${this.currentCharacter.characterId}`);
+            } catch (e) {
+                this.toggleNavigationLoading(false, PAGES.shop);
+            }
         });
 
-        document.getElementById('goToBank').addEventListener('click', () => {
-            router.navigate(`${PAGES.bank}&gameId=${this.currentGame.gameId}&characterId=${this.currentCharacter.characterId}`);
+        document.getElementById(`go-to-${PAGES.bank}`).addEventListener('click', () => {
+            if(this.isLoading) return;
+
+            this.toggleNavigationLoading(true, PAGES.bank);
+            try {
+                router.navigate(`${PAGES.bank}&gameId=${this.currentGame.gameId}&characterId=${this.currentCharacter.characterId}`);
+            } catch (e) {
+                this.toggleNavigationLoading(false, PAGES.bank);
+            }
         });
 
-        document.getElementById('goToInventory').addEventListener('click', () => {
-            router.navigate(`${PAGES.inventory}&gameId=${this.currentGame.gameId}&characterId=${this.currentCharacter.characterId}`);
+        document.getElementById(`go-to-${PAGES.inventory}`).addEventListener('click', () => {
+            if(this.isLoading) return;
+
+            this.toggleNavigationLoading(true, PAGES.inventory);
+            try {
+                router.navigate(`${PAGES.inventory}&gameId=${this.currentGame.gameId}&characterId=${this.currentCharacter.characterId}`);
+            } catch (e) {
+                this.toggleNavigationLoading(false, PAGES.inventory);
+            }
         });
                 
         if(this.currentGame.gameId) {
@@ -136,9 +180,35 @@ class CharacterPage extends Page {
         }
     }
 
+    toggleNavigationLoading(isLoading, page) {
+        this.isLoading = isLoading;
+        let spinnerWrapper = document.getElementById(`${page}-spinner`);
+
+        if (isLoading) {
+            spinnerWrapper.classList.remove('hidden');
+        } else {
+            spinnerWrapper.classList.add('hidden');
+        }
+    }
+
+    toggleLogoutLoading(isLoading) {
+        this.isLoading = isLoading;
+        const logoutButton = document.getElementById('logout-button');
+        const spinnerWrapper = document.getElementById('logout-loading-wrapper');
+
+        if (isLoading) {
+            logoutButton.classList.add('hidden');
+            spinnerWrapper.classList.remove('hidden');
+        } else {
+            logoutButton.classList.remove('hidden');
+            spinnerWrapper.classList.add('hidden');
+        }
+    }
+
     cleanup() {
         super.cleanup();
         this.currentCharacter = null;
+        this.isLoading = false;
 
         if (this.gameUnsubscribe) {
             this.gameUnsubscribe();
