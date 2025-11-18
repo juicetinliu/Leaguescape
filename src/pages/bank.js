@@ -20,10 +20,12 @@ class BankPage extends Page {
         this.goldActionType = null;
         this.currentGame = null;
         this.currentCharacter = null;
+        this.playerData = {};
         
         this.gameUnsubscribe = null;
         this.playerMessageUnsubscribe = null;
         this.characterUnsubscribe = null;
+        this.playerDataUnsubscribe = null
     }
 
     async show() {
@@ -152,6 +154,13 @@ class BankPage extends Page {
             const goldAmountInput = document.getElementById('goldAmount');
             goldAmountInput.value = 0;
             this.handleGoldInput(0);
+        });
+        this.playerDataUnsubscribe = GameService.onPlayerSnapshot(gameId, AuthService.currentUser.authId, async (playerData) => {
+            if(playerData.loginMode == 'inventory') {
+                window.location.reload();
+                return;
+            }
+            this.playerData = playerData;
         });
     }
     
@@ -285,6 +294,7 @@ class BankPage extends Page {
         super.cleanup();
         this.goldActionType = null;
         this.currentCharacter = null;
+        this.playerData = {};
 
         if (this.gameUnsubscribe) {
             this.gameUnsubscribe();
@@ -294,6 +304,9 @@ class BankPage extends Page {
         }
         if (this.characterUnsubscribe) {
             this.characterUnsubscribe();
+        }
+        if (this.playerDataUnsubscribe) {
+            this.playerDataUnsubscribe();
         }
     }
 }

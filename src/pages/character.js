@@ -57,9 +57,10 @@ class CharacterPage extends Page {
                     <div class="character-menu-heading">
                         Welcome to Piltover Academy.
                     </div>
+                    ${this.playerData.loginMode === 'inventory' ? '' :`
                     <div class="character-menu-subheading">
                         Please select your mode.
-                    </div>
+                    </div>`}
                     
                     <div class="character-menu-buttons-wrapper">
                         ${this.playerData.loginMode === 'inventory' ? '' :
