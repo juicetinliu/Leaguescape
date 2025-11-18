@@ -6,7 +6,7 @@ import Item from '../models/Item.js';
 import Action from '../models/Action.js';
 import Message from '../models/Message.js';
 import { MessageTo, MessageType } from '../models/MessageTypes.js';
-import AuthService from '../services/auth.js';
+import AuthService from './auth.js';
 
 class MessageService {
     onUnprocessedAdminMessagesSnapshot(gameId, callback) {
