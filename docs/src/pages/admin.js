@@ -37,7 +37,8 @@ class AdminPage extends Page {
         }
 
         this.currentGame = await GameService.getGame(gameId);
-        if (!this.currentGame || await !GameService.isAdmin(gameId, AuthService.currentUser.authId)) {
+        const isAdmin = await GameService.isAdmin(gameId, AuthService.currentUser.authId);
+        if (!this.currentGame || !isAdmin) {
             router.navigate(PAGES.user);
             return;
         }
