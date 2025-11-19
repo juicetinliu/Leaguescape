@@ -23,6 +23,8 @@ class AdminPage extends Page {
         this.gameCharactersUnsubscribe = null;
         this.adminMessageUnsubscribe = null;
 
+        this.unprocessedAdminMessages = [];
+
         this.players = [];
         this.characters = [];
         this.items = [];
@@ -59,7 +61,7 @@ class AdminPage extends Page {
                             ${this.getGameStateButton()}
                         </div>
                         <div>
-                            ${this.currentGame.gameState === GAME_STATE.RUNNING ? '<button id="showActivity" class="btn">View Activity</button>' : ''}
+                            ${this.currentGame.gameState === GAME_STATE.RUNNING ? '<button id="showActivity" class="btn">View Activity <span id="activityBadge" class="hidden">0</span></button>' : ''}
                             <button id="exitGame" class="btn">Exit Game</button>
                         </div>
                     </div>
@@ -172,6 +174,11 @@ class AdminPage extends Page {
             }
         });
 
+        document.getElementById('closeActivity').onclick = () => {
+            const modal = document.getElementById('activityModal');
+            modal.style.display = 'none';
+        };
+
         if(this.currentGame.gameId) {
             this.gamePlayersUnsubscribe = GameService.onGamePlayersSnapshot(this.currentGame.gameId, async (gameLobbyData) => {
                 await this.loadLobby(gameLobbyData);
@@ -183,6 +190,7 @@ class AdminPage extends Page {
                 await this.loadItems(this.activeTab === TABS.ITEMS ? document.getElementById('tabContent') : null, gameItemsData);
             });
 
+            // subscribe to unprocessed admin messages and update badge
             this.setupAdminMessageListener()
         }
     }
@@ -198,6 +206,10 @@ class AdminPage extends Page {
                     <option value="secret" ${player.loginMode === 'secret' ? 'selected' : ''}>Secret</option>
                     <option value="inventory" ${player.loginMode === 'inventory' ? 'selected' : ''}>Inventory</option>
                 </select>
+                <div>
+                ${player.privateDetails.assumedCharacterId ? `Player assumed character: ${this.characters.find(c => c.characterId === player.privateDetails.assumedCharacterId).name}
+                    ` : `No character assumed`}
+                </div>
                 <button class="btn kick-player" data-player-id="${player.playerId}">Kick</button>
                 ${!player.privateDetails.isBanned ?
                     `<button class="btn ban-player" data-player-id="${player.playerId}">Ban</button>`
@@ -357,18 +369,75 @@ class AdminPage extends Page {
 
     async showActivityLog() {
         const modal = document.getElementById('activityModal');
-        const log = document.getElementById('activityLog');
-        
-        const actions = await GameService.getGameActions(this.currentGame.gameId);
-        log.innerHTML = actions.map(action => `
-            <div class="activity-item">
-                <span class="timestamp">${new Date(action.activityTime).toLocaleString()}</span>
-                <span class="type">${action.actionType}</span>
-                <span class="details">${action.actionDetails}</span>
-            </div>
-        `).join('');
-        
         modal.style.display = 'flex';
+    }
+
+    renderUnprocessedMessages() {
+        const log = document.getElementById('activityLog');
+        const unprocessedAdminMessagesLength = this.unprocessedAdminMessages.length;
+        const html = this.unprocessedAdminMessages.map(msg => {
+            const player = this.players.find(p => p.playerId === msg.playerId);
+            let character = null;
+            if(msg.messageDetails && msg.messageDetails.characterId) {
+                character = this.characters.find(c => c.characterId === msg.messageDetails.characterId);
+            }
+
+            // TODO: Create helpers to convert the messageType to display string, and details to display ready UX.
+            return `
+                <div class="activity-item" id="activity-${msg.messageId}">
+                    <div class="activity-header">
+                        <span class="timestamp">${msg.activityTime.toDate().toLocaleString("en-US", { timeZone: "PST" })}</span>
+                        <span class="message-type">${msg.messageType}</span>
+                    </div>
+                    <div class="activity-details"><pre>${typeof msg.messageDetails === 'string' ? msg.messageDetails : JSON.stringify(msg.messageDetails)}</pre></div>
+                    <div class="activity-actions">
+                        <button class="btn approve-msg" data-id="${msg.messageId}">Approve</button>
+                        <button class="btn decline-msg" data-id="${msg.messageId}">Decline</button>
+                        <button class="btn ignore-msg" data-id="${msg.messageId}">Ignore</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+
+        if (unprocessedAdminMessagesLength === 0) {
+            log.innerHTML = '<p>No pending requests</p>';
+        } else {
+            log.innerHTML = html;
+        }
+
+        const badge = document.getElementById('activityBadge');
+        if (unprocessedAdminMessagesLength > 0) {
+            badge.classList.remove('hidden');
+            badge.textContent = unprocessedAdminMessagesLength > 9 
+                ? '9+'
+                : unprocessedAdminMessagesLength ;
+        } else {
+            badge.classList.add('hidden');
+            badge.textContent = "0";
+        }
+
+        // attach listeners
+        document.querySelectorAll('.approve-msg').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const id = e.target.dataset.id;
+                await this.processAdminDecision(id, true);
+            });
+        });
+
+        document.querySelectorAll('.decline-msg').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const id = e.target.dataset.id;
+                await this.processAdminDecision(id, false);
+            });
+        });
+
+        document.querySelectorAll('.ignore-msg').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const id = e.target.dataset.id;
+                await this.ignoreMessage(id);
+            });
+        });
     }
 
     async editCharacter(character) {
@@ -573,70 +642,73 @@ class AdminPage extends Page {
     }
 
     async setupAdminMessageListener() {
+        // Keep local list of unprocessed messages and update badge/UI. Do not auto-process.
         this.adminMessageUnsubscribe = MessageService.onUnprocessedAdminMessagesSnapshot(this.currentGame.gameId, async (messages) => {
-            // process the last message (oldest) - the listener will update as messages get processed.
-            if (messages && messages.length > 0) {
-                const message = messages[messages.length - 1];
-                await this.processAdminMessage(message);
-            }
+            this.unprocessedAdminMessages = messages || [];
+            this.renderUnprocessedMessages();
         });
     }
 
-    async processAdminMessage(message) {
-        console.log(message);
+    async ignoreMessage(messageId) {
+        const message = this.unprocessedAdminMessages.find(m => m.messageId === messageId);
+        if (!message) return;
         await message.markAsProcessed();
+    }
+
+    // Admin-driven processing: called when admin approves/declines an individual message. Admin can also make modifications/overrides.
+    async processAdminDecision(messageId, adminApproved, adminRejectionMessage, modifications) {
+        const message = this.unprocessedAdminMessages.find(m => m.messageId === messageId);
+        if (!message) return;
+
         const gameId = this.currentGame.gameId;
-        const player = this.players.find(player => { return player.playerId === message.playerId});
-        if(!player) throw 'No player found, treating it as an invalid message.';
-        
-        const playerId = player.playerId;
+        const player = this.players.find(p => p.playerId === message.playerId);
+        if (!player) {
+            // mark processed and return. This flow should not be possible!
+            await message.markAsProcessed();
+            return;
+        }
 
         if (message.messageType === MessageType.LOGIN_ATTEMPT) {
             const { accountNumber, accountPassword } = message.messageDetails;
-
-            const character = this.characters.find(c => 
-                c.accountNumber === accountNumber && 
-                c.accountPassword === accountPassword
-            );
-
-            if (character) {
+            const character = this.characters.find(c => c.accountNumber === accountNumber && c.accountPassword === accountPassword);
+            if (adminApproved && character) {
                 await AdminHandlerService.handlePlayerLogIn(gameId, player, character.characterId, true);
-                this.players = await GameService.getGamePlayers(gameId);
+                await this.loadLobby();
             } else {
-                await AdminHandlerService.handlePlayerLogIn(gameId, player, null, false, 'Invalid Credentials');
+                await AdminHandlerService.handlePlayerLogIn(gameId, player, null, false, !adminApproved ? 'Declined by Admin' : 'Invalid Credentials');
             }
         } else if (message.messageType === MessageType.LOGOUT_ATTEMPT) {
             const { characterId } = message.messageDetails;
-
-            if (characterId) {
+            if (adminApproved && characterId) {
                 await AdminHandlerService.handlePlayerLogOut(gameId, player, characterId, true);
+                await this.loadLobby();
+            } else {
+                await AdminHandlerService.handlePlayerLogOut(gameId, player, characterId, false, !adminApproved ? 'Declined by Admin' : 'Invalid Character');
             }
-            this.players = await GameService.getGamePlayers(gameId);
         } else if (message.messageType === MessageType.PURCHASE_ATTEMPT) {
             const { characterId, cart } = message.messageDetails;
             const character = this.characters.find(character => { return character.characterId === characterId });
             
-            const { approved, rejectionReason, approvedItems, totalPrice } = await AdminHandlerService.checkPlayerCartPurchaseRequirements(gameId, player, character, cart, this.items);
-            
-            await AdminHandlerService.handlePlayerCartPurchaseRequest(gameId, player, characterId, approvedItems, totalPrice, approved, rejectionReason);
-        } else if (message.messageType === MessageType.WITHDRAW_ATTEMPT) {
+            const { autoApproved = approved, rejectionReason, approvedItems, totalPrice } = await AdminHandlerService.checkPlayerCartPurchaseRequirements(gameId, player, character, cart, this.items);
+            if (adminApproved && autoApproved) {
+                await AdminHandlerService.handlePlayerCartPurchaseRequest(gameId, player, characterId, approvedItems, totalPrice, true);
+            } else {
+                await AdminHandlerService.handlePlayerCartPurchaseRequest(gameId, player, characterId, [], 0, false, !adminApproved ? 'Declined by Admin' : rejectionReason);
+            }
+        } else if (message.messageType === MessageType.WITHDRAW_ATTEMPT || message.messageType === MessageType.DEPOSIT_ATTEMPT) {
             const { characterId, amount } = message.messageDetails;
+            const isDeposit = message.messageType === MessageType.DEPOSIT_ATTEMPT;
             const character = this.characters.find(character => { return character.characterId === characterId });
-
-            const { approved, rejectionReason, isDeposit, approvedAmount = amount } = await AdminHandlerService.checkGoldActionRequirements(gameId, player, character, false, amount);
-
-            await AdminHandlerService.handlePlayerGoldActionRequest(gameId, player, characterId, approvedAmount, isDeposit, approved, rejectionReason);
-            
-
-        } else if (message.messageType === MessageType.DEPOSIT_ATTEMPT) {
-            const { characterId, amount } = message.messageDetails;
-            const character = this.characters.find(character => { return character.characterId === characterId });
-
-            const { approved, rejectionReason, isDeposit, approvedAmount = amount } = await AdminHandlerService.checkGoldActionRequirements(gameId, player, character, true, amount);
-
-            await AdminHandlerService.handlePlayerGoldActionRequest(gameId, player, characterId, approvedAmount, isDeposit, approved, rejectionReason);
+            const { approved:autoApproved, rejectionReason, isDeposit:_, amount:approvedAmount } = await AdminHandlerService.checkGoldActionRequirements(gameId, player, character, isDeposit, amount);
+            if (adminApproved && autoApproved) {
+                await AdminHandlerService.handlePlayerGoldActionRequest(gameId, player, characterId, approvedAmount, isDeposit, true);
+            } else {
+                await AdminHandlerService.handlePlayerGoldActionRequest(gameId, player, characterId, approvedAmount, isDeposit, false, !adminApproved ? 'Declined by Admin' : rejectionReason);
+            }
         }
-        
+
+        // Mark original message processed and remove from local list
+        await message.markAsProcessed();
     }
 
     cleanup() {
@@ -657,6 +729,7 @@ class AdminPage extends Page {
         if (this.gameItemsUnsubscribe){ 
             this.gameItemsUnsubscribe();
         }
+        this.unprocessedAdminMessages = [];
     }
 }
 

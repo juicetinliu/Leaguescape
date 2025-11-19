@@ -174,7 +174,9 @@ class AdminHandlerService {
             }, playerId);
         } else {
             await MessageService.sendAdminMessageToPlayer(gameId, {
-                messageType: MessageType.WITHDRAW_FAILURE,
+                 messageType: isDeposit 
+                    ? MessageType.DEPOSIT_FAILURE 
+                    : MessageType.WITHDRAW_FAILURE,
                 messageDetails: { 
                     rejectionReason: rejectionReason 
                 }
