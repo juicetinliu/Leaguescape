@@ -18,7 +18,10 @@ export const MessageType = {
     DEPOSIT_FAILURE: 'depositFailure',
     WITHDRAW_ATTEMPT: 'withdrawAttempt',
     WITHDRAW_SUCCESS: 'withdrawSuccess',
-    WITHDRAW_FAILURE: 'withdrawFailure'
+    WITHDRAW_FAILURE: 'withdrawFailure',
+    REQUEST_INVENTORY: 'requestInventory',
+    REQUEST_INVENTORY_SUCCESS: 'requestInventorySuccess',
+    REQUEST_INVENTORY_FAILURE: 'requestInventoryFailure'
 }
 
 export default { MessageType, MessageTo };

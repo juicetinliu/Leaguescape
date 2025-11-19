@@ -43,15 +43,15 @@ service cloud.firestore {
     // User rules (unchanged)
     match /users/{userId} {
       allow read: if isAuthenticated();
-      allow write: if request.auth.uid == userId;
+      allow write: if isAuthenticated() && request.auth.uid == userId;
     }
     
     // Game rules
     match /games/{gameId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
-      allow update: if isAdmin(gameId);
-      allow delete: if isAdmin(gameId);
+      allow update: if isAuthenticated() && isAdmin(gameId);
+      allow delete: if isAuthenticated() && isAdmin(gameId);
 
       // Rules for the PUBLIC player data (e.g., playerName)
       match /players/{playerId} {
@@ -63,16 +63,16 @@ service cloud.firestore {
                       // A player can update ONLY their own playerName
                       (request.auth.uid == playerId &&
                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['playerName'])));
-        allow delete: if isAdmin(gameId); // Only admin can delete a player's public profile
+        allow delete: if isAuthenticated() && isAdmin(gameId); // Only admin can delete a player's public profile
 
         // Rules for admin-managed player data (e.g., isBanned, assumedCharacterId)
         match /privateDetails/{detailId} { // 'detailId' would typically be 'data'
           // Only the admin can read/update/delete private data (e.g., ban status, assigned character)
           allow read: if isAuthenticated() && isAdmin(gameId);
           // A player should be able to create default private data when they join
-          allow create: if isAuthenticated() && (request.auth.uid == playerId && detailId == 'data' && request.resource.data.isBanned == false && request.resource.data.assumedCharacterId == '');
-          allow update: if isAdmin(gameId);
-          allow delete: if isAdmin(gameId);
+          allow create: if isAuthenticated() && (isAdmin(gameId) || (request.auth.uid == playerId && detailId == 'data' && request.resource.data.isBanned == false && request.resource.data.assumedCharacterId == ''));
+          allow update: if isAuthenticated() && isAdmin(gameId);
+          allow delete: if isAuthenticated() && isAdmin(gameId);
         }
 
         // Rules for the message bus from the admin to the player
@@ -80,7 +80,7 @@ service cloud.firestore {
           // Admin and players can read these messages
           allow read: if isAuthenticated() && (isAdmin(gameId) || request.auth.uid == playerId);
           // Only the admin can create messages to the player
-          allow create: if isAdmin(gameId);
+          allow create: if isAuthenticated() && isAdmin(gameId);
           // Only the player can update messages they receive
           allow update: if isAuthenticated() && request.auth.uid == playerId;
           allow delete: if false;
@@ -89,25 +89,25 @@ service cloud.firestore {
       
       // Character rules
       match /characters/{characterId} {
-        allow read: if isAdmin(gameId) || hasAssumedThisCharacter(gameId, characterId);
+        allow read: if isAuthenticated() && (isAdmin(gameId) || hasAssumedThisCharacter(gameId, characterId));
         // Only admin can update character data
-        allow write: if isAdmin(gameId);
+        allow write: if isAuthenticated() && isAdmin(gameId);
       }
       
       // Item rules
       match /items/{itemId} {
-        allow read: if isAdmin(gameId) || (hasAssumedCharacter(gameId) && ((
+        allow read: if isAuthenticated() && (isAdmin(gameId) || (hasAssumedCharacter(gameId) && ((
           resource.data.isSecret == true &&
             canPlayerViewSecretItems(gameId) &&
             canAssumedCharacterViewSecretItems(gameId)) || 
-          resource.data.isSecret == false));
-        allow write: if isAdmin(gameId);
+          resource.data.isSecret == false)));
+        allow write: if isAuthenticated() && isAdmin(gameId);
       }
 
       // Action rules
       match /actions/{actionId} {
-        allow read: if isAdmin(gameId);
-        allow create: if isAdmin(gameId) || isActivePlayer(gameId);
+        allow read: if isAuthenticated() && isAdmin(gameId);
+        allow create: if isAuthenticated() && (isAdmin(gameId) || isActivePlayer(gameId));
         allow update: if false;
         allow delete: if false;
       }
@@ -121,7 +121,7 @@ service cloud.firestore {
         // Only the owning player can create messages to the admin
         allow create: if isAuthenticated() && (isActivePlayer(gameId) && request.auth.uid == request.resource.data.fromPlayer);
         // Only the admin can update messages they receive
-        allow update: if isAdmin(gameId);
+        allow update: if isAuthenticated() && isAdmin(gameId);
         allow delete: if false;
       }
     }

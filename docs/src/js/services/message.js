@@ -38,6 +38,24 @@ class MessageService {
         )
     }
 
+    //unused?
+    async getUnprocessedAdminMessagesFromPlayer(gameId, playerId, messageType) {
+        const q = messageType ? query(
+            collection(db, `games/${gameId}/${MessageTo.ADMIN}`),
+            where('fromPlayer', '==', playerId),
+            where('processed', '==', false),
+            where('messageType', '==', messageType),
+            orderBy('activityTime', 'desc')
+        ) : query(
+            collection(db, `games/${gameId}/${MessageTo.ADMIN}`),
+            where('fromPlayer', '==', playerId),
+            where('processed', '==', false),
+            orderBy('activityTime', 'desc')
+        );
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => new Message(gameId, doc.id, { ...doc.data(), messageTo: MessageTo.ADMIN, playerId: doc.data().fromPlayer }));
+    }
+
     /**
      * ONLY used by the admin - to send a message for processing to a specific player
      * @param {*} gameId 

@@ -600,16 +600,16 @@ class AdminPage extends Page {
             );
 
             if (character) {
-                await AdminHandlerService.handlePlayerLogIn(gameId, playerId, character.characterId, true);
+                await AdminHandlerService.handlePlayerLogIn(gameId, player, character.characterId, true);
                 this.players = await GameService.getGamePlayers(gameId);
             } else {
-                await AdminHandlerService.handlePlayerLogIn(gameId, playerId, null, false, 'Invalid Credentials');
+                await AdminHandlerService.handlePlayerLogIn(gameId, player, null, false, 'Invalid Credentials');
             }
         } else if (message.messageType === MessageType.LOGOUT_ATTEMPT) {
             const { characterId } = message.messageDetails;
 
             if (characterId) {
-                await AdminHandlerService.handlePlayerLogOut(gameId, playerId, characterId, true);
+                await AdminHandlerService.handlePlayerLogOut(gameId, player, characterId, true);
             }
             this.players = await GameService.getGamePlayers(gameId);
         } else if (message.messageType === MessageType.PURCHASE_ATTEMPT) {
@@ -618,14 +618,14 @@ class AdminPage extends Page {
             
             const { approved, rejectionReason, approvedItems, totalPrice } = await AdminHandlerService.checkPlayerCartPurchaseRequirements(gameId, player, character, cart, this.items);
             
-            await AdminHandlerService.handlePlayerCartPurchaseRequest(gameId, playerId, characterId, approvedItems, totalPrice, approved, rejectionReason);
+            await AdminHandlerService.handlePlayerCartPurchaseRequest(gameId, player, characterId, approvedItems, totalPrice, approved, rejectionReason);
         } else if (message.messageType === MessageType.WITHDRAW_ATTEMPT) {
             const { characterId, amount } = message.messageDetails;
             const character = this.characters.find(character => { return character.characterId === characterId });
 
             const { approved, rejectionReason, isDeposit, approvedAmount = amount } = await AdminHandlerService.checkGoldActionRequirements(gameId, player, character, false, amount);
 
-            await AdminHandlerService.handlePlayerGoldActionRequest(gameId, playerId, characterId, approvedAmount, isDeposit, approved, rejectionReason);
+            await AdminHandlerService.handlePlayerGoldActionRequest(gameId, player, characterId, approvedAmount, isDeposit, approved, rejectionReason);
             
 
         } else if (message.messageType === MessageType.DEPOSIT_ATTEMPT) {
@@ -634,7 +634,7 @@ class AdminPage extends Page {
 
             const { approved, rejectionReason, isDeposit, approvedAmount = amount } = await AdminHandlerService.checkGoldActionRequirements(gameId, player, character, true, amount);
 
-            await AdminHandlerService.handlePlayerGoldActionRequest(gameId, playerId, characterId, approvedAmount, isDeposit, approved, rejectionReason);
+            await AdminHandlerService.handlePlayerGoldActionRequest(gameId, player, characterId, approvedAmount, isDeposit, approved, rejectionReason);
         }
         
     }

@@ -9,7 +9,8 @@ import MessageService from '../message.js';
 import GameService from '../game.js';
 
 class AdminHandlerService {
-    async handlePlayerLogOut(gameId, playerId, characterId, approved, rejectionReason = "") {
+    async handlePlayerLogOut(gameId, player, characterId, approved, rejectionReason = "") {
+        const playerId = player.playerId;
         if (approved) {
             await GameService.clearPlayerAssumedCharacter(gameId, playerId, characterId);
             await MessageService.sendAdminMessageToPlayer(gameId, {
@@ -25,7 +26,8 @@ class AdminHandlerService {
         }
     }
 
-    async handlePlayerLogIn(gameId, playerId, characterId, approved, rejectionReason = "") {
+    async handlePlayerLogIn(gameId, player, characterId, approved, rejectionReason = "") {
+        const playerId = player.playerId;
         if (approved) {
             await GameService.updatePlayerAssumedCharacter(gameId, playerId, characterId);
             await MessageService.sendAdminMessageToPlayer(gameId, {
@@ -92,7 +94,8 @@ class AdminHandlerService {
         return output;
     }
 
-    async handlePlayerCartPurchaseRequest(gameId, playerId, characterId, approvedItems, totalPrice, approved, rejectionReason = "") {
+    async handlePlayerCartPurchaseRequest(gameId, player, characterId, approvedItems, totalPrice, approved, rejectionReason = "") {
+        const playerId = player.playerId;
         if (approved) {
             await GameService.purchaseItemsCharacter(gameId, playerId, characterId, approvedItems, totalPrice);
             await MessageService.sendAdminMessageToPlayer(gameId, {
@@ -153,7 +156,8 @@ class AdminHandlerService {
 
 
 
-    async handlePlayerGoldActionRequest(gameId, playerId, characterId, approvedAmount, isDeposit, approved, rejectionReason = "") {
+    async handlePlayerGoldActionRequest(gameId, player, characterId, approvedAmount, isDeposit, approved, rejectionReason = "") {
+        const playerId = player.playerId;
         if (approved) {
             if (isDeposit) {
                 await GameService.depositGoldCharacter(gameId, playerId, characterId, approvedAmount);
@@ -176,15 +180,6 @@ class AdminHandlerService {
                 }
             }, playerId);
         }
-    }
-
-
-    async handlePlayerWithdrawRequest(gameId, playerId, characterId, approvedAmount, approved, rejectionReason = "") {
-        return await this.handlePlayerGoldActionRequest(gameId, playerId, characterId, approvedAmount, approved, rejectionReason, false);
-    }
-
-    async handlePlayerDepositRequest(gameId, playerId, characterId, approvedAmount, approved, rejectionReason = "") {
-        return await this.handlePlayerGoldActionRequest(gameId, playerId, characterId, approvedAmount, approved, rejectionReason, true);
     }
 }
 
