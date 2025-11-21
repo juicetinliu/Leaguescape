@@ -51,6 +51,16 @@ class CharacterHandlerService {
             }
         });
     }
+
+    async requestInventoryAccess(gameId, characterId) {
+        // No action logged. This is a request!
+        await MessageService.sendPlayerMessageToAdmin(gameId, {
+            messageType: MessageType.REQUEST_INVENTORY_ATTEMPT,
+            messageDetails: {
+                characterId: characterId,
+            }
+        });
+    }
 }
 
 export default new CharacterHandlerService();

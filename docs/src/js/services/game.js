@@ -317,6 +317,13 @@ class GameService {
         }, playerId);
     }
 
+    async logInventoryAccess(gameId, playerId, characterId) {
+        await this.logAction(gameId, {
+            actionType: ActionType.ACCESS_INVENTORY,
+            characterId: characterId,
+        }, playerId);
+    }
+
     async getGameItems(gameId) {
         const itemsRef = collection(db, `games/${gameId}/items`);
         const items = await getDocs(itemsRef);

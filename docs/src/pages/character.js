@@ -8,7 +8,6 @@ import { PAGES, GAME_STATE } from '../js/models/Enums.js';
 import { gameRouter } from '../js/utils/gamerouter.js';
 import CharacterHandlerService from '../js/services/handlers/characterHandler.js';
 import { spinner } from '../js/components/staticComponents.js';
-import bank from './bank.js';
 
 class CharacterPage extends Page {
     constructor() {

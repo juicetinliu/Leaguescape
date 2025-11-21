@@ -6,12 +6,15 @@ import { MessageType } from '../js/models/MessageTypes.js';
 import { router } from '../js/utils/router.js';
 import { PAGES, GAME_STATE } from '../js/models/Enums.js';
 import { gameRouter } from '../js/utils/gamerouter.js';
+import CharacterHandlerService from '../js/services/handlers/characterHandler.js';
+import { spinner } from '../js/components/staticComponents.js';
 
 class InventoryPage extends Page {
     constructor() {
         super(PAGES.inventory);
         this.currentGame = null;
         this.currentCharacter = null;
+        this.isLoading = true;
         
         this.gameUnsubscribe = null;
         this.playerMessageUnsubscribe = null;
@@ -45,11 +48,29 @@ class InventoryPage extends Page {
                 </div>
 
                 <div class="inventory-content-wrapper">
-                    <div class="inventory-content-heading">
-                        PLEASE WAIT
+                    <div id="inventory-loading-wrapper" class="inventory-content-wrapper">
+                        <div class="inventory-content-heading">
+                            Contacting the Shop Keeper...
+                        </div>
+                        <div id="inventory-spinner-wrapper">
+                            ${spinner}
+                        </div>
                     </div>
-                    <div class="inventory-content-message">
-                        The shop keeper will be with you shortly.
+                    <div id="inventory-accept-wrapper" class="inventory-content-wrapper hidden">
+                        <div class="inventory-content-heading">
+                            Success!
+                        </div>
+                        <div class="inventory-content-message">
+                            The Shop Keeper will be with you shortly.
+                        </div>
+                    </div>
+                    <div id="inventory-decline-wrapper" class="inventory-content-wrapper hidden">
+                        <div class="inventory-content-heading">
+                            Please try again later!
+                        </div>
+                        <div class="inventory-content-message">
+                            The Shop Keeper has declined your request.
+                        </div>
                     </div>
                 </div>
             </div>
@@ -71,6 +92,7 @@ class InventoryPage extends Page {
                 }
             });
             this.setupPlayerMessageUnsubscribe();
+            this.notifyAdmin();
         }
     }
         
@@ -87,13 +109,45 @@ class InventoryPage extends Page {
     async processPlayerMessage(message) {
         console.log(message);
         await message.markAsProcessed();
-        if (message.messageType === MessageType.LOGOUT_SUCCESS) {
+        if (message.messageType === MessageType.REQUEST_INVENTORY_SUCCESS) {
+            this.toggleLogoutLoading(false, true);
+        } else if (message.messageType === MessageType.REQUEST_INVENTORY_FAILURE) {
+            this.toggleLogoutLoading(false, false);
+        }
+    }
+
+    async notifyAdmin() {
+        await CharacterHandlerService.requestInventoryAccess(this.currentGame.gameId, this.currentCharacter.characterId);
+    }
+
+
+
+    toggleLogoutLoading(isLoading, accepted) {
+        this.isLoading = isLoading;
+        const loadingWrapper = document.getElementById('inventory-loading-wrapper');
+        const messageAccept = document.getElementById('inventory-accept-wrapper');
+        const messageDecline = document.getElementById('inventory-decline-wrapper');
+
+        if (isLoading) {
+            messageAccept.classList.add('hidden');
+            messageDecline.classList.add('hidden');
+            loadingWrapper.classList.remove('hidden');
+        } else {
+            if(accepted) {
+                messageAccept.classList.remove('hidden');
+                messageDecline.classList.add('hidden');
+            } else {
+                messageDecline.classList.remove('hidden');
+                messageAccept.classList.add('hidden');
+            }
+            loadingWrapper.classList.add('hidden');
         }
     }
 
     cleanup() {
         super.cleanup();
         this.currentCharacter = null;
+        this.isLoading = true;
 
         if (this.gameUnsubscribe) {
             this.gameUnsubscribe();

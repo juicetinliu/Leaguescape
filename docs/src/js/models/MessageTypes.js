@@ -19,7 +19,7 @@ export const MessageType = {
     WITHDRAW_ATTEMPT: 'withdrawAttempt',
     WITHDRAW_SUCCESS: 'withdrawSuccess',
     WITHDRAW_FAILURE: 'withdrawFailure',
-    REQUEST_INVENTORY: 'requestInventory',
+    REQUEST_INVENTORY_ATTEMPT: 'requestInventoryAttempt',
     REQUEST_INVENTORY_SUCCESS: 'requestInventorySuccess',
     REQUEST_INVENTORY_FAILURE: 'requestInventoryFailure'
 }

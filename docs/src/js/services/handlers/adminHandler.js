@@ -45,6 +45,22 @@ class AdminHandlerService {
             }, playerId);
         }
     }
+    async handlePlayerInventoryAccess(gameId, player, characterId, approved, rejectionReason = "") {
+        const playerId = player.playerId;
+        if (approved) {
+            await GameService.logInventoryAccess(gameId, playerId, characterId);
+            await MessageService.sendAdminMessageToPlayer(gameId, {
+                messageType: MessageType.REQUEST_INVENTORY_SUCCESS
+            }, playerId);
+        } else {
+            await MessageService.sendAdminMessageToPlayer(gameId, {
+                messageType: MessageType.REQUEST_INVENTORY_FAILURE,
+                messageDetails: { 
+                    rejectionReason: rejectionReason 
+                }
+            }, playerId);
+        }
+    }
 
     async checkPlayerCartPurchaseRequirements(gameId, player, character, cart, availableItems) {
         let output = { approved: false, rejectionReason: '', approvedItems: {}, totalPrice: 0 };

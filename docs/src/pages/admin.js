@@ -685,6 +685,13 @@ class AdminPage extends Page {
             } else {
                 await AdminHandlerService.handlePlayerLogOut(gameId, player, characterId, false, !adminApproved ? 'Declined by Admin' : 'Invalid Character');
             }
+        } else if (message.messageType === MessageType.REQUEST_INVENTORY_ATTEMPT) {
+            const { characterId } = message.messageDetails;
+            if (adminApproved && characterId) {
+                await AdminHandlerService.handlePlayerInventoryAccess(gameId, player, characterId, true);
+            } else {
+                await AdminHandlerService.handlePlayerInventoryAccess(gameId, player, characterId, false, !adminApproved ? 'Declined by Admin' : 'Invalid Character');
+            }
         } else if (message.messageType === MessageType.PURCHASE_ATTEMPT) {
             const { characterId, cart } = message.messageDetails;
             const character = this.characters.find(character => { return character.characterId === characterId });
