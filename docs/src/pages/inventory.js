@@ -50,7 +50,7 @@ class InventoryPage extends Page {
                 <div class="inventory-content-wrapper">
                     <div id="inventory-loading-wrapper" class="inventory-content-wrapper">
                         <div class="inventory-content-heading">
-                            Contacting the Shop Keeper...
+                            Contacting the Shopkeeper...
                         </div>
                         <div id="inventory-spinner-wrapper">
                             ${spinner}
@@ -61,7 +61,7 @@ class InventoryPage extends Page {
                             Success!
                         </div>
                         <div class="inventory-content-message">
-                            The Shop Keeper will be with you shortly.
+                            The Shopkeeper will be with you shortly.
                         </div>
                     </div>
                     <div id="inventory-decline-wrapper" class="inventory-content-wrapper hidden">
@@ -69,7 +69,7 @@ class InventoryPage extends Page {
                             Please try again later!
                         </div>
                         <div class="inventory-content-message">
-                            The Shop Keeper has declined your request.
+                            The Shopkeeper has declined your request.
                         </div>
                     </div>
                 </div>

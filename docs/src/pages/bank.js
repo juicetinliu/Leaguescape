@@ -58,7 +58,7 @@ class BankPage extends Page {
                 <div class="bank-content-wrapper">
                     <div class="bank-profile-content-wrapper">
                         <div class="profile-image-wrapper">
-                            <img src=""/>
+                            <img src="${this.currentCharacter.profileImage}"/>
                         </div>
                         <div class="profile-bank-info-wrapper">
                             <div class="profile-name-heading heading">

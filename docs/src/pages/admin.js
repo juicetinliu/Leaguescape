@@ -1,5 +1,6 @@
 import Page from '../js/models/Page.js';
 import AuthService from '../js/services/auth.js';
+import StorageService from '../js/services/storage.js';
 import GameService from '../js/services/game.js';
 import MessageService from '../js/services/message.js';
 import { MessageTo, MessageType } from '../js/models/MessageTypes.js';
@@ -313,7 +314,9 @@ class AdminPage extends Page {
             const card = document.createElement('div');
             card.className = 'profile-card';
             card.innerHTML = `
-                <img src="${character.profileImage || '/public/images/default-profile.png'}" class="profile-image">
+                <div class="profile-image-wrapper">
+                    <img src="${character.profileImage}" class="profile-image">
+                </div>
                 <div class="profile-info">
                     <h3>${character.name}</h3>
                     <p>Account: ${character.accountNumber}</p>
@@ -449,55 +452,122 @@ class AdminPage extends Page {
         const isUpdate = !!character.characterId; //otherwise this is for creating!
 
         form.innerHTML = `
-            <div class="form-group">
-                <label>FIRST NAME:</label>
-                <input type="text" id="characterFirstName" value="${characterFirstName || ''}" required>
+            <div class="character-form-images">
+                <div class="form-group">
+                    <label>PROFILE IMAGE:</label>
+                    <input type="file" id="profileImageInput" accept="image/*">
+                    <div class="profile-image-wrapper">
+                        <img src="${character.profileImage}" alt="profileImagePreview" id="profileImagePreview">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>EMBLEM IMAGE:</label>
+                    <input type="file" id="emblemImageInput" accept="image/*">
+                    <div class="emblem-image-wrapper">
+                        <img src="${character.emblemImage}" alt="emblemImagePreview" id="emblemImagePreview">
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label>LAST NAME:</label>
-                <input type="text" id="characterLastName" value="${characterLastName || ''}">
-            </div>
-            <div class="form-group">
-                <label>USER ID:</label>
-                <input type="text" id="userId" value="${character.userId || ''}" required>
-            </div>
-            <div class="form-group">
-                <label>ACCOUNT NUMBER:</label>
-                <input type="text" id="accountNumber" value="${character.accountNumber || ''}" required>
-            </div>
-            <div class="form-group">
-                <label>ACCOUNT PASSWORD:</label>
-                <input type="text" id="accountPassword" value="${character.accountPassword || ''}" required>
-            </div>
-            <div class="form-group">
-                <label>SECURITY QUESTION:</label>
-                <textarea type="text" id="securityQuestion">${character.securityQuestion || ''}</textarea>
-            </div>
-            <div class="form-group">
-                <label>SECURITY ANSWER:</label>
-                <input type="text" id="securityAnswer" value="${character.securityAnswer || ''}">
-            </div>
-            <div class="form-group">
-                <label>STARTING BANK BALANCE:</label>
-                <input type="number" id="startingGold" value="${character.startingGold || 0}" required>
-            </div>
-            ${isUpdate ? 
-                `<div class="form-group">
-                    <label>CURRENT BANK BALANCE:</label>
-                    <input type="number" id="actualGold" value="${character.gold || 0}" required>
-                </div>` : ''}
-            <div class="form-group">
-                <label>CAN ACCESS SECRET:</label>
-                <input type="checkbox" id="canAccessSecret" ${character.canAccessSecret ? 'checked' : ''}>
-            </div>
-            <div class="form-actions">
-                <button type="submit" class="btn">SAVE</button>
-                <button type="button" class="btn" id="cancelCharacter">CANCEL</button>
+            <div class="character-form-details">
+                <div class="form-group">
+                    <label>FIRST NAME:</label>
+                    <input type="text" id="characterFirstName" value="${characterFirstName || ''}" required>
+                </div>
+                <div class="form-group">
+                    <label>LAST NAME:</label>
+                    <input type="text" id="characterLastName" value="${characterLastName || ''}">
+                </div>
+                <div class="form-group">
+                    <label>USER ID:</label>
+                    <input type="text" id="userId" value="${character.userId || ''}" required>
+                </div>
+                <div class="form-group">
+                    <label>ACCOUNT NUMBER:</label>
+                    <input type="text" id="accountNumber" value="${character.accountNumber || ''}" required>
+                </div>
+                <div class="form-group">
+                    <label>ACCOUNT PASSWORD:</label>
+                    <input type="text" id="accountPassword" value="${character.accountPassword || ''}" required>
+                </div>
+                <div class="form-group">
+                    <label>SECURITY QUESTION:</label>
+                    <textarea type="text" id="securityQuestion">${character.securityQuestion || ''}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>SECURITY ANSWER:</label>
+                    <input type="text" id="securityAnswer" value="${character.securityAnswer || ''}">
+                </div>
+                <div class="form-group">
+                    <label>STARTING BANK BALANCE:</label>
+                    <input type="number" id="startingGold" value="${character.startingGold || 0}" required>
+                </div>
+                ${isUpdate ? 
+                    `<div class="form-group">
+                        <label>CURRENT BANK BALANCE:</label>
+                        <input type="number" id="actualGold" value="${character.gold || 0}" required>
+                    </div>` : ''}
+                <div class="form-group">
+                    <label>CAN ACCESS SECRET:</label>
+                    <input type="checkbox" id="canAccessSecret" ${character.canAccessSecret ? 'checked' : ''}>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn">SAVE</button>
+                    <button type="button" class="btn" id="cancelCharacter">CANCEL</button>
+                </div>
             </div>
         `;
 
+        document.getElementById('profileImageInput').addEventListener('change', function() {
+            const profileImagePreview = document.getElementById('profileImagePreview');
+
+            const files = this.files;
+            if (files && files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    profileImagePreview.src = e.target.result;
+                };
+                reader.onerror = function(err) {
+                    console.error("Error reading file:", err);
+                    alert("An error occurred while reading the file.");
+                };
+                reader.readAsDataURL(files[0]);
+            }
+        });
+
+        document.getElementById('emblemImageInput').addEventListener('change', function() {
+            const emblemImagePreview = document.getElementById('emblemImagePreview');
+
+            const files = this.files;
+            if (files && files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    emblemImagePreview.src = e.target.result;
+                };
+                reader.onerror = function(err) {
+                    console.error("Error reading file:", err);
+                    alert("An error occurred while reading the file.");
+                };
+                reader.readAsDataURL(files[0]);
+            }
+        });
+
         form.onsubmit = async (e) => {
             e.preventDefault();
+            const gameId = this.currentGame.gameId;
+
+            const profileImageInput = document.getElementById('profileImageInput');
+            let profileImageUrl = character.profileImage || '';
+            const profileFiles = profileImageInput.files;
+            if (profileFiles.length > 0) {
+                profileImageUrl = await GameService.uploadCharacterProfileImage(gameId, profileFiles[0]);
+            }
+            const emblemImageInput = document.getElementById('emblemImageInput');
+            let emblemImageUrl = character.emblemImage || '';
+            const emblemFiles = emblemImageInput.files;
+            if (emblemFiles.length > 0) {
+                emblemImageUrl = await GameService.uploadCharacterProfileImage(gameId, emblemFiles[0]);
+            }
+
             const characterData = {
                 name: document.getElementById('characterFirstName').value + ' ' + document.getElementById('characterLastName').value,
                 userId: document.getElementById('userId').value,
@@ -507,8 +577,8 @@ class AdminPage extends Page {
                 securityAnswer: document.getElementById('securityAnswer').value,
                 startingGold: parseInt(document.getElementById('startingGold').value),
                 gold: parseInt(document.getElementById(isUpdate ? 'actualGold' : 'startingGold').value),
-                // profileImage: , soon!
-                // emblemImage: , soon!
+                profileImage: profileImageUrl,
+                emblemImage: emblemImageUrl,
                 canAccessSecret: document.getElementById('canAccessSecret').checked
                 //items - TODO: support starting items?
             };

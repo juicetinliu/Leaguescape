@@ -21,6 +21,17 @@
     #showActivity {
         position: relative;
     }
+
+    #characterForm {
+        display: flex;
+        flex-direction: row;
+    }
+
+    .character-form-images,
+    .character-form-details {
+        display: flex;
+        flex-direction: column;
+    }
     
     #activityBadge {
         position: absolute;
@@ -34,5 +45,27 @@
         display: flex;
         align-items: center;
         justify-content: center;
+    }
+
+    .profile-card .profile-image-wrapper,
+    .profile-card .emblem-image-wrapper {
+        width: 60px;
+        height: 60px;
+    }
+
+    
+    .profile-image-wrapper, 
+    .emblem-image-wrapper {
+        flex: 1 0 auto;
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        border: 2px solid var(--primary-color);
+        overflow: hidden;
+
+        img {
+            width: 100%;
+            height: 100%;
+        }
     }
 }

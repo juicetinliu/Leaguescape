@@ -58,7 +58,7 @@ class ShopPage extends Page {
                     <div class="items-header-wrapper">
                         <div class="profile-preview-wrapper wrapper">
                             <div class="profile-image-wrapper ${this.canAccessSecretShop ? 'flickering' : ''}">
-                                <img src=""/>
+                                <img src="${this.currentCharacter.profileImage}"/>
                             </div>
                             <div class="profile-info-wrapper">
                                 <div id="characterName" class="profile-name-text">

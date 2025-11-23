@@ -6,6 +6,7 @@ import Item from '../models/Item.js';
 import Action from '../models/Action.js';
 import ActionType from '../models/ActionType.js';
 import AuthService from './auth.js';
+import StorageService from './storage.js';
 
 class GameService {
     createPlayerRef(gameId, playerId) {
@@ -262,6 +263,42 @@ class GameService {
     async updateCharacter(gameId, characterId, characterData) {
         const character = await Character.get(gameId, characterId);
         await character.update(characterData);
+    }
+
+    // unused?
+    // async updateCharacterProfileImage(gameId, characterId, imageFile) {
+    //     const profileImageUrl = await this.uploadCharacterProfileImage(gameId, imageFile);
+    //     const character = await Character.get(gameId, characterId);
+    //     await character.updateProfileImage(profileImageUrl);
+
+    //     return profileImageUrl;
+    // }
+
+    async uploadCharacterProfileImage(gameId, imageFile) {
+        const timestamp = Date.now(); //Essentially a uuid.
+        const filePath = `public/${gameId}/profile_${timestamp}.jpg`;
+        const profileImageUrl = await StorageService.uploadFile(filePath, imageFile);
+
+        return profileImageUrl;
+    }
+
+    // Probably should only upload emblems once - and select the emblem in character creation.
+    // unused?
+    // async updateCharacterEmblemImage(gameId, characterId, imageFile) {
+    //     const emblemImageUrl = await this.uploadCharacterEmblemImage(gameId, imageFile);
+    //     const character = await Character.get(gameId, characterId);
+    //     await character.updateEmblemImage(emblemImageUrl);
+
+    //     return emblemImageUrl;
+    // }
+
+    // Probably should only upload emblems once - and select the emblem in character creation.
+    async uploadCharacterEmblemImage(gameId, imageFile) {
+        const timestamp = Date.now(); //Essentially a uuid.
+        const filePath = `public/${gameId}/emblem_${timestamp}.jpg`;
+        const emblemImageUrl = await StorageService.uploadFile(filePath, imageFile);
+
+        return emblemImageUrl;
     }
 
     async updateCharacterGold(gameId, characterId, amount) {

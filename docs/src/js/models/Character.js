@@ -65,6 +65,24 @@ class Character {
         });
     }
 
+    // unused?
+    // async updateProfileImage(url) {
+    //     if(!url) throw 'Provide a url!'
+    //     this.profileImage = url;
+    //     await updateDoc(doc(db, `games/${this.gameId}/characters`, this.characterId), {
+    //         profileImage: this.profileImage
+    //     });
+    // }
+
+    // unused?
+    // async updateEmblemImage(url) {
+    //     if(!url) throw 'Provide a url!'
+    //     this.emblemImage = url;
+    //     await updateDoc(doc(db, `games/${this.gameId}/characters`, this.characterId), {
+    //         emblemImage: this.emblemImage
+    //     });
+    // }
+
     // Unnecessary?
     // async addItem(itemId, quantity = 1) {
     //     const itemQuantity = this.items[itemId] || 0;
