@@ -5,6 +5,7 @@ import { MessageTo }  from './MessageTypes.js';
 
 //TODO: validate messageData based on messageType
 // Unlike Actions, messages are used for action game processing between players and admin.
+// Probably should keep messages within characters instead of players for a truly secure experience...
 class Message {
     constructor(gameId, messageId, data = {}) {
         this.gameId = gameId;

@@ -71,7 +71,7 @@ class AdminHandlerService {
             return output;
         }
         
-        // Then check if the items are in stock and all reqs are met - remove anything unmet!
+        // Then check if the items are in stock and all reqs are met - remove anything unmet (e.g. OOS, unavailable, or quantity request exceeds current quantity) - these scenarios are possible if multiple players are purchasing at the same time!! (Though if it's just one player - this shouldn't be possible as their view updates real time.)
         let approvedItems = {};
         let totalPrice = 0;
         Object.entries(cart).map(([itemId, quantity]) => {
@@ -110,8 +110,10 @@ class AdminHandlerService {
         return output;
     }
 
-    async handlePlayerCartPurchaseRequest(gameId, player, characterId, approvedItems, totalPrice, approved, rejectionReason = "") {
+    async handlePlayerCartPurchaseRequest(gameId, player, character, approvedItems, totalPrice, messageId, approved, rejectionReason = "") {
         const playerId = player.playerId;
+        const characterId = character.characterId;
+        await character.updatePurchaseHistoryEntry(messageId, approved, approvedItems, totalPrice);
         if (approved) {
             await GameService.purchaseItemsCharacter(gameId, playerId, characterId, approvedItems, totalPrice);
             await MessageService.sendAdminMessageToPlayer(gameId, {
@@ -129,6 +131,10 @@ class AdminHandlerService {
                 }
             }, playerId);
         }
+    }
+    
+    async createPlayerCartPurchaseHistoryEntry(messageId, character, cart) {
+        await character.createPurchaseHistoryEntry(messageId, cart);
     }
 
     async checkGoldActionRequirements(gameId, player, character, isDeposit, amount) {

@@ -715,6 +715,7 @@ class AdminPage extends Page {
         // Keep local list of unprocessed messages and update badge/UI. Do not auto-process.
         this.adminMessageUnsubscribe = MessageService.onUnprocessedAdminMessagesSnapshot(this.currentGame.gameId, async (messages) => {
             this.unprocessedAdminMessages = messages || [];
+            await this.preprocessMessages();
             this.renderUnprocessedMessages();
         });
     }
@@ -723,6 +724,19 @@ class AdminPage extends Page {
         const message = this.unprocessedAdminMessages.find(m => m.messageId === messageId);
         if (!message) return;
         await message.markAsProcessed();
+    }
+
+    async preprocessMessages() {
+        await Promise.all(this.unprocessedAdminMessages.map(async message => {
+            const messageId = message.messageId;
+            if(message.messageType === MessageType.PURCHASE_ATTEMPT) {
+                const { characterId, cart } = message.messageDetails;
+                const character = this.characters.find(character => { return character.characterId === characterId });
+
+                return await AdminHandlerService.createPlayerCartPurchaseHistoryEntry(messageId, character, cart);
+            }
+            return;
+        }));
     }
 
     // Admin-driven processing: called when admin approves/declines an individual message. Admin can also make modifications/overrides.
@@ -766,11 +780,11 @@ class AdminPage extends Page {
             const { characterId, cart } = message.messageDetails;
             const character = this.characters.find(character => { return character.characterId === characterId });
             
-            const { autoApproved = approved, rejectionReason, approvedItems, totalPrice } = await AdminHandlerService.checkPlayerCartPurchaseRequirements(gameId, player, character, cart, this.items);
+            const { approved:autoApproved, rejectionReason, approvedItems, totalPrice } = await AdminHandlerService.checkPlayerCartPurchaseRequirements(gameId, player, character, cart, this.items);
             if (adminApproved && autoApproved) {
-                await AdminHandlerService.handlePlayerCartPurchaseRequest(gameId, player, characterId, approvedItems, totalPrice, true);
+                await AdminHandlerService.handlePlayerCartPurchaseRequest(gameId, player, character, approvedItems, totalPrice, messageId, true);
             } else {
-                await AdminHandlerService.handlePlayerCartPurchaseRequest(gameId, player, characterId, [], 0, false, !adminApproved ? 'Declined by Admin' : rejectionReason);
+                await AdminHandlerService.handlePlayerCartPurchaseRequest(gameId, player, character, [], 0, messageId, false, !adminApproved ? 'Declined by Admin' : rejectionReason);
             }
         } else if (message.messageType === MessageType.WITHDRAW_ATTEMPT || message.messageType === MessageType.DEPOSIT_ATTEMPT) {
             const { characterId, amount } = message.messageDetails;

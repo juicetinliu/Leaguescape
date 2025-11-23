@@ -17,6 +17,7 @@ class Character {
         this.canAccessSecret = data.canAccessSecret || false;
         this.gold = data.gold || 0;
         this.items = data.items || {}; //itemId and quantity
+        this.purchaseHistory = data.purchaseHistory || {}; //hacky way for now...
     }
 
     static async create(gameId, characterData) {
@@ -34,7 +35,8 @@ class Character {
             startingGold: character.startingGold,
             canAccessSecret: character.canAccessSecret,
             gold: character.gold,
-            items: character.items
+            items: character.items,
+            purchaseHistory: character.purchaseHistory
         });
 
         character.characterId = docRef.id;
@@ -91,6 +93,40 @@ class Character {
     //         items: this.items
     //     });
     // }
+
+    /**
+     * Add a purchaseHistoryEntry - used on initial character cart request to Admin
+     * Skip adding if already exists!
+     * 
+     * @param {*} purchaseId - use the messageId (hack but should work!)
+     * @param {*} cart - initial player requested items
+     */
+    async createPurchaseHistoryEntry(purchaseId, cart) {
+        if(this.purchaseHistory[purchaseId]) return;
+        
+        const timestamp = Date.now();
+        this.purchaseHistory[purchaseId] = {
+            requestTime: timestamp,
+            requestedItems: cart,
+            status: "pending"
+        }
+        await updateDoc(doc(db, `games/${this.gameId}/characters`, this.characterId), {
+            purchaseHistory: this.purchaseHistory
+        });
+    }
+
+    /**
+     * Update a purchaseHistoryEntry - used after admin processes the purchase request
+     */
+    async updatePurchaseHistoryEntry(purchaseId, approved, approvedItems, approvedPrice) {
+        this.purchaseHistory[purchaseId].status = approved ? 'approved' : 'rejected';
+        this.purchaseHistory[purchaseId].approvedItems = approved ? approvedItems : null;
+        this.purchaseHistory[purchaseId].approvedPrice = approved ? approvedPrice : 0;
+
+        await updateDoc(doc(db, `games/${this.gameId}/characters`, this.characterId), {
+            purchaseHistory: this.purchaseHistory
+        });
+    }
 
     async addItems(itemsMap) {
         Object.entries(itemsMap).map(([itemId, itemDetails]) => {

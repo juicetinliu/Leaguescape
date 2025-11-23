@@ -39,21 +39,38 @@ class MessageService {
     }
 
     //unused?
-    async getUnprocessedAdminMessagesFromPlayer(gameId, playerId, messageType) {
+    async getAdminMessagesFromPlayer(gameId, playerId, messageType, isProcessed = false) {
         const q = messageType ? query(
             collection(db, `games/${gameId}/${MessageTo.ADMIN}`),
             where('fromPlayer', '==', playerId),
-            where('processed', '==', false),
+            where('processed', '==', isProcessed),
             where('messageType', '==', messageType),
             orderBy('activityTime', 'desc')
         ) : query(
             collection(db, `games/${gameId}/${MessageTo.ADMIN}`),
             where('fromPlayer', '==', playerId),
-            where('processed', '==', false),
+            where('processed', '==', isProcessed),
             orderBy('activityTime', 'desc')
         );
         const snapshot = await getDocs(q);
         return snapshot.docs.map(doc => new Message(gameId, doc.id, { ...doc.data(), messageTo: MessageTo.ADMIN, playerId: doc.data().fromPlayer }));
+    }
+
+    //unused?
+    async getPlayerMessagesFromAdmin(gameId, messageType, isProcessed = false) {
+        const playerId = AuthService.currentUser.authId;
+        const q = messageType ? query(
+            collection(db, `games/${gameId}/players/${playerId}/${MessageTo.PLAYER}`),
+            where('processed', '==', isProcessed),
+            where('messageType', '==', messageType),
+            orderBy('activityTime', 'desc')
+        ) : query(
+            collection(db, `games/${gameId}/players/${playerId}/${MessageTo.PLAYER}`),
+            where('processed', '==', isProcessed),
+            orderBy('activityTime', 'desc')
+        );
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => new Message(gameId, doc.id, { ...doc.data(), messageTo: MessageTo.PLAYER, playerId: playerId }));
     }
 
     /**
