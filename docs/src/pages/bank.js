@@ -48,35 +48,31 @@ class BankPage extends Page {
         const template = `
             <div id="${this.page}" class="page-container">
                 <div class="bank-header-wrapper">
-                    <div class="wrapper"></div>
-                    <div class="bank-header-heading wrapper">THE BANK</div>
                     <div class="back-button-wrapper wrapper">
                         <button id="backToCharacter" class="text-button">BACK</button>
+                    </div>
+                    <div class="bank-header-heading wrapper">THE BANK</div>
+                    <div class="profile-preview-wrapper wrapper">
+                        <div class="profile-info-wrapper">
+                            <div id="characterName" class="profile-name-text">
+                                ${this.currentCharacter.name}
+                            </div>
+                            <div id="character-account-number" class="profile-account-number-text">
+                                <span id="account-number-prefix">
+                                    Acc# 
+                                </span>
+                                <span id="characterAccountNumber">
+                                    ${this.currentCharacter.accountNumber}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="profile-image-wrapper">
+                            <img src="${this.currentCharacter.profileImage}"/>
+                        </div>
                     </div>
                 </div>
 
                 <div class="bank-content-wrapper">
-                    <div class="bank-profile-content-wrapper">
-                        <div class="profile-image-wrapper">
-                            <img src="${this.currentCharacter.profileImage}"/>
-                        </div>
-                        <div class="profile-bank-info-wrapper">
-                            <div class="profile-name-heading heading">
-                                FULL NAME:
-                            </div>
-                            <div id="characterName" class="profile-name-text">
-                                ${this.currentCharacter.name}
-                            </div>
-                        </div>
-                        <div class="profile-bank-info-wrapper">
-                            <div class="profile-account-number-heading heading">
-                                ACCOUNT NUMBER:
-                            </div>
-                            <div id="characterAccountNumber" class="profile-account-number-text">
-                                ${this.currentCharacter.accountNumber}
-                            </div>
-                        </div>
-                    </div>
                     <div class="bank-gold-content-wrapper">
                         <div class="account-balance-heading heading">
                             CURRENT BALANCE:

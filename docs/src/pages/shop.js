@@ -56,10 +56,11 @@ class ShopPage extends Page {
             <div id="${this.page}" class="page-container">
                 <div class="items-container">
                     <div class="items-header-wrapper">
+                        <div class="back-button-wrapper wrapper">
+                            <button id="backToCharacter" class="text-button">BACK</button>
+                        </div>
+                        <div class="items-header-heading wrapper">${this.canAccessSecretShop ? flickeringSymbols(9, 'flickering-items-header-heading') : 'THE SHOP'}</div>
                         <div class="profile-preview-wrapper wrapper">
-                            <div class="profile-image-wrapper ${this.canAccessSecretShop ? 'flickering' : ''}">
-                                <img src="${this.currentCharacter.profileImage}"/>
-                            </div>
                             <div class="profile-info-wrapper">
                                 <div id="characterName" class="profile-name-text">
                                     ${this.canAccessSecretShop ? flickeringSymbols(10, 'profile-name') : this.currentCharacter.name}
@@ -69,10 +70,9 @@ class ShopPage extends Page {
                                     ${gold}
                                 </div>
                             </div>
-                        </div>
-                        <div class="items-header-heading wrapper">${this.canAccessSecretShop ? flickeringSymbols(9, 'flickering-items-header-heading') : 'THE SHOP'}</div>
-                        <div class="back-button-wrapper wrapper">
-                            <button id="backToCharacter" class="text-button">BACK</button>
+                            <div class="profile-image-wrapper ${this.canAccessSecretShop ? 'flickering' : ''}">
+                                <img src="${this.currentCharacter.profileImage}"/>
+                            </div>
                         </div>
                     </div>
                     <div id="itemsGrid" class="items-grid">

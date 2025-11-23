@@ -27,7 +27,7 @@
         }
         .back-button-wrapper {
             display: flex;
-            justify-content: end;
+            justify-content: start;
         }
     }
 

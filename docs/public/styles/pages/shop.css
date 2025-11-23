@@ -34,13 +34,15 @@
         margin-bottom: 20px;
         .wrapper {
             flex: 1 1 33%;
+            display: flex;
         }
         .items-header-heading {
-            display: flex;
             justify-content: center;
         }
         .back-button-wrapper {
-            display: flex;
+            justify-content: start;
+        }
+        .profile-preview-wrapper {
             justify-content: end;
         }
     }
@@ -50,7 +52,6 @@
     }
 
     .profile-preview-wrapper {
-        display: flex;
         flex-direction: row;
         gap: 20px;
     }
@@ -58,7 +59,7 @@
     .profile-info-wrapper {
         display: flex;
         flex-direction: column;
-        align-items: start;
+        align-items: end;
         gap: 4px;
         justify-content: center;
     }
