@@ -5,7 +5,7 @@ import MessageService from '../js/services/message.js';
 import StoreService from '../js/services/store.js';
 import { MessageType } from '../js/models/MessageTypes.js';
 import { router } from '../js/utils/router.js';
-import { PAGES, GAME_STATE } from '../js/models/Enums.js';
+import { PAGES, GAME_STATE, PURCHASE_STATUS } from '../js/models/Enums.js';
 import { gameRouter } from '../js/utils/gamerouter.js';
 import { gold } from '../js/components/staticComponents.js'
 import { flickeringSymbols, flickeringSymbolsInterval } from '../js/components/flickeringSymbols.js'
@@ -58,6 +58,10 @@ class ShopPage extends Page {
                     <div class="items-header-wrapper">
                         <div class="back-button-wrapper wrapper">
                             <button id="backToCharacter" class="text-button">BACK</button>
+                            <button id="showPurchaseHistory" class="text-button ${!Object.entries(this.currentCharacter.purchaseHistory).length ? 'hidden' : ''}">
+                                PAST ORDERS
+                                <span id="purchaseHistoryBadge" class="hidden"></span>
+                            </button>
                         </div>
                         <div class="items-header-heading wrapper">${this.canAccessSecretShop ? flickeringSymbols(9, 'flickering-items-header-heading') : 'THE SHOP'}</div>
                         <div class="profile-preview-wrapper wrapper">
@@ -99,6 +103,20 @@ class ShopPage extends Page {
                         </div>
                     </div>
                 </div>
+                <!-- Purchase History Modal -->
+                <div id="purchaseHistoryModal" class="modal" style="display: none;">
+                    <div class="modal-content purchase-history-modal-content">
+                        <div class="purchase-history-header-wrapper">
+                            <div class="wrapper"></div>
+                            <div class="purchase-history-heading wrapper">PURCHASE HISTORY
+                            </div>
+                            <div class="back-button-wrapper wrapper">
+                                <button id="closePurchaseHistory" class="icon-button" class="btn">×</button>
+                            </div>
+                        </div>
+                        <div id="purchaseHistoryList" class="purchase-history-wrapper"></div>
+                    </div>
+                </div>
             </div>
         `;
         
@@ -129,12 +147,21 @@ class ShopPage extends Page {
             this.flickeringSymbolsProfileNameInterval = flickeringSymbolsInterval(10, 'profile-name', 456);
             this.flickeringSymbolsItemsHeadingInterval = flickeringSymbolsInterval(9, 'flickering-items-header-heading', 890);
         }
+
+        // Purchase history modal
+        document.getElementById('showPurchaseHistory').addEventListener('click', () => this.showPurchaseHistoryModal());
+        document.getElementById('closePurchaseHistory').addEventListener('click', () => {
+            const modal = document.getElementById('purchaseHistoryModal');
+            modal.style.display = 'none';
+            this.togglePurchaseHistoryBadge(false);
+        });
     }
 
     setupCharacterPlayerUnsubscribes(gameId) {
         this.characterUnsubscribe = GameService.onCharacterSnapshot(gameId, this.currentCharacter.characterId, async (character) => {
             this.currentCharacter = character;
             this.loadCharacterData();
+            this.loadPurchaseHistory();
             // run flows that depend on character data changes (e.g. prereqs!)
             this.updateCartBasedOnItemsAndPrereqs();
             await this.loadItems();
@@ -156,6 +183,7 @@ class ShopPage extends Page {
             this.updateCartBasedOnItemsAndPrereqs();
             await this.loadItems();
             this.updateCartDisplay();
+            this.loadPurchaseHistory();
         }, this.canAccessSecretShop);
     }
         
@@ -190,7 +218,104 @@ class ShopPage extends Page {
             ${gold}
         `;
 
+
+        const showPurchaseHistoryButton = document.getElementById('showPurchaseHistory');
+        if(!Object.entries(this.currentCharacter.purchaseHistory).length) {
+            showPurchaseHistoryButton.classList.add('hidden');
+        } else {
+            showPurchaseHistoryButton.classList.remove('hidden');
+        }
+
         //TODO: Update Profile Image too!
+    }
+
+    togglePurchaseHistoryBadge(on) {
+        const badge = document.getElementById('purchaseHistoryBadge');
+        if(on) {
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+
+    showPurchaseHistoryModal() {
+        const modal = document.getElementById('purchaseHistoryModal');
+        if (!modal) return;
+        modal.style.display = 'flex';
+    }
+
+    loadPurchaseHistory() {
+        const list = document.getElementById('purchaseHistoryList');
+        const history = this.currentCharacter.purchaseHistory || {};
+        const entries = Object.entries(history).map(([id, entry]) => ({ id, ...entry }));
+        console.log(entries);
+        if (!entries || entries.length === 0) {
+            list.innerHTML = 'No purchase history to show.';
+            return;
+        }
+
+        entries.sort((a, b) => (b.requestTime || 0) - (a.requestTime || 0));
+
+        const html = entries.map(e => {
+            const time = new Date(e.requestTime).toLocaleString("en-US", { timeZone: "PST" });
+            const purchaseStatus = e.status; // should not be empty.
+            const requested = e.requestedItems || {}; // should not be empty.
+            const approvedItems = e.approvedItems || null; // undefined if PURCHASE_STATUS.PENDING
+            const approvedPrice = e.approvedPrice || 0; // undefined if PURCHASE_STATUS.PENDING
+
+            const requestedItemsHtml = Object.entries(requested).map(([itemId, quantity]) => {
+                const item = this.items.find(i => i.itemId === itemId);
+                const name = item ? item.name : '???';
+                return `
+                    <div class="hist-item ${purchaseStatus === PURCHASE_STATUS.REJECTED ? 'rejected' : ''}">
+                        <div>${name} × ${quantity}</div>
+                    </div>
+                `;
+            }).join('') || '<div class="hist-item">(no items... might be a bug)</div>';
+
+            const approvedItemsHtml = approvedItems ? Object.entries(approvedItems).map(([itemId, details]) => {
+                const item = this.items.find(i => i.itemId === itemId) ;
+                const name = item ? item.name : '???';
+                return `
+                    <div class="hist-item approved">
+                        <div>${name} × ${details.quantity}</div>
+                        <div class="price">
+                            ${details.quantity * details.price}
+                            ${gold}
+                        </div>
+                    </div>
+                `;
+            }).join('') : '<div class="hist-item">No items purchased</div>';
+
+            return `
+                <div class="purchase-entry" id="purchase-${e.id}">
+                    <div class="purchase-header">
+                        <span class="purchase-time">${time}</span>
+                        <span class="purchase-status">${purchaseStatus.toUpperCase()}</span>
+                    </div>
+                    ${purchaseStatus === PURCHASE_STATUS.APPROVED ? `
+                        <div class="purchase-section">
+                            <div class="purchase-section-body">
+                                ${approvedItemsHtml}
+                            </div>
+                            <div class="purchase-section-total line-item">
+                                <div>TOTAL</div>
+                                <div class="price">
+                                    ${approvedPrice} 
+                                    ${gold}
+                                </div>
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="purchase-section">
+                            <div class="purchase-section-body">${requestedItemsHtml}</div>
+                        </div>
+                    `}
+                </div>
+            `;
+        }).join('');
+
+        list.innerHTML = html;
     }
 
     loadPlayerData() {
@@ -361,6 +486,7 @@ class ShopPage extends Page {
         if (Object.entries(this.cart).length === 0) return;
 
         await CharacterHandlerService.purchaseCart(this.currentGame.gameId, this.currentCharacter.characterId, this.cart);
+        this.togglePurchaseHistoryBadge(true);
 
         this.cart = {} //reset cart to empty map
         this.loadItems(); //load items to update selections baesd on empty map

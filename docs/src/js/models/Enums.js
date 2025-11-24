@@ -18,3 +18,9 @@ export const PAGES = {
     inventory: 'inventory',
     credits: 'credits'
 }
+
+export const PURCHASE_STATUS = {
+    APPROVED: 'approved',
+    REJECTED: 'rejected',
+    PENDING: 'pending'
+}

@@ -1,5 +1,6 @@
 import { db } from '../config/firebase.js';
 import { doc, getDoc, addDoc, updateDoc, deleteDoc, collection } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
+import { PURCHASE_STATUS } from '../models/Enums.js';
 
 class Character {
     constructor(gameId, characterId, data = {}) {
@@ -108,7 +109,7 @@ class Character {
         this.purchaseHistory[purchaseId] = {
             requestTime: timestamp,
             requestedItems: cart,
-            status: "pending"
+            status: PURCHASE_STATUS.PENDING
         }
         await updateDoc(doc(db, `games/${this.gameId}/characters`, this.characterId), {
             purchaseHistory: this.purchaseHistory
@@ -119,7 +120,7 @@ class Character {
      * Update a purchaseHistoryEntry - used after admin processes the purchase request
      */
     async updatePurchaseHistoryEntry(purchaseId, approved, approvedItems, approvedPrice) {
-        this.purchaseHistory[purchaseId].status = approved ? 'approved' : 'rejected';
+        this.purchaseHistory[purchaseId].status = approved ? PURCHASE_STATUS.APPROVED : PURCHASE_STATUS.REJECTED;
         this.purchaseHistory[purchaseId].approvedItems = approved ? approvedItems : null;
         this.purchaseHistory[purchaseId].approvedPrice = approved ? approvedPrice : 0;
 

@@ -41,13 +41,33 @@
         }
         .back-button-wrapper {
             justify-content: start;
+            display: flex;
+            gap: 10px;
         }
         .profile-preview-wrapper {
             justify-content: end;
         }
     }
 
-    .items-header-heading, .cart-heading {
+    #showPurchaseHistory {
+        position: relative;
+    }
+    
+    #purchaseHistoryBadge {
+        position: absolute;
+        background-color: var(--text-error-color);
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        z-index: 100;
+        top: -10px;
+        right: -10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .items-header-heading, .cart-heading, .purchase-history-heading {
         font-size: 30px;
     }
 
@@ -123,6 +143,7 @@
         border-color: var(--accent-color);
         .add-to-cart {
             border-color: var(--accent-color);
+            background: var(--background-secondary-color-inverse);
         }
         .divider {
             border-color: var(--accent-color);
@@ -179,8 +200,7 @@
         border-bottom: 1px solid var(--primary-color);
         margin-bottom: 20px;
     }
-
-    .cart-items-wrapper {
+    .cart-items-wrapper, .purchase-history-wrapper {
         flex: 1;
         overflow: auto;
         display: flex;
@@ -296,4 +316,67 @@
     #purchaseCart {
         flex: 1;
     }
+    
+    .purchase-history-header-wrapper {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--primary-color);
+        margin-bottom: 20px;
+        .wrapper {
+            display: flex;
+            flex: 1 1 15%;
+        }
+        .purchase-history-heading {
+            justify-content: center;
+            flex: 1 1 70%;
+        }
+        .back-button-wrapper {
+            justify-content: end;
+        }
+        #closePurchaseHistory {
+            height: 40px;
+            width: 40px;
+        }
+    }
+
+    .purchase-history-modal-content {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .purchase-entry {
+        color: var(--text-color);
+        padding-bottom: 15px;
+        
+        &:not(:last-child) {
+            border-bottom: 1px solid var(--primary-color);
+        }
+
+        .price {
+            display: flex;
+            align-items: center;
+            flex-direction: row;
+            justify-content: end;
+            gap: 5px;
+        }
+
+        .hist-item, .purchase-section-total, .purchase-header {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .purchase-section-body, .purchase-section-total {
+            padding-top: 10px;
+        }
+
+        .hist-item.rejected{
+            text-decoration: line-through;
+        }
+    }
+
 }
