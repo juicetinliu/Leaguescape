@@ -374,8 +374,12 @@
             padding-top: 10px;
         }
 
-        .hist-item.rejected{
+        .hist-item.rejected {
             text-decoration: line-through;
+        }
+
+        .hist-item.pending {
+            opacity: 70%;
         }
     }
 

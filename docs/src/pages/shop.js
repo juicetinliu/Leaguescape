@@ -267,7 +267,7 @@ class ShopPage extends Page {
                 const item = this.items.find(i => i.itemId === itemId);
                 const name = item ? item.name : '???';
                 return `
-                    <div class="hist-item ${purchaseStatus === PURCHASE_STATUS.REJECTED ? 'rejected' : ''}">
+                    <div class="hist-item ${purchaseStatus === PURCHASE_STATUS.REJECTED ? 'rejected' : 'pending'}">
                         <div>${name} × ${quantity}</div>
                     </div>
                 `;
