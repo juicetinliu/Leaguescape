@@ -65,13 +65,13 @@ class ShopPage extends Page {
                                 <div id="characterName" class="profile-name-text">
                                     ${this.canAccessSecretShop ? flickeringSymbols(10, 'profile-name') : this.currentCharacter.name}
                                 </div>
-                                <div id="characterGold" class="profile-gold-display ${this.canAccessSecretShop ? 'flickering' : ''}">
+                                <div id="characterGold" class="profile-gold-display">
                                     ${this.currentCharacter.gold}
                                     ${gold}
                                 </div>
                             </div>
                             <div class="profile-image-wrapper ${this.canAccessSecretShop ? 'flickering' : ''}">
-                                <img src="${this.currentCharacter.profileImage}"/>
+                                <img src="${this.canAccessSecretShop ? this.currentCharacter.emblemImage : this.currentCharacter.profileImage}"/>
                             </div>
                         </div>
                     </div>
