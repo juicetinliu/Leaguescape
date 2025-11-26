@@ -24,7 +24,7 @@ class AdminHandlerService {
             [MessageType.WITHDRAW_ATTEMPT, 
                 [ACTIVITY_OPTIONS.APPROVE, ACTIVITY_OPTIONS.DECLINE]],
             [MessageType.REQUEST_INVENTORY_ATTEMPT, 
-                [ACTIVITY_OPTIONS.APPROVE, ACTIVITY_OPTIONS.DECLINE]],
+                [ACTIVITY_OPTIONS.APPROVE, ACTIVITY_OPTIONS.DECLINE, ACTIVITY_OPTIONS.IGNORE]],
         ]);
     }
 

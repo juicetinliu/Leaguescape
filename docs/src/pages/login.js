@@ -49,7 +49,7 @@ class LoginPage extends Page {
                 <div class="login-wrapper">
                     <div class="login-card">
                         <div class="login-emblem">
-                            <img src="">
+                            <img src="public/images/login.png">
                         </div>
                         <form id="loginForm" class="login-form-wrapper">
                             <div class="login-text-input-wrapper">

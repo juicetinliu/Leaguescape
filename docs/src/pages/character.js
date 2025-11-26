@@ -15,9 +15,11 @@ class CharacterPage extends Page {
         this.currentGame = null;
         this.currentCharacter = null;
         this.playerData = {};
+        this.canAccessSecretShop = false;
         this.isLoading = false;
         
         this.gameUnsubscribe = null;
+        this.characterUnsubscribe = null;
         this.playerDataUnsubscribe = null
         this.playerMessageUnsubscribe = null;
         this.gameTimerInterval = null;
@@ -39,6 +41,7 @@ class CharacterPage extends Page {
 
         // Even though the snapshot listeners will update this, we do the fetch first to avoid a flicker (immediate refresh due to initial canAccessSecretShop value being different)
         this.playerData = await GameService.getPlayerData(gameId, AuthService.currentUser.authId);
+        this.canAccessSecretShop = this.currentCharacter.canAccessSecret && (this.playerData.loginMode === 'secret');
 
         this.initializeUI();
         this.attachEventListeners();
@@ -73,8 +76,8 @@ class CharacterPage extends Page {
                     <div class="character-menu-buttons-wrapper">
                         ${this.playerData.loginMode === 'inventory' ? '' :
                         `<div id="go-to-${PAGES.shop}" class="character-menu-button">
-                            <div class="character-menu-button-image">
-                                <img src="">
+                            <div id="${PAGES.shop}-page-menu-button-image" class="character-menu-button-image ${this.canAccessSecretShop ? 'flickering' : ''}">
+                                <img src="public/images/${this.canAccessSecretShop ? 'ss' : 's'}.png">
                                 <div id="${PAGES.shop}-spinner" class="overlay-spinner hidden">
                                     ${spinner}
                                 </div>
@@ -84,8 +87,8 @@ class CharacterPage extends Page {
                             </div>
                         </div>
                         <div id="go-to-${PAGES.bank}" class="character-menu-button">
-                            <div class="character-menu-button-image">
-                                <img src="">
+                            <div id="${PAGES.bank}-page-menu-button-image" class="character-menu-button-image">
+                                <img src="public/images/b.png">
                                 <div id="${PAGES.bank}-spinner" class="overlay-spinner hidden">
                                     ${spinner}
                                 </div>
@@ -95,8 +98,8 @@ class CharacterPage extends Page {
                             </div>
                         </div>`}
                         <div id="go-to-${PAGES.inventory}" class="character-menu-button">
-                            <div class="character-menu-button-image">
-                                <img src="">
+                            <div id="${PAGES.inventory}-page-menu-button-image" class="character-menu-button-image">
+                                <img src="public/images/i.png">
                                 <div id="${PAGES.inventory}-spinner" class="overlay-spinner hidden">
                                     ${spinner}
                                 </div>
@@ -109,10 +112,10 @@ class CharacterPage extends Page {
                 </div>
 
                 <div class="character-footer-wrapper">
-                    <div class="character-footer-name">
+                    <div id="character-footer-name">
                         ${this.currentCharacter.name}
                     </div>
-                    <div class="character-footer-account-number">
+                    <div id="character-footer-account-number">
                         ${this.currentCharacter.accountNumber}
                     </div>
                 </div>
@@ -178,16 +181,50 @@ class CharacterPage extends Page {
                 }
             });
             this.setupPlayerMessageUnsubscribe(gameId);
-
-            this.playerDataUnsubscribe = GameService.onPlayerSnapshot(gameId, AuthService.currentUser.authId, async (playerData) => {
-                if(this.playerData.loginMode && (this.playerData.loginMode !== playerData.loginMode)) {
-                    window.location.reload();
-                    return;
-                }
-
-                this.playerData = playerData;
-            });
+            this.setupCharacterPlayerUnsubscribes(gameId);
         }
+    }
+
+    setupCharacterPlayerUnsubscribes(gameId) {
+        this.characterUnsubscribe = GameService.onCharacterSnapshot(gameId, this.currentCharacter.characterId, async (character) => {
+            this.currentCharacter = character;
+            this.loadCharacterData();
+        });
+        this.playerDataUnsubscribe = GameService.onPlayerSnapshot(gameId, AuthService.currentUser.authId, async (playerData) => {
+            if(this.playerData.loginMode && (this.playerData.loginMode !== playerData.loginMode)) {
+                window.location.reload(); //technically no need to reload between normal/secret IF the character cannot access secrets. However still safer to do so.
+                return;
+            }
+            this.playerData = playerData;
+            this.loadPlayerData();
+        });
+    }
+
+    loadPlayerData() {
+        if(this.reloadIfSecretShopAccessChanged()) return;
+        // nothing else to update? (Player data only includes name and login mode)
+    }
+
+    reloadIfSecretShopAccessChanged() {
+        const canAccessSecretShop = this.currentCharacter.canAccessSecret && (this.playerData.loginMode === 'secret');
+        if (this.canAccessSecretShop !== canAccessSecretShop) {
+            // access changed - force a refresh to get the right snapshot listeners/items/CX!
+            window.location.reload();
+            return true;
+        }
+        return false;
+    }
+
+    loadCharacterData() {
+        if(this.reloadIfSecretShopAccessChanged()) return;
+        // Now update everything that depends on character data! Gold/Name/Etc.
+
+        const characterName = document.getElementById('character-footer-name');
+        characterName.innerHTML = this.currentCharacter.name;
+        const characterAccount = document.getElementById('character-footer-account-number');
+        characterAccount.innerHTML = this.currentCharacter.accountNumber;
+        
+        
     }
         
     async setupPlayerMessageUnsubscribe(gameId) {
@@ -254,11 +291,14 @@ class CharacterPage extends Page {
     toggleNavigationLoading(isLoading, page) {
         this.isLoading = isLoading;
         let spinnerWrapper = document.getElementById(`${page}-spinner`);
+        let image = document.getElementById(`${page}-page-menu-button-image`);
 
         if (isLoading) {
             spinnerWrapper.classList.remove('hidden');
+            image.classList.add('loading');
         } else {
             spinnerWrapper.classList.add('hidden');
+            image.classList.remove('loading');
         }
     }
 
@@ -280,6 +320,7 @@ class CharacterPage extends Page {
         super.cleanup();
         this.currentCharacter = null;
         this.playerData = {};
+        this.canAccessSecretShop = false;
         this.isLoading = false;
 
         if (this.gameUnsubscribe) {
@@ -287,6 +328,9 @@ class CharacterPage extends Page {
         }
         if (this.playerMessageUnsubscribe) {
             this.playerMessageUnsubscribe();
+        }
+        if (this.characterUnsubscribe) {
+            this.characterUnsubscribe();
         }
         if (this.playerDataUnsubscribe) {
             this.playerDataUnsubscribe();

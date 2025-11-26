@@ -33,6 +33,9 @@
     }
 
     #logout-loading-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
         height: 51px;
         width: 150px;
     }
@@ -79,6 +82,22 @@
         border-radius: 50%;
         border: 2px solid var(--primary-color);
         overflow: hidden;
+        padding: 60px;
+
+        img {
+            width: 100%;
+            height: 100%;
+        }
+    }
+
+    .character-menu-button-image.loading {
+        img {
+            opacity: 50%;
+        }
+
+        .spinner {
+            border-top-color: var(--accent-color);
+        }
     }
     
     .character-menu-button-label, .character-menu-heading, .character-menu-subheading {
