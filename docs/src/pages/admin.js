@@ -46,6 +46,8 @@ class AdminPage extends Page {
             return;
         }
 
+        // Even though the snapshot listeners will update this, we do the fetch first to avoid empty data for dependent message flows
+        this.players = await GameService.getGamePlayers(this.currentGame.gameId); // 
         this.initializeUI();
         this.attachEventListeners();
         // this.loadLobby(); // Not necessary as onSnapshot will handle updates
@@ -379,6 +381,9 @@ class AdminPage extends Page {
         const log = document.getElementById('activityLog');
         const unprocessedAdminMessagesLength = this.unprocessedAdminMessages.length;
         const html = this.unprocessedAdminMessages.map(msg => {
+            console.log(msg);
+            if(msg.processed) return '';
+            
             const player = this.players.find(p => p.playerId === msg.playerId);
             let character = null;
             if(msg.messageDetails && msg.messageDetails.characterId) {
@@ -715,28 +720,52 @@ class AdminPage extends Page {
         // Keep local list of unprocessed messages and update badge/UI. Do not auto-process.
         this.adminMessageUnsubscribe = MessageService.onUnprocessedAdminMessagesSnapshot(this.currentGame.gameId, async (messages) => {
             this.unprocessedAdminMessages = messages || [];
-            await this.preprocessMessages();
+            await this.autoProcessMessages();
             this.renderUnprocessedMessages();
         });
+    }
+
+    // Run flows that happen immediately on receiving the message.
+    // Also run auto-approved/rejected messages - this "skips" the activity log flow if the message marked as processed here!
+    async autoProcessMessages() {
+        await Promise.all(this.unprocessedAdminMessages.map(async message => {
+            const messageId = message.messageId;
+            const gameId = this.currentGame.gameId;
+            const player = this.players.find(p => p.playerId === message.playerId);
+
+            if(message.messageType === MessageType.PURCHASE_ATTEMPT) {
+                const { characterId, cart } = message.messageDetails;
+                const character = this.characters.find(character => { return character.characterId === characterId });
+
+                return await AdminHandlerService.createPlayerCartPurchaseHistoryEntry(messageId, character, cart);
+            } else if (message.messageType === MessageType.LOGIN_ATTEMPT) {
+                const { accountNumber, accountPassword } = message.messageDetails;
+                const character = this.characters.find(c => c.accountNumber === accountNumber && c.accountPassword === accountPassword);
+                if (character) {
+                    await AdminHandlerService.handlePlayerLogIn(gameId, player, character.characterId, true);
+                    await this.loadLobby();
+                } else {
+                    await AdminHandlerService.handlePlayerLogIn(gameId, player, null, false, 'Invalid Credentials');
+                }
+                await message.markAsProcessed();
+            } else if (message.messageType === MessageType.LOGOUT_ATTEMPT) {
+                const { characterId } = message.messageDetails;
+                if (characterId) {
+                    await AdminHandlerService.handlePlayerLogOut(gameId, player, characterId, true);
+                    await this.loadLobby();
+                } else {
+                    await AdminHandlerService.handlePlayerLogOut(gameId, player, characterId, false, 'Invalid Character');
+                }
+                await message.markAsProcessed();
+            }
+            return;
+        }));
     }
 
     async ignoreMessage(messageId) {
         const message = this.unprocessedAdminMessages.find(m => m.messageId === messageId);
         if (!message) return;
         await message.markAsProcessed();
-    }
-
-    async preprocessMessages() {
-        await Promise.all(this.unprocessedAdminMessages.map(async message => {
-            const messageId = message.messageId;
-            if(message.messageType === MessageType.PURCHASE_ATTEMPT) {
-                const { characterId, cart } = message.messageDetails;
-                const character = this.characters.find(character => { return character.characterId === characterId });
-
-                return await AdminHandlerService.createPlayerCartPurchaseHistoryEntry(messageId, character, cart);
-            }
-            return;
-        }));
     }
 
     // Admin-driven processing: called when admin approves/declines an individual message. Admin can also make modifications/overrides.
@@ -752,24 +781,7 @@ class AdminPage extends Page {
             return;
         }
 
-        if (message.messageType === MessageType.LOGIN_ATTEMPT) {
-            const { accountNumber, accountPassword } = message.messageDetails;
-            const character = this.characters.find(c => c.accountNumber === accountNumber && c.accountPassword === accountPassword);
-            if (adminApproved && character) {
-                await AdminHandlerService.handlePlayerLogIn(gameId, player, character.characterId, true);
-                await this.loadLobby();
-            } else {
-                await AdminHandlerService.handlePlayerLogIn(gameId, player, null, false, !adminApproved ? 'Declined by Admin' : 'Invalid Credentials');
-            }
-        } else if (message.messageType === MessageType.LOGOUT_ATTEMPT) {
-            const { characterId } = message.messageDetails;
-            if (adminApproved && characterId) {
-                await AdminHandlerService.handlePlayerLogOut(gameId, player, characterId, true);
-                await this.loadLobby();
-            } else {
-                await AdminHandlerService.handlePlayerLogOut(gameId, player, characterId, false, !adminApproved ? 'Declined by Admin' : 'Invalid Character');
-            }
-        } else if (message.messageType === MessageType.REQUEST_INVENTORY_ATTEMPT) {
+        if (message.messageType === MessageType.REQUEST_INVENTORY_ATTEMPT) {
             const { characterId } = message.messageDetails;
             if (adminApproved && characterId) {
                 await AdminHandlerService.handlePlayerInventoryAccess(gameId, player, characterId, true);
