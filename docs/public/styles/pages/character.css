@@ -8,21 +8,33 @@
 
     .character-header-wrapper {
         display: flex;
+        flex-direction: row;
         align-items: center;
-        justify-content: end;
-    }
-
-    .character-header-wrapper {
+        justify-content: space-between;
         padding-bottom: 20px;
         height: 80px;
-    } 
+
+        .wrapper {
+            display: flex;
+            flex: 1 1 33%;
+        }
+
+        .game-timer-wrapper {
+            font-size: 30px;
+            color: var(--text-color);
+            justify-content: center;
+        }
+
+        .logout-button-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: end;
+        }
+    }
 
     #logout-loading-wrapper {
         height: 51px;
         width: 150px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
     }
     
     .character-footer-wrapper {

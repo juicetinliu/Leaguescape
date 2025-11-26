@@ -8,13 +8,28 @@
 
     .login-header-wrapper {
         display: flex;
+        flex-direction: row;
         align-items: center;
-        justify-content: end;
-    }
-
-    .login-header-wrapper {
+        justify-content: space-between;
         padding-bottom: 20px;
         height: 80px;
+
+        .wrapper {
+            display: flex;
+            flex: 1 1 33%;
+        }
+
+        .game-timer-wrapper {
+            font-size: 30px;
+            color: var(--text-color);
+            justify-content: center;
+        }
+
+        .back-button-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: end;
+        }
     }
 
     .login-wrapper {

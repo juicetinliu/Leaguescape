@@ -1,6 +1,5 @@
 import Page from '../js/models/Page.js';
 import AuthService from '../js/services/auth.js';
-import StorageService from '../js/services/storage.js';
 import GameService from '../js/services/game.js';
 import MessageService from '../js/services/message.js';
 import { MessageTo, MessageType } from '../js/models/MessageTypes.js';
@@ -29,6 +28,8 @@ class AdminPage extends Page {
         this.players = [];
         this.characters = [];
         this.items = [];
+        this.gameTimerInterval = null;
+        this.GAME_DURATION_MS = 60 * 60 * 1000; // 1 hour fixed duration
     }
 
     async show() {
@@ -50,6 +51,10 @@ class AdminPage extends Page {
         this.players = await GameService.getGamePlayers(this.currentGame.gameId); // 
         this.initializeUI();
         this.attachEventListeners();
+        // start timer UI if game already running
+        if (this.currentGame.gameState === GAME_STATE.RUNNING) {
+            this.startGameTimer();
+        }
         // this.loadLobby(); // Not necessary as onSnapshot will handle updates
         // this.loadActiveTab(); // Not necessary as onSnapshot will update the first tab!
     }
@@ -64,7 +69,7 @@ class AdminPage extends Page {
                             ${this.getGameStateButton()}
                         </div>
                         <div>
-                            ${this.currentGame.gameState === GAME_STATE.RUNNING ? '<button id="showActivity" class="btn">View Activity <span id="activityBadge" class="hidden">0</span></button>' : ''}
+                            <button id="showActivity" class="btn">View Activity <span id="activityBadge" class="hidden">0</span></button>
                             <button id="exitGame" class="btn">Exit Game</button>
                         </div>
                     </div>
@@ -141,7 +146,11 @@ class AdminPage extends Page {
 
         const startGameBtn = document.getElementById('startGame');
         if (startGameBtn) {
-            startGameBtn.addEventListener('click', () => this.updateGameState(GAME_STATE.RUNNING));
+            startGameBtn.addEventListener('click', async () => {
+                await this.updateGameState(GAME_STATE.RUNNING);
+                // start timer after starting the game
+                this.startGameTimer();
+            });
         }
 
         const endGameBtn = document.getElementById('endGame');
@@ -372,6 +381,64 @@ class AdminPage extends Page {
         window.location.reload();
     }
 
+    startGameTimer() {
+        // Clear any existing interval
+        if (this.gameTimerInterval) {
+            clearInterval(this.gameTimerInterval);
+            this.gameTimerInterval = null;
+        }
+
+        const timerEl = document.getElementById('gameTimer');
+        if (!timerEl) return;
+
+        // Determine start time from game doc
+        let startTime = this.currentGame.startTime;
+        let startDate = null;
+        try {
+            startDate = startTime && startTime.toDate ? startTime.toDate() : new Date(startTime);
+        } catch (e) {
+            startDate = new Date();
+        }
+
+        const durationMs = this.GAME_DURATION_MS;
+
+        const tick = () => {
+            const now = new Date();
+            const elapsed = now - startDate;
+            const remaining = durationMs - elapsed;
+
+            if (remaining <= 0) {
+                timerEl.textContent = '00:00:00';
+                clearInterval(this.gameTimerInterval);
+                this.gameTimerInterval = null;
+                // auto end the game
+                this.endGameAutomatically();
+                return;
+            }
+
+            // format remaining as HH:MM:SS
+            const hrs = Math.floor(remaining / (1000 * 60 * 60));
+            const mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+            const secs = Math.floor((remaining % (1000 * 60)) / 1000);
+            const pad = (n) => String(n).padStart(2, '0');
+            timerEl.textContent = `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+        }
+
+        // initial tick and interval
+        tick();
+        this.gameTimerInterval = setInterval(tick, 1000);
+    }
+
+    async endGameAutomatically() {
+        try {
+            // update without confirmation
+            await this.currentGame.updateState(GAME_STATE.END);
+            window.location.reload();
+        } catch (err) {
+            console.error('Failed to auto-end game', err);
+        }
+    }
+
     async showActivityLog() {
         const modal = document.getElementById('activityModal');
         modal.style.display = 'flex';
@@ -381,7 +448,6 @@ class AdminPage extends Page {
         const log = document.getElementById('activityLog');
         const unprocessedAdminMessagesLength = this.unprocessedAdminMessages.length;
         const html = this.unprocessedAdminMessages.map(msg => {
-            console.log(msg);
             if(msg.processed) return '';
             
             const player = this.players.find(p => p.playerId === msg.playerId);
@@ -390,7 +456,6 @@ class AdminPage extends Page {
                 character = this.characters.find(c => c.characterId === msg.messageDetails.characterId);
             }
             const activityOptions = AdminHandlerService.returnMessageActivityOptions(msg.messageType);
-            console.log(activityOptions)
 
             // TODO: Create helpers to convert the messageType to display string, and details to display ready UX.
             return `
@@ -721,6 +786,7 @@ class AdminPage extends Page {
     async setupAdminMessageListener() {
         // Keep local list of unprocessed messages and update badge/UI. Do not auto-process.
         this.adminMessageUnsubscribe = MessageService.onUnprocessedAdminMessagesSnapshot(this.currentGame.gameId, async (messages) => {
+            console.log(messages);
             this.unprocessedAdminMessages = messages || [];
             await this.autoProcessMessages();
             this.renderUnprocessedMessages();
@@ -835,6 +901,10 @@ class AdminPage extends Page {
             this.gameItemsUnsubscribe();
         }
         this.unprocessedAdminMessages = [];
+        if (this.gameTimerInterval) {
+            clearInterval(this.gameTimerInterval);
+            this.gameTimerInterval = null;
+        }
     }
 }
 

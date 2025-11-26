@@ -20,6 +20,8 @@ class CharacterPage extends Page {
         this.gameUnsubscribe = null;
         this.playerDataUnsubscribe = null
         this.playerMessageUnsubscribe = null;
+        this.gameTimerInterval = null;
+        this.GAME_DURATION_MS = 60 * 60 * 1000; // 1 hour
     }
 
     async show() {
@@ -40,15 +42,22 @@ class CharacterPage extends Page {
 
         this.initializeUI();
         this.attachEventListeners();
+        this.startGameTimer();
     }
 
     initializeUI() {
         const template = `
             <div id="${this.page}" class="page-container">
                 <div class="character-header-wrapper">
-                    <button id="logout-button" class="text-button">LOG OUT</button>
-                    <div id="logout-loading-wrapper" class="hidden">
-                        ${spinner}
+                    <div class="wrapper"></div>
+                    <div class="game-timer-wrapper wrapper">
+                        <div id="gameTimer"></div>
+                    </div>
+                    <div class="logout-button-wrapper wrapper">
+                        <button id="logout-button" class="text-button">LOG OUT</button>
+                        <div id="logout-loading-wrapper" class="hidden">
+                            ${spinner}
+                        </div>
                     </div>
                 </div>
 
@@ -199,6 +208,49 @@ class CharacterPage extends Page {
         }
     }
 
+    startGameTimer() {
+        if (this.gameTimerInterval) {
+            clearInterval(this.gameTimerInterval);
+            this.gameTimerInterval = null;
+        }
+
+        const timerEl = document.getElementById('gameTimer');
+        if (!timerEl) return;
+
+        let startTime = this.currentGame.startTime;
+        let startDate = null;
+        try {
+            startDate = startTime && startTime.toDate ? startTime.toDate() : new Date(startTime);
+        } catch (e) {
+            startDate = new Date();
+        }
+
+        const durationMs = this.GAME_DURATION_MS;
+
+        const tick = () => {
+            const now = new Date();
+            const elapsed = now - startDate;
+            const remaining = durationMs - elapsed;
+
+            if (remaining <= 0) {
+                timerEl.textContent = '00:00:00';
+                clearInterval(this.gameTimerInterval);
+                this.gameTimerInterval = null;
+                window.location.reload();
+                return;
+            }
+
+            const hrs = Math.floor(remaining / (1000 * 60 * 60));
+            const mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+            const secs = Math.floor((remaining % (1000 * 60)) / 1000);
+            const pad = (n) => String(n).padStart(2, '0');
+            timerEl.textContent = `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+        }
+
+        tick();
+        this.gameTimerInterval = setInterval(tick, 1000);
+    }
+
     toggleNavigationLoading(isLoading, page) {
         this.isLoading = isLoading;
         let spinnerWrapper = document.getElementById(`${page}-spinner`);
@@ -238,6 +290,10 @@ class CharacterPage extends Page {
         }
         if (this.playerDataUnsubscribe) {
             this.playerDataUnsubscribe();
+        }
+        if (this.gameTimerInterval) {
+            clearInterval(this.gameTimerInterval);
+            this.gameTimerInterval = null;
         }
     }
 }
