@@ -389,6 +389,8 @@ class AdminPage extends Page {
             if(msg.messageDetails && msg.messageDetails.characterId) {
                 character = this.characters.find(c => c.characterId === msg.messageDetails.characterId);
             }
+            const activityOptions = AdminHandlerService.returnMessageActivityOptions(msg.messageType);
+            console.log(activityOptions)
 
             // TODO: Create helpers to convert the messageType to display string, and details to display ready UX.
             return `
@@ -399,9 +401,9 @@ class AdminPage extends Page {
                     </div>
                     <div class="activity-details"><pre>${typeof msg.messageDetails === 'string' ? msg.messageDetails : JSON.stringify(msg.messageDetails)}</pre></div>
                     <div class="activity-actions">
-                        <button class="btn approve-msg" data-id="${msg.messageId}">Approve</button>
-                        <button class="btn decline-msg" data-id="${msg.messageId}">Decline</button>
-                        <button class="btn ignore-msg" data-id="${msg.messageId}">Ignore</button>
+                        ${activityOptions.map(option => {return `
+                            <button class="btn ${option}-msg" data-id="${msg.messageId}">${option.toUpperCase()}</button>
+                        `;}).join('')}
                     </div>
                 </div>
             `;

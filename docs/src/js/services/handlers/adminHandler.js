@@ -8,7 +8,30 @@ import AuthService from '../auth.js';
 import MessageService from '../message.js';
 import GameService from '../game.js';
 
+const ACTIVITY_OPTIONS = {
+    APPROVE: 'approve',
+    DECLINE: 'decline',
+    IGNORE: 'ignore' // should be unused...
+}
+
 class AdminHandlerService {
+    constructor() {
+        this.ADMIN_MESSAGE_ACTIVITY_OPTIONS = new Map([
+            [MessageType.PURCHASE_ATTEMPT, 
+                [ACTIVITY_OPTIONS.APPROVE, ACTIVITY_OPTIONS.DECLINE]],
+            [MessageType.DEPOSIT_ATTEMPT, 
+                [ACTIVITY_OPTIONS.APPROVE, ACTIVITY_OPTIONS.DECLINE]],
+            [MessageType.WITHDRAW_ATTEMPT, 
+                [ACTIVITY_OPTIONS.APPROVE, ACTIVITY_OPTIONS.DECLINE]],
+            [MessageType.REQUEST_INVENTORY_ATTEMPT, 
+                [ACTIVITY_OPTIONS.APPROVE, ACTIVITY_OPTIONS.DECLINE]],
+        ]);
+    }
+
+    returnMessageActivityOptions(messageType) {
+        return this.ADMIN_MESSAGE_ACTIVITY_OPTIONS.get(messageType) || [];
+    }
+
     async handlePlayerLogOut(gameId, player, characterId, approved, rejectionReason = "") {
         const playerId = player.playerId;
         if (approved) {
