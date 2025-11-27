@@ -30,6 +30,7 @@ class AdminPage extends Page {
         this.items = [];
         this.gameTimerInterval = null;
         this.GAME_DURATION_MS = 60 * 60 * 1000; // 1 hour fixed duration
+        this.importCsvRows = [];
     }
 
     async show() {
@@ -119,6 +120,21 @@ class AdminPage extends Page {
                         <form id="itemForm">
                             <!-- Form fields will be dynamically added -->
                         </form>
+                    </div>
+                </div>
+
+                <!-- Import CSV Modal -->
+                <div id="importCsvModal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <h2>Import Characters (CSV)</h2>
+                        <p>CSV should include header: <code>first_name,last_name,user_id,user_password,starting_gold</code></p>
+                        <input type="file" id="importCsvFileInput" accept="text/csv" />
+                        <div id="importCsvError" class="error-text"></div>
+                        <div id="importCsvPreview"></div>
+                        <div class="form-actions">
+                            <button id="importCsvCancel" class="btn">Cancel</button>
+                            <button id="importCsvConfirm" class="btn" disabled>Confirm Import</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -356,9 +372,13 @@ class AdminPage extends Page {
             const addCard = document.createElement('div');
             addCard.className = 'profile-card add-profile';
             addCard.innerHTML = `
-                <button id="addCharacter" class="btn">Add Character</button>
+                <div class="profile-add-actions">
+                    <button id="addCharacter" class="btn">Add Character</button>
+                    <button id="importCsv" class="btn">Import CSV</button>
+                </div>
             `;
             addCard.querySelector('#addCharacter').addEventListener('click', () => this.showCharacterModal());
+            addCard.querySelector('#importCsv').addEventListener('click', () => this.showImportCsvModal());
             grid.appendChild(addCard);
         }
 
@@ -571,8 +591,8 @@ class AdminPage extends Page {
                     <input type="checkbox" id="canAccessSecret" ${!isUpdate || character.canAccessSecret ? 'checked' : ''}>
                 </div>
                 <div class="form-actions">
-                    <button type="submit" class="btn">SAVE</button>
                     <button type="button" class="btn" id="cancelCharacter">CANCEL</button>
+                    <button type="submit" class="btn">SAVE</button>
                 </div>
             </div>
         `;
@@ -663,36 +683,36 @@ class AdminPage extends Page {
         
         form.innerHTML = `
             <div class="form-group">
-                <label>ITEM ID:</label>
+                <label for="itemNumber">ITEM ID:</label>
                 <input type="number" id="itemNumber" value="${item.itemNumber || 0}" required>
             </div>
             <div class="form-group">
-                <label>NAME:</label>
+                <label for="itemName">NAME:</label>
                 <input type="text" id="itemName" value="${item.name || ''}" required>
             </div>
             <div class="form-group">
-                <label>DESCRIPTION:</label>
+                <label for="itemDescription">DESCRIPTION:</label>
                 <textarea id="itemDescription">${item.description || ''}</textarea>
             </div>
             <div class="form-group">
-                <label>QUANTITY IN SHOP:</label>
+                <label for="itemQuantity">QUANTITY IN SHOP:</label>
                 <input type="number" id="itemQuantity" value="${item.quantity || 0}" required>
             </div>
             <div class="form-group">
-                <label>PRICE:</label>
+                <label for="itemPrice">PRICE:</label>
                 <input type="number" id="itemPrice" value="${item.price || 0}" required>
             </div>
             <div class="form-group">
-                <label>PREREQS:</label>
+                <label for="itemPrereqs">PREREQS:</label>
                 <input type="text" id="itemPrereqs" value="${item.prereqs || ''}">
             </div>
             <div class="form-group">
-                <label>IS SECRET ITEM:</label>
+                <label for="itemIsSecret">IS SECRET ITEM:</label>
                 <input type="checkbox" id="itemIsSecret" ${item.isSecret ? 'checked' : ''}>
             </div>
             <div class="form-actions">
-                <button type="submit" class="btn">Save</button>
                 <button type="button" class="btn" id="cancelItem">Cancel</button>
+                <button type="submit" class="btn">Save</button>
             </div>
         `;
 
@@ -724,6 +744,161 @@ class AdminPage extends Page {
 
         itemModal.style.display = 'flex';
     }
+
+    /*********************** CSV Import Handlers ************************/
+    showImportCsvModal() {
+        this.importCsvRows = [];
+        const err = document.getElementById('importCsvError');
+        const preview = document.getElementById('importCsvPreview');
+        const confirmBtn = document.getElementById('importCsvConfirm');
+        if (err) err.innerHTML = '';
+        if (preview) preview.innerHTML = '';
+        if (confirmBtn) confirmBtn.disabled = true;
+
+        const modal = document.getElementById('importCsvModal');
+        modal.style.display = 'flex';
+
+        // wire file input
+        const fileInput = document.getElementById('importCsvFileInput');
+        fileInput.value = '';
+        fileInput.onchange = (e) => this.handleImportCsvFileInput(e.target.files && e.target.files[0]);
+
+        document.getElementById('importCsvCancel').onclick = () => this.hideImportCsvModal();
+        document.getElementById('importCsvConfirm').onclick = async () => await this.confirmImportCsv();
+    }
+
+    hideImportCsvModal() {
+        const modal = document.getElementById('importCsvModal');
+        if (modal) modal.style.display = 'none';
+        this.importCsvRows = [];
+    }
+
+    handleImportCsvFileInput(file) {
+        const err = document.getElementById('importCsvError');
+        const preview = document.getElementById('importCsvPreview');
+        const confirmBtn = document.getElementById('importCsvConfirm');
+        if (!file) {
+            if (err) err.innerHTML = 'No file selected';
+            if (confirmBtn) confirmBtn.disabled = true;
+            if (preview) preview.innerHTML = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const text = ev.target.result;
+            try {
+                const rows = this.parseCsvText(text);
+                // validate
+                if (!rows || rows.length === 0) {
+                    throw new Error('CSV contains no rows');
+                }
+                // ensure headers
+                const required = ['first_name','last_name','user_id','user_password','starting_gold'];
+                const headers = Object.keys(rows[0]);
+                const missing = required.filter(r => !headers.includes(r));
+                if (missing.length > 0) {
+                    throw new Error('Missing headers: ' + missing.join(', '));
+                }
+
+                this.importCsvRows = rows;
+                if (err) err.innerHTML = '';
+                if (preview) this.renderImportPreview(rows);
+                if (confirmBtn) confirmBtn.disabled = rows.length === 0;
+            } catch (e) {
+                if (err) err.innerHTML = e.message || 'Invalid CSV';
+                if (preview) preview.innerHTML = '';
+                if (confirmBtn) confirmBtn.disabled = true;
+            }
+        };
+        reader.onerror = (e) => {
+            const errEl = document.getElementById('importCsvError');
+            if (errEl) errEl.innerHTML = 'Failed to read file';
+        };
+        reader.readAsText(file);
+    }
+
+    parseCsvText(text) {
+        // Very small CSV parser: splits lines, supports simple quoted values without embedded newlines.
+        const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+        if (lines.length === 0) return [];
+        const splitRow = (line) => {
+            const parts = [];
+            let cur = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const ch = line[i];
+                if (ch === '"') {
+                    inQuotes = !inQuotes;
+                    continue;
+                }
+                if (ch === ',' && !inQuotes) {
+                    parts.push(cur.trim());
+                    cur = '';
+                    continue;
+                }
+                cur += ch;
+            }
+            parts.push(cur.trim());
+            return parts;
+        };
+
+        const headerParts = splitRow(lines[0]).map(h => h.trim().toLowerCase());
+        const rows = [];
+        for (let r = 1; r < lines.length; r++) {
+            const parts = splitRow(lines[r]);
+            if (parts.length === 0) continue;
+            // pad short rows
+            while (parts.length < headerParts.length) parts.push('');
+            const obj = {};
+            for (let i = 0; i < headerParts.length; i++) {
+                obj[headerParts[i]] = parts[i] || '';
+            }
+            rows.push(obj);
+        }
+        return rows;
+    }
+
+    renderImportPreview(rows) {
+        const preview = document.getElementById('importCsvPreview');
+        if (!preview) return;
+        const count = rows.length;
+        const lines = rows.slice(0, 10).map(r => `<li>${r.first_name} ${r.last_name} (${r.user_id} | ${r.user_password}) - ${r.starting_gold}</li>`).join('');
+        preview.innerHTML = `
+            <p>Will create <strong>${count}</strong> characters.</p>
+            <ul>${lines}${count > 10 ? '<li>...and more</li>' : ''}</ul>
+        `;
+    }
+
+    async confirmImportCsv() {
+        if (!this.importCsvRows || this.importCsvRows.length === 0) return;
+        const rows = this.importCsvRows;
+        const gameId = this.currentGame.gameId;
+        try {
+            // create characters sequentially to avoid bursts
+            for (const r of rows) {
+                const first = r.first_name || '';
+                const last = r.last_name || '';
+                const characterData = {
+                    name: (first + ' ' + last).trim(),
+                    accountNumber: r.user_id || '',
+                    accountPassword: r.user_password || '',
+                    startingGold: parseInt(r.starting_gold || '0'),
+                    gold: parseInt(r.starting_gold || '0'),
+                    profileImage: '',
+                    emblemImage: '',
+                    canAccessSecret: true
+                };
+                await GameService.createCharacter(gameId, characterData);
+            }
+            this.hideImportCsvModal();
+        } catch (err) {
+            const errEl = document.getElementById('importCsvError');
+            if (errEl) errEl.innerHTML = 'Failed to import CSV: ' + (err.message || String(err));
+        }
+    }
+
+    /********************* End CSV Import Handlers ***********************/
 
     showCharacterModal() {
         this.editCharacter({});
