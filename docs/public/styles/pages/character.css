@@ -82,11 +82,12 @@
         border-radius: 50%;
         border: 2px solid var(--primary-color);
         overflow: hidden;
-        padding: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
 
         img {
-            width: 100%;
-            height: 100%;
+            width: 50%;
         }
     }
 
