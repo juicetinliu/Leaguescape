@@ -28,14 +28,15 @@ class StoreService {
         return items;
     }
 
-    onItemsSnapshot(gameId, callback, getSecretItemsToo = false) {
+    onItemsSnapshot(gameId, callback, getSecretItemsToo = false, errorCallback = () => {}) {
         return onSnapshot(
             this.createItemsQuery(gameId, getSecretItemsToo),
             async (itemDocs) => {
                 const items = itemDocs.docs.map(doc => 
                     new Item(gameId, doc.id, doc.data()));
                 await callback(items);
-            }
+            }, 
+            async (error) => { await errorCallback(error)}
         )
     }
 }

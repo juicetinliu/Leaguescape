@@ -17,52 +17,52 @@ class GameService {
         return doc(db, `games/${gameId}/players/${playerId}/privateDetails/data`);
     }
 
-    onGameSnapshot(gameId, callback) {
+    onGameSnapshot(gameId, callback, errorCallback = () => {}) {
         return onSnapshot(doc(db, 'games', gameId), async (gameDoc) => {
             await callback(gameDoc.data());
-        });
+        }, async (error) => { await errorCallback(error)});
     }
 
-    onGamePlayersSnapshot(gameId, callback, fetchPrivateDetails = true) {
+    onGamePlayersSnapshot(gameId, callback, fetchPrivateDetails = true, errorCallback = () => {}) {
         return onSnapshot(collection(db, `games/${gameId}/players`), async (players) => {
             const playerDetails = await Promise.all(players.docs.map(async (doc) => {
                 return await this.getPlayerDetails(gameId, doc, fetchPrivateDetails);
             }))
 
             await callback(playerDetails);
-        });
+        }, async (error) => { await errorCallback(error)});
     }
     
-    onGameCharactersSnapshot(gameId, callback) {
+    onGameCharactersSnapshot(gameId, callback, errorCallback = () => {}) {
         return onSnapshot(collection(db, `games/${gameId}/characters`), async (charactersData) => {
             const characters = charactersData.docs.map(doc => 
                 new Character(gameId, doc.id, doc.data())
             ); 
             await callback(characters);
-        });
+        }, async (error) => { await errorCallback(error)});
     }
 
-    onGameItemsSnapshot(gameId, callback) {
+    onGameItemsSnapshot(gameId, callback, errorCallback = () => {}) {
         return onSnapshot(collection(db, `games/${gameId}/items`), async (itemsData) => {
             const items = itemsData.docs.map(doc => 
                 new Item(gameId, doc.id, doc.data())
             ); 
             await callback(items);
-        });
+        }, async (error) => { await errorCallback(error)});
     }
 
-    onPlayerSnapshot(gameId, playerId, callback) {
+    onPlayerSnapshot(gameId, playerId, callback, errorCallback = () => {}) {
         return onSnapshot(this.createPlayerRef(gameId, playerId), async (playerData) => {
             await callback(playerData.data());
-        });
+        }, async (error) => { await errorCallback(error)});
     }
     
     // Could try passing in character instead to save memory?
-    onCharacterSnapshot(gameId, characterId, callback) {
+    onCharacterSnapshot(gameId, characterId, callback, errorCallback = () => {}) {
         return onSnapshot(doc(db, `games/${gameId}/characters`, characterId), async (characterData) => {
             const character = new Character(gameId, characterData.id, characterData.data())
             await callback(character);
-        });
+        }, async (error) => { await errorCallback(error)});
     }
 
     async createGame(adminId) {

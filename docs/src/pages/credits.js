@@ -55,7 +55,6 @@ class CreditsPage extends Page {
                     window.location.reload();
                 }
             });
-            this.setupPlayerMessageUnsubscribe();
         }
     }
 

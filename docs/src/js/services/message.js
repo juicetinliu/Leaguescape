@@ -9,7 +9,7 @@ import { MessageTo, MessageType } from '../models/MessageTypes.js';
 import AuthService from './auth.js';
 
 class MessageService {
-    onUnprocessedAdminMessagesSnapshot(gameId, callback) {
+    onUnprocessedAdminMessagesSnapshot(gameId, callback, errorCallback = () => {}) {
         return onSnapshot(
             query(
                 collection(db, `games/${gameId}/${MessageTo.ADMIN}`),
@@ -19,11 +19,12 @@ class MessageService {
             async (messages) => {
                 const unprocessedMessages = messages.docs.map(doc => new Message(gameId, doc.id, { ...doc.data(), messageTo: MessageTo.ADMIN, playerId: doc.data().fromPlayer }));
                 await callback(unprocessedMessages);
-            }
+            }, 
+            async (error) => { await errorCallback(error)}
         )
     }
 
-    onUnprocessedPlayerMessagesSnapshot(gameId, callback) {
+    onUnprocessedPlayerMessagesSnapshot(gameId, callback, errorCallback = () => {}) {
         const playerId = AuthService.currentUser.authId;
         return onSnapshot(
             query(
@@ -34,7 +35,8 @@ class MessageService {
             async (messages) => {
                 const unprocessedMessages = messages.docs.map(doc => new Message(gameId, doc.id, { ...doc.data(), messageTo: MessageTo.PLAYER, playerId: playerId }));
                 await callback(unprocessedMessages);
-            }
+            }, 
+            async (error) => { await errorCallback(error)}
         )
     }
 
