@@ -526,14 +526,14 @@ class AdminPage extends Page {
         form.innerHTML = `
             <div class="character-form-images">
                 <div class="form-group">
-                    <label>PROFILE IMAGE:</label>
+                    <label for="profileImageInput">PROFILE IMAGE:</label>
                     <input type="file" id="profileImageInput" accept="image/*">
                     <div class="profile-image-wrapper">
                         <img src="${character.profileImage}" alt="profileImagePreview" id="profileImagePreview">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>EMBLEM IMAGE:</label>
+                    <label for="emblemImageInput">EMBLEM IMAGE:</label>
                     <input type="file" id="emblemImageInput" accept="image/*">
                     <div class="emblem-image-wrapper">
                         <img src="${character.emblemImage}" alt="emblemImagePreview" id="emblemImagePreview">
@@ -542,45 +542,33 @@ class AdminPage extends Page {
             </div>
             <div class="character-form-details">
                 <div class="form-group">
-                    <label>FIRST NAME:</label>
+                    <label for="characterFirstName">FIRST NAME:</label>
                     <input type="text" id="characterFirstName" value="${characterFirstName || ''}" required>
                 </div>
                 <div class="form-group">
-                    <label>LAST NAME:</label>
+                    <label for="characterLastName">LAST NAME:</label>
                     <input type="text" id="characterLastName" value="${characterLastName || ''}">
                 </div>
                 <div class="form-group">
-                    <label>USER ID:</label>
-                    <input type="text" id="userId" value="${character.userId || ''}" required>
-                </div>
-                <div class="form-group">
-                    <label>ACCOUNT NUMBER:</label>
+                    <label for="accountNumber">USER ID:</label>
                     <input type="text" id="accountNumber" value="${character.accountNumber || ''}" required>
                 </div>
                 <div class="form-group">
-                    <label>ACCOUNT PASSWORD:</label>
+                    <label for="accountPassword">USER PASSWORD:</label>
                     <input type="text" id="accountPassword" value="${character.accountPassword || ''}" required>
                 </div>
                 <div class="form-group">
-                    <label>SECURITY QUESTION:</label>
-                    <textarea type="text" id="securityQuestion">${character.securityQuestion || ''}</textarea>
-                </div>
-                <div class="form-group">
-                    <label>SECURITY ANSWER:</label>
-                    <input type="text" id="securityAnswer" value="${character.securityAnswer || ''}">
-                </div>
-                <div class="form-group">
-                    <label>STARTING BANK BALANCE:</label>
+                    <label for="startingGold">STARTING GOLD BALANCE:</label>
                     <input type="number" id="startingGold" value="${character.startingGold || 0}" required>
                 </div>
                 ${isUpdate ? 
                     `<div class="form-group">
-                        <label>CURRENT BANK BALANCE:</label>
+                        <label for="actualGold">CURRENT GOLD BALANCE:</label>
                         <input type="number" id="actualGold" value="${character.gold || 0}" required>
                     </div>` : ''}
                 <div class="form-group">
-                    <label>CAN ACCESS SECRET:</label>
-                    <input type="checkbox" id="canAccessSecret" ${character.canAccessSecret ? 'checked' : ''}>
+                    <label for="canAccessSecret">CAN ACCESS SECRET:</label>
+                    <input type="checkbox" id="canAccessSecret" ${!isUpdate || character.canAccessSecret ? 'checked' : ''}>
                 </div>
                 <div class="form-actions">
                     <button type="submit" class="btn">SAVE</button>
@@ -642,11 +630,8 @@ class AdminPage extends Page {
 
             const characterData = {
                 name: document.getElementById('characterFirstName').value + ' ' + document.getElementById('characterLastName').value,
-                userId: document.getElementById('userId').value,
                 accountNumber: document.getElementById('accountNumber').value,
                 accountPassword: document.getElementById('accountPassword').value,
-                securityQuestion: document.getElementById('securityQuestion').value,
-                securityAnswer: document.getElementById('securityAnswer').value,
                 startingGold: parseInt(document.getElementById('startingGold').value),
                 gold: parseInt(document.getElementById(isUpdate ? 'actualGold' : 'startingGold').value),
                 profileImage: profileImageUrl,
