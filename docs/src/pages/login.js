@@ -18,7 +18,6 @@ class LoginPage extends Page {
         this.gameUnsubscribe = null;
         this.playerMessageUnsubscribe = null;
         this.gameTimerInterval = null;
-        this.GAME_DURATION_MS = 60 * 60 * 1000; // 1 hour
     }
 
     async show() {
@@ -104,6 +103,11 @@ class LoginPage extends Page {
             this.gameUnsubscribe = GameService.onGameSnapshot(this.currentGame.gameId, async (gameData) => {
                 if (gameData.gameState !== GAME_STATE.RUNNING) {
                     window.location.reload();
+                } else {
+                    if (gameData.gameDuration != this.currentGame.gameDuration) {
+                        this.currentGame.gameDuration = gameData.gameDuration;
+                        this.startGameTimer();
+                    }
                 }
             });
             this.setupPlayerMessageUnsubscribe();
@@ -151,7 +155,7 @@ class LoginPage extends Page {
             startDate = new Date();
         }
 
-        const durationMs = this.GAME_DURATION_MS;
+        const durationMs = this.currentGame.gameDuration;
 
         const tick = () => {
             const now = new Date();
@@ -163,7 +167,7 @@ class LoginPage extends Page {
                 clearInterval(this.gameTimerInterval);
                 this.gameTimerInterval = null;
                 // reload to pick up final state
-                window.location.reload();
+                // window.location.reload(); // Not necessary - the admin page will change the game state!
                 return;
             }
 

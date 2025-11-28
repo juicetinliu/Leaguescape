@@ -2,6 +2,8 @@ import { db } from '../config/firebase.js';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 import { GAME_STATE } from './Enums.js';
 
+const DEFAULT_GAME_DURATION = 60 * 60 * 1000; // 1 hour fixed duration
+
 class Game {
     constructor(gameId, data = {}) {
         this.gameId = gameId;
@@ -9,6 +11,7 @@ class Game {
         this.startTime = data.startTime || null;
         this.endTime = data.endTime || null;
         this.adminId = data.adminId || '';
+        this.gameDuration = data.gameDuration || DEFAULT_GAME_DURATION;
         this.gameState = data.gameState || GAME_STATE.SETUP;
     }
 
@@ -37,7 +40,15 @@ class Game {
             startTime: this.startTime,
             endTime: this.endTime,
             adminId: this.adminId,
+            gameDuration: this.gameDuration,
             gameState: this.gameState
+        });
+    }
+
+    async updateDuration(newDuration) {
+        this.gameDuration = newDuration;
+        await updateDoc(doc(db, 'games', this.gameId), {
+            gameDuration: this.gameDuration
         });
     }
 

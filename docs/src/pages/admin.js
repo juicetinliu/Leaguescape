@@ -4,6 +4,7 @@ import GameService from '../js/services/game.js';
 import MessageService from '../js/services/message.js';
 import { MessageTo, MessageType } from '../js/models/MessageTypes.js';
 import { router } from '../js/utils/router.js';
+import { msToHms, hmsToMs } from '../js/utils/timeUtils.js';
 import { PAGES, GAME_STATE } from '../js/models/Enums.js';
 import AdminHandlerService from '../js/services/handlers/adminHandler.js';
 
@@ -29,7 +30,6 @@ class AdminPage extends Page {
         this.characters = [];
         this.items = [];
         this.gameTimerInterval = null;
-        this.GAME_DURATION_MS = 60 * 60 * 1000; // 1 hour fixed duration
         this.importCsvRows = [];
     }
 
@@ -71,6 +71,7 @@ class AdminPage extends Page {
                         </div>
                         <div>
                             <button id="showActivity" class="btn">View Activity <span id="activityBadge" class="hidden">0</span></button>
+                            ${this.currentGame.gameState === GAME_STATE.SETUP || this.currentGame.gameState === GAME_STATE.RUNNING ? '<button id="modifyDuration" class="btn">Modify Duration</button>' : ''}
                             <button id="exitGame" class="btn">Exit Game</button>
                         </div>
                     </div>
@@ -137,6 +138,20 @@ class AdminPage extends Page {
                         </div>
                     </div>
                 </div>
+
+                <!-- Modify Duration Modal -->
+                <div id="modifyDurationModal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <h2>Set Game Duration</h2>
+                        <p>Enter duration as <code>HH:MM:SS</code></p>
+                        <input type="text" id="durationInput" placeholder="01:00:00" />
+                        <div id="durationError" class="error-text"></div>
+                        <div class="form-actions">
+                            <button id="durationCancel" class="btn">Cancel</button>
+                            <button id="durationConfirm" class="btn" disabled>Confirm</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
         
@@ -164,14 +179,14 @@ class AdminPage extends Page {
         if (startGameBtn) {
             startGameBtn.addEventListener('click', async () => {
                 await this.updateGameState(GAME_STATE.RUNNING);
-                // start timer after starting the game
-                this.startGameTimer();
             });
         }
 
         const endGameBtn = document.getElementById('endGame');
         if (endGameBtn) {
-            endGameBtn.addEventListener('click', () => this.updateGameState(GAME_STATE.END));
+            endGameBtn.addEventListener('click', async () => { 
+                await this.updateGameState(GAME_STATE.END);
+            });
         }
 
         // Tab switching
@@ -187,6 +202,12 @@ class AdminPage extends Page {
         const showActivityBtn = document.getElementById('showActivity');
         if (showActivityBtn) {
             showActivityBtn.addEventListener('click', () => this.showActivityLog());
+        }
+
+        // Game duration button
+        const modifyDurationBtn = document.getElementById('modifyDuration');
+        if (modifyDurationBtn) {
+            modifyDurationBtn.addEventListener('click', () => this.showModifyDurationModal());
         }
 
         // Lobby toggle
@@ -219,7 +240,7 @@ class AdminPage extends Page {
             });
 
             // subscribe to unprocessed admin messages and update badge
-            this.setupAdminMessageListener()
+            this.setupAdminMessageListener();
         }
     }
 
@@ -420,7 +441,7 @@ class AdminPage extends Page {
             startDate = new Date();
         }
 
-        const durationMs = this.GAME_DURATION_MS;
+        const durationMs = this.currentGame.gameDuration;
 
         const tick = () => {
             const now = new Date();
@@ -899,6 +920,67 @@ class AdminPage extends Page {
     }
 
     /********************* End CSV Import Handlers ***********************/
+
+    /********************* Modify Duration Handlers ********************/
+
+    showModifyDurationModal() {
+        const modal = document.getElementById('modifyDurationModal');
+        const input = document.getElementById('durationInput');
+        const err = document.getElementById('durationError');
+        const confirmBtn = document.getElementById('durationConfirm');
+        if (!modal || !input || !confirmBtn || !this.currentGame) return;
+        // prefill with current duration
+        input.value = msToHms(this.currentGame.gameDuration);
+        if (err) err.innerHTML = '';
+        confirmBtn.disabled = false;
+
+        input.oninput = () => {
+            const ms = hmsToMs(input.value.trim());
+            if (ms === null) {
+                if (err) err.innerHTML = 'Invalid format. Use HH:MM:SS';
+                confirmBtn.disabled = true;
+            } else {
+                if (err) err.innerHTML = '';
+                confirmBtn.disabled = false;
+            }
+        };
+
+        document.getElementById('durationCancel').onclick = () => this.hideModifyDurationModal();
+        document.getElementById('durationConfirm').onclick = async () => await this.confirmModifyDuration();
+
+        modal.style.display = 'flex';
+    }
+
+    hideModifyDurationModal() {
+        const modal = document.getElementById('modifyDurationModal');
+        if (modal) modal.style.display = 'none';
+        const input = document.getElementById('durationInput');
+        if (input) input.oninput = null;
+    }
+
+    async confirmModifyDuration() {
+        const input = document.getElementById('durationInput');
+        const err = document.getElementById('durationError');
+        if (!input) return;
+        const ms = hmsToMs(input.value.trim());
+        if (ms === null) {
+            if (err) err.innerHTML = 'Invalid duration format';
+            return;
+        }
+
+        try {
+            await this.currentGame.updateDuration(ms);
+            this.hideModifyDurationModal();
+            // if game running, restart timer with new duration
+            if (this.currentGame.gameState === GAME_STATE.RUNNING) {
+                this.startGameTimer();
+            }
+        } catch (e) {
+            if (err) err.innerHTML = 'Failed to save duration: ' + (e.message || String(e));
+        }
+    }
+
+    /******************* End Modify Duration Handlers *******************/
 
     showCharacterModal() {
         this.editCharacter({});
