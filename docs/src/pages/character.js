@@ -4,6 +4,7 @@ import GameService from '../js/services/game.js';
 import MessageService from '../js/services/message.js';
 import { MessageType } from '../js/models/MessageTypes.js';
 import { router } from '../js/utils/router.js';
+import { msToHms } from '../js/utils/timeUtils.js';
 import { PAGES, GAME_STATE } from '../js/models/Enums.js';
 import { gameRouter } from '../js/utils/gamerouter.js';
 import CharacterHandlerService from '../js/services/handlers/characterHandler.js';
@@ -249,6 +250,7 @@ class CharacterPage extends Page {
         }
     }
 
+    //TODO: dedupe with admin timer into component!
     startGameTimer() {
         if (this.gameTimerInterval) {
             clearInterval(this.gameTimerInterval);
@@ -274,18 +276,15 @@ class CharacterPage extends Page {
             const remaining = durationMs - elapsed;
 
             if (remaining <= 0) {
-                timerEl.textContent = '00:00:00';
+                timerEl.textContent = msToHms(0);
                 clearInterval(this.gameTimerInterval);
                 this.gameTimerInterval = null;
                 // window.location.reload(); // Not necessary - the admin page will change the game state!
                 return;
             }
 
-            const hrs = Math.floor(remaining / (1000 * 60 * 60));
-            const mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-            const secs = Math.floor((remaining % (1000 * 60)) / 1000);
-            const pad = (n) => String(n).padStart(2, '0');
-            timerEl.textContent = `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+            // format remaining as HH:MM:SS
+            timerEl.textContent = msToHms(remaining);
         }
 
         tick();

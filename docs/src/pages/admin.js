@@ -4,6 +4,7 @@ import GameService from '../js/services/game.js';
 import MessageService from '../js/services/message.js';
 import { MessageTo, MessageType } from '../js/models/MessageTypes.js';
 import { router } from '../js/utils/router.js';
+import { parseCsvText } from '../js/utils/csvUtils.js';
 import { msToHms, hmsToMs } from '../js/utils/timeUtils.js';
 import { PAGES, GAME_STATE } from '../js/models/Enums.js';
 import AdminHandlerService from '../js/services/handlers/adminHandler.js';
@@ -449,7 +450,7 @@ class AdminPage extends Page {
             const remaining = durationMs - elapsed;
 
             if (remaining <= 0) {
-                timerEl.textContent = '00:00:00';
+                timerEl.textContent = msToHms(0);
                 clearInterval(this.gameTimerInterval);
                 this.gameTimerInterval = null;
                 // auto end the game
@@ -458,11 +459,7 @@ class AdminPage extends Page {
             }
 
             // format remaining as HH:MM:SS
-            const hrs = Math.floor(remaining / (1000 * 60 * 60));
-            const mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-            const secs = Math.floor((remaining % (1000 * 60)) / 1000);
-            const pad = (n) => String(n).padStart(2, '0');
-            timerEl.textContent = `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+            timerEl.textContent = msToHms(remaining);
         }
 
         // initial tick and interval
@@ -809,7 +806,7 @@ class AdminPage extends Page {
         reader.onload = (ev) => {
             const text = ev.target.result;
             try {
-                const rows = this.parseCsvText(text);
+                const rows = parseCsvText(text);
                 // validate
                 if (!rows || rows.length === 0) {
                     throw new Error('CSV contains no rows');
@@ -837,47 +834,6 @@ class AdminPage extends Page {
             if (errEl) errEl.innerHTML = 'Failed to read file';
         };
         reader.readAsText(file);
-    }
-
-    parseCsvText(text) {
-        // Very small CSV parser: splits lines, supports simple quoted values without embedded newlines.
-        const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
-        if (lines.length === 0) return [];
-        const splitRow = (line) => {
-            const parts = [];
-            let cur = '';
-            let inQuotes = false;
-            for (let i = 0; i < line.length; i++) {
-                const ch = line[i];
-                if (ch === '"') {
-                    inQuotes = !inQuotes;
-                    continue;
-                }
-                if (ch === ',' && !inQuotes) {
-                    parts.push(cur.trim());
-                    cur = '';
-                    continue;
-                }
-                cur += ch;
-            }
-            parts.push(cur.trim());
-            return parts;
-        };
-
-        const headerParts = splitRow(lines[0]).map(h => h.trim().toLowerCase());
-        const rows = [];
-        for (let r = 1; r < lines.length; r++) {
-            const parts = splitRow(lines[r]);
-            if (parts.length === 0) continue;
-            // pad short rows
-            while (parts.length < headerParts.length) parts.push('');
-            const obj = {};
-            for (let i = 0; i < headerParts.length; i++) {
-                obj[headerParts[i]] = parts[i] || '';
-            }
-            rows.push(obj);
-        }
-        return rows;
     }
 
     renderImportPreview(rows) {
@@ -936,13 +892,9 @@ class AdminPage extends Page {
 
         input.oninput = () => {
             const ms = hmsToMs(input.value.trim());
-            if (ms === null) {
-                if (err) err.innerHTML = 'Invalid format. Use HH:MM:SS';
-                confirmBtn.disabled = true;
-            } else {
-                if (err) err.innerHTML = '';
-                confirmBtn.disabled = false;
-            }
+            const showError = ms === null;
+            if (err) err.innerHTML = showError ? 'Invalid format. Use HH:MM:SS' : '';
+            confirmBtn.disabled = showError;
         };
 
         document.getElementById('durationCancel').onclick = () => this.hideModifyDurationModal();
