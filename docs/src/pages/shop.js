@@ -7,6 +7,7 @@ import { MessageType } from '../js/models/MessageTypes.js';
 import { router } from '../js/utils/router.js';
 import { PAGES, GAME_STATE, PURCHASE_STATUS } from '../js/models/Enums.js';
 import { gameRouter } from '../js/utils/gamerouter.js';
+import { setTwoNumberDecimalString, setTwoNumberDecimal } from '../js/utils/numUtils.js';
 import { gold } from '../js/components/staticComponents.js'
 import { flickeringSymbols, flickeringSymbolsInterval } from '../js/components/flickeringSymbols.js'
 import CharacterHandlerService from '../js/services/handlers/characterHandler.js';
@@ -50,7 +51,7 @@ class ShopPage extends Page {
         this.initializeUI();
         this.attachEventListeners();
     }
-
+//TODO: MISSING ITEM HEADERS
     initializeUI() {
         const template = `
             <div id="${this.page}" class="page-container">
@@ -59,7 +60,7 @@ class ShopPage extends Page {
                         <div class="back-button-wrapper wrapper">
                             <button id="backToCharacter" class="text-button">BACK</button>
                             <button id="showPurchaseHistory" class="text-button ${!Object.entries(this.currentCharacter.purchaseHistory).length ? 'hidden' : ''}">
-                                PAST ORDERS
+                                PURCHASES
                                 <span id="purchaseHistoryBadge" class="hidden"></span>
                             </button>
                         </div>
@@ -70,7 +71,7 @@ class ShopPage extends Page {
                                     ${this.canAccessSecretShop ? flickeringSymbols(10, 'profile-name') : this.currentCharacter.name}
                                 </div>
                                 <div id="characterGold" class="profile-gold-display">
-                                    ${this.currentCharacter.gold}
+                                    ${setTwoNumberDecimalString(this.currentCharacter.gold)}
                                     ${gold}
                                 </div>
                             </div>
@@ -214,7 +215,7 @@ class ShopPage extends Page {
         }
         const characterGoldDiv = document.getElementById('characterGold');
         characterGoldDiv.innerHTML = `
-            ${this.currentCharacter.gold}
+            ${setTwoNumberDecimalString(this.currentCharacter.gold)}
             ${gold}
         `;
 
@@ -280,7 +281,7 @@ class ShopPage extends Page {
                     <div class="hist-item approved">
                         <div>${name} × ${details.quantity}</div>
                         <div class="price">
-                            ${details.quantity * details.price}
+                            ${setTwoNumberDecimalString(details.quantity * details.price)}
                             ${gold}
                         </div>
                     </div>
@@ -301,7 +302,7 @@ class ShopPage extends Page {
                             <div class="purchase-section-total line-item">
                                 <div>TOTAL</div>
                                 <div class="price">
-                                    ${approvedPrice} 
+                                    ${setTwoNumberDecimalString(approvedPrice)} 
                                     ${gold}
                                 </div>
                             </div>
@@ -364,7 +365,7 @@ class ShopPage extends Page {
                 </div>
                 <div class="divider"></div>
                 <div class="item-price-wrapper wrapper">
-                    <span class="item-price">${item.price}</span>
+                    <span class="item-price">${setTwoNumberDecimalString(item.price)}</span>
                 </div>
             </div>
         `;
@@ -413,7 +414,7 @@ class ShopPage extends Page {
 
         const cartHtml = Object.entries(this.cart).map(([itemId, quantity]) => {
             const item = this.items.find(i => i.itemId === itemId);
-            const itemTotal = item.price * quantity;
+            const itemTotal = setTwoNumberDecimal(item.price * quantity);
             total += itemTotal;
 
             return { 
@@ -433,7 +434,7 @@ class ShopPage extends Page {
                                 </div>
                             </div>
                             <div class="cart-item-price-wrapper wrapper">
-                                <span class="cart-item-price">${item.price}</span>
+                                <span class="cart-item-price">${setTwoNumberDecimalString(item.price)}</span>
                                 ${gold}
                             </div>
                         </div>
@@ -449,7 +450,7 @@ class ShopPage extends Page {
         cartItems.innerHTML = cartHtml;
         document.querySelector('.cart-total-amount-wrapper').innerHTML = `
             <div class="cart-total">
-                <span class="cart-item-total-price">${total}</span>
+                <span class="cart-item-total-price">${setTwoNumberDecimalString(total)}</span>
                 ${gold}
             </div>
         `;

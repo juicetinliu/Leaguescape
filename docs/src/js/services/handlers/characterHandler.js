@@ -5,6 +5,7 @@ import Action from '../../models/Action.js';
 import Message from '../../models/Message.js';
 import { MessageTo, MessageType } from '../../models/MessageTypes.js';
 import AuthService from '../auth.js';
+import { setTwoNumberDecimal } from '../../utils/numUtils.js';
 import MessageService from '../message.js';
 import GameService from '../game.js';
 
@@ -25,7 +26,7 @@ class CharacterHandlerService {
             messageType: MessageType.WITHDRAW_ATTEMPT,
             messageDetails: {
                 characterId: characterId,
-                amount: goldAmount
+                amount: setTwoNumberDecimal(goldAmount)
             }
         });
     }
@@ -36,7 +37,7 @@ class CharacterHandlerService {
             messageType: MessageType.DEPOSIT_ATTEMPT,
             messageDetails: {
                 characterId: characterId,
-                amount: goldAmount
+                amount: setTwoNumberDecimal(goldAmount)
             }
         });
     }

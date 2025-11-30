@@ -5,6 +5,7 @@ import Character from '../models/Character.js';
 import Item from '../models/Item.js';
 import Action from '../models/Action.js';
 import ActionType from '../models/ActionType.js';
+import { setTwoNumberDecimal } from '../utils/numUtils.js';
 import AuthService from './auth.js';
 import StorageService from './storage.js';
 
@@ -312,7 +313,7 @@ class GameService {
 
     async updateCharacterGold(gameId, characterId, amount) {
         const character = await Character.get(gameId, characterId);
-        await character.updateGold(amount);
+        await character.updateGold(setTwoNumberDecimal(amount));
     }
 
     async addToCharacterItems(gameId, characterId, itemsMap) {
@@ -336,7 +337,7 @@ class GameService {
             characterId: characterId,
             actionDetails: {
                 items: itemsMap,
-                totalPrice: totalPrice
+                totalPrice: setTwoNumberDecimal(totalPrice)
             }
         }, playerId);
     }
@@ -347,7 +348,7 @@ class GameService {
             actionType: ActionType.DEPOSIT_GOLD,
             characterId: characterId,
             actionDetails: {
-                amount: amount
+                amount: setTwoNumberDecimal(amount)
             }
         }, playerId);
     }
@@ -358,7 +359,7 @@ class GameService {
             actionType: ActionType.WITHDRAW_GOLD,
             characterId: characterId,
             actionDetails: {
-                amount: amount
+                amount: setTwoNumberDecimal(amount)
             }
         }, playerId);
     }

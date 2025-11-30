@@ -4,6 +4,7 @@ import Character from '../models/Character.js';
 import ActionType from '../models/ActionType.js';
 import GameService from './game.js';
 
+//UNUSED?
 class BankService {
     async getBalance(gameId, characterId) {
         const character = await Character.get(gameId, characterId);

@@ -1,6 +1,7 @@
 import { db } from '../config/firebase.js';
 import { doc, getDoc, addDoc, updateDoc, deleteDoc, collection } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 import { PURCHASE_STATUS } from '../models/Enums.js';
+import { setTwoNumberDecimal } from '../utils/numUtils.js';
 
 class Character {
     constructor(gameId, characterId, data = {}) {
@@ -14,9 +15,9 @@ class Character {
         this.accountPassword = data.accountPassword || '';
         this.securityQuestion = data.securityQuestion || '';
         this.securityAnswer = data.securityAnswer || '';
-        this.startingGold = data.startingGold || 0;
+        this.startingGold = setTwoNumberDecimal(data.startingGold) || 0;
         this.canAccessSecret = data.canAccessSecret || false;
-        this.gold = data.gold || 0;
+        this.gold = setTwoNumberDecimal(data.gold) || 0;
         this.items = data.items || {}; //itemId and quantity
         this.purchaseHistory = data.purchaseHistory || {}; //hacky way for now...
     }
@@ -62,7 +63,7 @@ class Character {
     async updateGold(amount) {
         const balance = this.gold + amount;
         if(balance < 0) throw 'Character cannot end up in debt!'
-        this.gold = balance
+        this.gold = setTwoNumberDecimal(balance);
         await updateDoc(doc(db, `games/${this.gameId}/characters`, this.characterId), {
             gold: this.gold
         });
@@ -122,7 +123,7 @@ class Character {
     async updatePurchaseHistoryEntry(purchaseId, approved, approvedItems, approvedPrice) {
         this.purchaseHistory[purchaseId].status = approved ? PURCHASE_STATUS.APPROVED : PURCHASE_STATUS.REJECTED;
         this.purchaseHistory[purchaseId].approvedItems = approved ? approvedItems : null;
-        this.purchaseHistory[purchaseId].approvedPrice = approved ? approvedPrice : 0;
+        this.purchaseHistory[purchaseId].approvedPrice = approved ? setTwoNumberDecimal(approvedPrice) : 0;
 
         await updateDoc(doc(db, `games/${this.gameId}/characters`, this.characterId), {
             purchaseHistory: this.purchaseHistory

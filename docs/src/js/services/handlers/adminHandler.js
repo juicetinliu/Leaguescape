@@ -5,6 +5,7 @@ import Action from '../../models/Action.js';
 import Message from '../../models/Message.js';
 import { MessageTo, MessageType } from '../../models/MessageTypes.js';
 import AuthService from '../auth.js';
+import { setTwoNumberDecimal } from '../../utils/numUtils.js';
 import MessageService from '../message.js';
 import GameService from '../game.js';
 
@@ -148,17 +149,17 @@ class AdminHandlerService {
             } else if (quantity > item.quantity) {
                 approvedItems[itemId] = {
                     quantity: item.quantity,
-                    price: item.price
+                    price: setTwoNumberDecimal(item.price)
                 }
                 itemTotalPrice = item.price * item.quantity;
             } else {
                 approvedItems[itemId] = {
                     quantity: quantity,
-                    price: item.price
+                    price: setTwoNumberDecimal(item.price)
                 }
                 itemTotalPrice = item.price * quantity;
             }
-            totalPrice += itemTotalPrice;
+            totalPrice += setTwoNumberDecimal(itemTotalPrice);
         });
 
         // Then check if the character has enough gold for the remaining items
@@ -169,7 +170,7 @@ class AdminHandlerService {
 
         output.approved = true;
         output.approvedItems = approvedItems;
-        output.totalPrice = totalPrice;
+        output.totalPrice = setTwoNumberDecimal(totalPrice);
 
         return output;
     }
@@ -184,7 +185,7 @@ class AdminHandlerService {
                 messageType: MessageType.PURCHASE_SUCCESS,
                 messageDetails: { 
                     approvedItems: approvedItems,
-                    totalPrice: totalPrice
+                    totalPrice: setTwoNumberDecimal(totalPrice)
                 }
             }, playerId);
         } else {
@@ -211,12 +212,7 @@ class AdminHandlerService {
         }
 
         let currentBalance = character.gold;
-
-        if (!Number.isInteger(amount)) {
-            output.rejectionReason = "Gold must be a whole number"
-            return output;
-        }
-        let inputAmount = parseInt(amount);
+        let inputAmount = setTwoNumberDecimal(amount);
         let newBalance = 0;
         if (inputAmount < 0) {
             output.rejectionReason = "Gold must be non-negative";

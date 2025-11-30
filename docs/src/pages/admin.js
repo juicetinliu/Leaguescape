@@ -6,6 +6,7 @@ import { MessageTo, MessageType } from '../js/models/MessageTypes.js';
 import { router } from '../js/utils/router.js';
 import { parseCsvText } from '../js/utils/csvUtils.js';
 import { msToHms, hmsToMs } from '../js/utils/timeUtils.js';
+import { setTwoNumberDecimalString, setTwoNumberDecimal } from '../js/utils/numUtils.js';
 import { PAGES, GAME_STATE } from '../js/models/Enums.js';
 import AdminHandlerService from '../js/services/handlers/adminHandler.js';
 
@@ -318,7 +319,7 @@ class AdminPage extends Page {
             card.innerHTML = `
                 <div class="item-info">
                     <h3>${item.name}</h3>
-                    <p>Price: ${item.price} gold</p>
+                    <p>Price: ${setTwoNumberDecimalString(item.price)} gold</p>
                     <p>Quantity: ${item.quantity}</p>
                 </div>
                 ${this.currentGame.gameState !== GAME_STATE.END ? `
@@ -597,12 +598,12 @@ class AdminPage extends Page {
                 </div>
                 <div class="form-group">
                     <label for="startingGold">STARTING GOLD BALANCE:</label>
-                    <input type="number" id="startingGold" value="${character.startingGold || 0}" required>
+                    <input type="number" step="0.01" id="startingGold" value="${setTwoNumberDecimal(character.startingGold) || 0}" required>
                 </div>
                 ${isUpdate ? 
                     `<div class="form-group">
                         <label for="actualGold">CURRENT GOLD BALANCE:</label>
-                        <input type="number" id="actualGold" value="${character.gold || 0}" required>
+                        <input type="number" step="0.01" id="actualGold" value="${setTwoNumberDecimal(character.gold) || 0}" required>
                     </div>` : ''}
                 <div class="form-group">
                     <label for="canAccessSecret">CAN ACCESS SECRET:</label>
@@ -670,8 +671,8 @@ class AdminPage extends Page {
                 name: document.getElementById('characterFirstName').value + ' ' + document.getElementById('characterLastName').value,
                 accountNumber: document.getElementById('accountNumber').value,
                 accountPassword: document.getElementById('accountPassword').value,
-                startingGold: parseInt(document.getElementById('startingGold').value),
-                gold: parseInt(document.getElementById(isUpdate ? 'actualGold' : 'startingGold').value),
+                startingGold: setTwoNumberDecimal(document.getElementById('startingGold').value),
+                gold: setTwoNumberDecimal(document.getElementById(isUpdate ? 'actualGold' : 'startingGold').value),
                 profileImage: profileImageUrl,
                 emblemImage: emblemImageUrl,
                 canAccessSecret: document.getElementById('canAccessSecret').checked
@@ -718,7 +719,7 @@ class AdminPage extends Page {
             </div>
             <div class="form-group">
                 <label for="itemPrice">PRICE:</label>
-                <input type="number" id="itemPrice" value="${item.price || 0}" required>
+                <input type="number" step="0.01" id="itemPrice" value="${setTwoNumberDecimal(item.price) || 0}" required>
             </div>
             <div class="form-group">
                 <label for="itemPrereqs">PREREQS:</label>
@@ -741,7 +742,7 @@ class AdminPage extends Page {
                 name: document.getElementById('itemName').value,
                 description: document.getElementById('itemDescription').value,
                 quantity: parseInt(document.getElementById('itemQuantity').value),
-                price: parseInt(document.getElementById('itemPrice').value),
+                price: setTwoNumberDecimal(document.getElementById('itemPrice').value),
                 prereqs: document.getElementById('itemPrereqs').value, // Probably should make this into some selection CX. Currently requires list of itemIds which is hard to translate!
                 isSecret: document.getElementById('itemIsSecret').checked,
             };
@@ -860,8 +861,8 @@ class AdminPage extends Page {
                     name: (first + ' ' + last).trim(),
                     accountNumber: r.user_id || '',
                     accountPassword: r.user_password || '',
-                    startingGold: parseInt(r.starting_gold || '0'),
-                    gold: parseInt(r.starting_gold || '0'),
+                    startingGold: setTwoNumberDecimal(r.starting_gold || '0'),
+                    gold: setTwoNumberDecimal(r.starting_gold || '0'),
                     profileImage: '',
                     emblemImage: '',
                     canAccessSecret: true

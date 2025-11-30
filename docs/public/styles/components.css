@@ -175,6 +175,7 @@ input.text-form-input {
     .lower {
         bottom: 0px;
         left: 0px;
+        z-index: 99;
     }
 }
 

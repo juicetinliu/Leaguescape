@@ -1,5 +1,6 @@
 import { db } from '../config/firebase.js';
 import { doc, getDoc, addDoc, updateDoc, deleteDoc, collection } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
+import { setTwoNumberDecimal } from '../utils/numUtils.js';
 
 class Item {
     constructor(gameId, itemId, data = {}) {
@@ -9,7 +10,7 @@ class Item {
         this.name = data.name || '';
         this.description = data.description || '';
         this.quantity = data.quantity || 0;
-        this.price = data.price || 0;
+        this.price = setTwoNumberDecimal(data.price) || 0;
         this.prereqs = data.prereqs || '';
         this.isSecret = data.isSecret || false;
     }
