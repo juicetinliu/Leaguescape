@@ -49,8 +49,25 @@ class AdminHandlerService {
         }
     }
 
-    async handlePlayerLogIn(gameId, player, characterId, approved, rejectionReason = "") {
+    async handlePlayerLogIn(gameId, player, characterId, approved, rejectionReason = "", MAX_LOGIN_ATTEMPTS = 3) {
         const playerId = player.playerId;
+        const characterFailedLoginMap = player.privateDetails.characterFailedLogins || {};
+
+        if(characterFailedLoginMap[characterId]) {
+            // check if locked
+            if(characterFailedLoginMap[characterId].lockUntil && Date.now() < characterFailedLoginMap[characterId].lockUntil) {
+                approved = false; //technically not needed, but for clarity
+                rejectionReason = `Character is locked for ${Math.ceil((characterFailedLoginMap[characterId].lockUntil - Date.now())/1000)} seconds. Try again later.`;
+                await MessageService.sendAdminMessageToPlayer(gameId, {
+                    messageType: MessageType.LOGIN_FAILURE,
+                    messageDetails: { 
+                        rejectionReason: rejectionReason 
+                    }
+                }, playerId);
+                return;
+            }
+        }
+
         if (approved) {
             await GameService.updatePlayerAssumedCharacter(gameId, playerId, characterId);
             await MessageService.sendAdminMessageToPlayer(gameId, {
@@ -59,7 +76,31 @@ class AdminHandlerService {
                     characterId: characterId 
                 }
             }, playerId);
+            if(characterFailedLoginMap[characterId]) {
+                // reset failed login attempts on successful login
+                characterFailedLoginMap[characterId] = {
+                    remainingAttempts: MAX_LOGIN_ATTEMPTS
+                }
+                await GameService.updateCharacterFailedLoginMap(gameId, playerId, characterFailedLoginMap);
+            }
         } else {
+            if (characterId) {
+                // We matched a character! But the password was wrong.
+                const remainingAttempts = characterFailedLoginMap[characterId] ? characterFailedLoginMap[characterId].remainingAttempts - 1 : MAX_LOGIN_ATTEMPTS - 1;
+                if(remainingAttempts <= 0) {
+                    rejectionReason = 'Invalid Credentials. Character is locked for 1 minute';
+                    characterFailedLoginMap[characterId] = {
+                        remainingAttempts: MAX_LOGIN_ATTEMPTS, // reset after lock
+                        lockUntil: Date.now() + 60000 // lock for 1 minute
+                    };
+                } else {
+                    characterFailedLoginMap[characterId] = {
+                        remainingAttempts: remainingAttempts
+                    }
+                }
+                await GameService.updateCharacterFailedLoginMap(gameId, playerId, characterFailedLoginMap);
+            }
+
             await MessageService.sendAdminMessageToPlayer(gameId, {
                 messageType: MessageType.LOGIN_FAILURE,
                 messageDetails: { 

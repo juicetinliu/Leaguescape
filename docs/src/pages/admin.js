@@ -1002,13 +1002,15 @@ class AdminPage extends Page {
                 return await AdminHandlerService.createPlayerCartPurchaseHistoryEntry(messageId, character, cart);
             } else if (message.messageType === MessageType.LOGIN_ATTEMPT) {
                 const { accountNumber, accountPassword } = message.messageDetails;
-                const character = this.characters.find(c => c.accountNumber === accountNumber && c.accountPassword === accountPassword);
-                if (character) {
-                    await AdminHandlerService.handlePlayerLogIn(gameId, player, character.characterId, true);
-                    await this.loadLobby();
+                const matchedCharacter = this.characters.find(c => c.accountNumber === accountNumber && c.accountPassword === accountPassword);
+                if (matchedCharacter) {
+                    await AdminHandlerService.handlePlayerLogIn(gameId, player, matchedCharacter.characterId, true);
                 } else {
-                    await AdminHandlerService.handlePlayerLogIn(gameId, player, null, false, 'Invalid Credentials');
+                    const matchedCharacterOnlyAccount = this.characters.find(c => c.accountNumber === accountNumber);
+                    const matchedCharacterId = matchedCharacterOnlyAccount ? matchedCharacterOnlyAccount.characterId : null;
+                    await AdminHandlerService.handlePlayerLogIn(gameId, player, matchedCharacterId, false, 'Invalid Credentials');
                 }
+                await this.loadLobby();
                 await message.markAsProcessed();
             } else if (message.messageType === MessageType.LOGOUT_ATTEMPT) {
                 const { characterId } = message.messageDetails;

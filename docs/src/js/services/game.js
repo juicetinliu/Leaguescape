@@ -56,6 +56,12 @@ class GameService {
             await callback(playerData.data());
         }, async (error) => { await errorCallback(error)});
     }
+
+    // Only used by the player - NOT the admin.
+    async getPlayerData(gameId, playerId) {
+        const playerData = await getDoc(this.createPlayerRef(gameId, playerId));
+        return playerData.data();
+    }
     
     // Could try passing in character instead to save memory?
     onCharacterSnapshot(gameId, characterId, callback, errorCallback = () => {}) {
@@ -109,11 +115,6 @@ class GameService {
         return await Game.get(gameId);
     }
 
-    async getPlayerData(gameId, playerId) {
-        const playerData = await getDoc(this.createPlayerRef(gameId, playerId));
-        return playerData.data();
-    }
-
     async getUserGames(userId) {
         const gamesRef = collection(db, 'games');
         const games = [];
@@ -147,6 +148,14 @@ class GameService {
         }
 
         return games;
+    }
+
+    async updateCharacterFailedLoginMap(gameId, playerId, characterFailedLoginMap) {
+        // This should only be called by admin, firestore rules will enforce this
+        const playerRef = this.createPlayerPrivateDataRef(gameId, playerId)
+        await updateDoc(playerRef, {
+            characterFailedLogins: characterFailedLoginMap
+        });
     }
 
     async banPlayer(gameId, playerId) {
