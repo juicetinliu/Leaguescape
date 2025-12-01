@@ -6,8 +6,8 @@ import { GAME_STATE, PAGES } from '../models/Enums.js';
 class GameRouter {
     constructor() {
         this.validGamePagesByState = {
-            [GAME_STATE.SETUP]: [PAGES.lobby],
-            [GAME_STATE.RUNNING]: [PAGES.login, PAGES.character, PAGES.shop, PAGES.bank, PAGES.inventory],
+            [GAME_STATE.SETUP]: [PAGES.lobby, PAGES.timer],
+            [GAME_STATE.RUNNING]: [PAGES.login, PAGES.character, PAGES.shop, PAGES.bank, PAGES.inventory, PAGES.timer],
             [GAME_STATE.END]: [PAGES.credits]
         };
 
@@ -27,7 +27,7 @@ class GameRouter {
     /**
      * return false if redirected, otherwise return currentGame
      */
-    async handlePlayerGamePageShow(currentPage) {
+    async handlePlayerGamePageShow(currentPage, skipAdminCheck = false) {
         const gameId = GameService.getCurrentGameId();
         if (!gameId) {
             router.navigate(PAGES.user);
@@ -41,12 +41,12 @@ class GameRouter {
         }
 
         const userId = AuthService.currentUser.authId;
-        if (!(await GameService.isPlayer(gameId, userId))) {
+        if (!(await GameService.isPlayer(gameId, userId) || await GameService.isAdmin(gameId, userId))) {
             router.navigate(PAGES.user);
             return false;
         }
 
-        if (await GameService.isAdmin(gameId, userId)) {
+        if (!skipAdminCheck && await GameService.isAdmin(gameId, userId)) {
             router.navigate(`${PAGES.admin}&gameId=${gameId}`);
             return false;
         }

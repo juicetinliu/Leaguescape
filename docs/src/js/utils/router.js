@@ -8,6 +8,7 @@ import CharacterPage from '../../pages/character.js';
 import ShopPage from '../../pages/shop.js';
 import BankPage from '../../pages/bank.js';
 import InventoryPage from '../../pages/inventory.js';
+import TimerPage from '../../pages/timer.js';
 import CreditsPage from '../../pages/credits.js';
 import AuthService from '../services/auth.js';
 import { PAGES } from '../models/Enums.js';
@@ -33,6 +34,10 @@ class Router {
             },
             [PAGES.lobby]: {
                 page: LobbyPage,
+                requiresAuth: true
+            },
+            [PAGES.timer]: {
+                page: TimerPage,
                 requiresAuth: true
             },
             [PAGES.login]: {

@@ -20,7 +20,7 @@ class GameService {
 
     onGameSnapshot(gameId, callback, errorCallback = () => {}) {
         return onSnapshot(doc(db, 'games', gameId), async (gameDoc) => {
-            await callback(gameDoc.data());
+            await callback(new Game(gameDoc.id, gameDoc.data()));
         }, async (error) => { await errorCallback(error)});
     }
 

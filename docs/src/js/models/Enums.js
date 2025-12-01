@@ -9,6 +9,7 @@ export const PAGES = {
     info: 'info',
     user: 'user',
     admin: 'admin',
+    timer: 'timer',
     // player game pages
     lobby: 'lobby',
     login: 'login',
