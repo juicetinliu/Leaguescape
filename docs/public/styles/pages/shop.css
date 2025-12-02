@@ -153,10 +153,20 @@
     /* swap to display:grid later! */
     .item-wrapper {
         border: 2px solid var(--primary-color);
+        color: var(--text-color);
+    }
+    .item-header {
+        color: var(--primary-color);
+        .wrapper {
+            padding: 0px 20px !important;
+        }
+        .item-add-to-cart-wrapper { padding: 0px !important; }
+        padding-bottom: 10px;
+    }
+    .item-wrapper, .item-header {
         display: flex;
         flex-direction: row;
         align-items: center;
-        color: var(--text-color);
         
         .divider {
             border-right: 1px solid var(--primary-color);

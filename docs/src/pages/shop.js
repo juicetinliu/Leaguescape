@@ -80,6 +80,9 @@ class ShopPage extends Page {
                             </div>
                         </div>
                     </div>
+                    <div id="itemsGridHeaders" class="items-grid-headers">
+                        Headers will go here
+                    </div>
                     <div id="itemsGrid" class="items-grid">
                         Items will go here
                     </div>
@@ -336,7 +339,18 @@ class ShopPage extends Page {
 
     loadItems() {
         console.log('Loading Items');
+        const gridHeaders = document.getElementById('itemsGridHeaders');
         const grid = document.getElementById('itemsGrid');
+
+        gridHeaders.innerHTML = `
+            <div class="item-header">
+                <div class="item-add-to-cart-wrapper wrapper">SELECT</div>
+                <div class="item-number-wrapper wrapper">ITEM #</div>
+                <div class="item-info-wrapper wrapper">ITEM</div>
+                <div class="item-quantity-wrapper wrapper">QUANTITY</div>
+                <div class="item-price-wrapper wrapper">PRICE</div>
+            </div>
+        `;
         
         const itemsHtml = this.items.map(item => {
             const itemLocked = !item.checkPrerequisites(this.currentCharacter);
