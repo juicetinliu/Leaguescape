@@ -51,7 +51,7 @@ class ShopPage extends Page {
         this.initializeUI();
         this.attachEventListeners();
     }
-//TODO: MISSING ITEM HEADERS
+
     initializeUI() {
         const template = `
             <div id="${this.page}" class="page-container">
@@ -76,7 +76,7 @@ class ShopPage extends Page {
                                 </div>
                             </div>
                             <div class="profile-image-wrapper ${this.canAccessSecretShop ? 'flickering' : ''}">
-                                <img src="${this.canAccessSecretShop ? this.currentCharacter.emblemImage : this.currentCharacter.profileImage}"/>
+                                <img id="profile-image" src="${this.canAccessSecretShop ? this.currentCharacter.emblemImage : this.currentCharacter.profileImage}"/>
                             </div>
                         </div>
                     </div>
@@ -230,7 +230,8 @@ class ShopPage extends Page {
             showPurchaseHistoryButton.classList.remove('hidden');
         }
 
-        //TODO: Update Profile Image too!
+        const characterProfileImage = document.getElementById('profile-image');
+        characterProfileImage.src = this.canAccessSecretShop ? this.currentCharacter.emblemImage : this.currentCharacter.profileImage;
     }
 
     togglePurchaseHistoryBadge(on) {

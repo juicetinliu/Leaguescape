@@ -68,7 +68,7 @@ class BankPage extends Page {
                             </div>
                         </div>
                         <div class="profile-image-wrapper">
-                            <img src="${this.currentCharacter.profileImage}"/>
+                            <img id="profile-image" src="${this.currentCharacter.profileImage}"/>
                         </div>
                     </div>
                 </div>
@@ -191,7 +191,8 @@ class BankPage extends Page {
             ${gold}
         `;
 
-        //TODO: Update Profile Image too!
+        const characterProfileImage = document.getElementById('profile-image');
+        characterProfileImage.src = this.currentCharacter.profileImage;
     }
 
     handleGoldInput(event) {
