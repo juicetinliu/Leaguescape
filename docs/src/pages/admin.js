@@ -32,7 +32,8 @@ class AdminPage extends Page {
         this.characters = [];
         this.items = [];
         this.gameTimerInterval = null;
-        this.importCsvRows = [];
+        this.importCharacterRows = [];
+        this.importItemsRows = [];
     }
 
     async show() {
@@ -126,17 +127,32 @@ class AdminPage extends Page {
                     </div>
                 </div>
 
-                <!-- Import CSV Modal -->
-                <div id="importCsvModal" class="modal" style="display: none;">
+                <!-- Characters Import Modal -->
+                <div id="importCharactersModal" class="modal" style="display: none;">
                     <div class="modal-content">
                         <h2>Import Characters (CSV)</h2>
                         <p>CSV should include header: <code>first_name,last_name,user_id,user_password,starting_gold</code></p>
-                        <input type="file" id="importCsvFileInput" accept="text/csv" />
-                        <div id="importCsvError" class="error-text"></div>
-                        <div id="importCsvPreview"></div>
+                        <input type="file" id="importCharactersFileInput" accept="text/csv" />
+                        <div id="importCharactersError" class="error-text"></div>
+                        <div id="importCharactersPreview"></div>
                         <div class="form-actions">
-                            <button id="importCsvCancel" class="btn">Cancel</button>
-                            <button id="importCsvConfirm" class="btn" disabled>Confirm Import</button>
+                            <button id="importCharactersCancel" class="btn">Cancel</button>
+                            <button id="importCharactersConfirm" class="btn" disabled>Confirm Import</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Items Import Modal -->
+                <div id="importItemsModal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <h2>Import Items (CSV)</h2>
+                        <p>CSV should include header: <code>item_id,item_name,item_description,quantity,price,pre_requisite_item_id,category,notes</code></p>
+                        <input type="file" id="importItemsFileInput" accept="text/csv" />
+                        <div id="importItemsError" class="error-text"></div>
+                        <div id="importItemsPreview"></div>
+                        <div class="form-actions">
+                            <button id="importItemsCancel" class="btn">Cancel</button>
+                            <button id="importItemsConfirm" class="btn" disabled>Confirm Import</button>
                         </div>
                     </div>
                 </div>
@@ -344,8 +360,14 @@ class AdminPage extends Page {
         if (this.currentGame.gameState !== GAME_STATE.END) {
             const addCard = document.createElement('div');
             addCard.className = 'item-card add-item';
-            addCard.innerHTML = `<button id="addItem" class="btn">Add Item</button>`;
+            addCard.innerHTML = `
+                <div class="item-add-actions">
+                    <button id="addItem" class="btn">Add Item</button>
+                    <button id="importItems" class="btn">Import CSV</button>
+                </div>
+            `;
             addCard.querySelector('#addItem').addEventListener('click', () => this.showItemModal());
+            addCard.querySelector('#importItems').addEventListener('click', () => this.showImportItemsModal());
             grid.appendChild(addCard);
         }
 
@@ -397,11 +419,11 @@ class AdminPage extends Page {
             addCard.innerHTML = `
                 <div class="profile-add-actions">
                     <button id="addCharacter" class="btn">Add Character</button>
-                    <button id="importCsv" class="btn">Import CSV</button>
+                    <button id="importCharacters" class="btn">Import CSV</button>
                 </div>
             `;
             addCard.querySelector('#addCharacter').addEventListener('click', () => this.showCharacterModal());
-            addCard.querySelector('#importCsv').addEventListener('click', () => this.showImportCsvModal());
+            addCard.querySelector('#importCharacters').addEventListener('click', () => this.showImportCharactersModal());
             grid.appendChild(addCard);
         }
 
@@ -764,38 +786,38 @@ class AdminPage extends Page {
         itemModal.style.display = 'flex';
     }
 
-    /*********************** CSV Import Handlers ************************/
-    showImportCsvModal() {
-        this.importCsvRows = [];
-        const err = document.getElementById('importCsvError');
-        const preview = document.getElementById('importCsvPreview');
-        const confirmBtn = document.getElementById('importCsvConfirm');
+    /*********************** Characters Import Handlers ************************/
+    showImportCharactersModal() {
+        this.importCharacterRows = [];
+        const err = document.getElementById('importCharactersError');
+        const preview = document.getElementById('importCharactersPreview');
+        const confirmBtn = document.getElementById('importCharactersConfirm');
         if (err) err.innerHTML = '';
         if (preview) preview.innerHTML = '';
         if (confirmBtn) confirmBtn.disabled = true;
 
-        const modal = document.getElementById('importCsvModal');
+        const modal = document.getElementById('importCharactersModal');
         modal.style.display = 'flex';
 
         // wire file input
-        const fileInput = document.getElementById('importCsvFileInput');
+        const fileInput = document.getElementById('importCharactersFileInput');
         fileInput.value = '';
-        fileInput.onchange = (e) => this.handleImportCsvFileInput(e.target.files && e.target.files[0]);
+        fileInput.onchange = (e) => this.handleImportCharactersFileInput(e.target.files && e.target.files[0]);
 
-        document.getElementById('importCsvCancel').onclick = () => this.hideImportCsvModal();
-        document.getElementById('importCsvConfirm').onclick = async () => await this.confirmImportCsv();
+        document.getElementById('importCharactersCancel').onclick = () => this.hideImportCharactersModal();
+        document.getElementById('importCharactersConfirm').onclick = async () => await this.confirmImportCharacters();
     }
 
-    hideImportCsvModal() {
-        const modal = document.getElementById('importCsvModal');
+    hideImportCharactersModal() {
+        const modal = document.getElementById('importCharactersModal');
         if (modal) modal.style.display = 'none';
-        this.importCsvRows = [];
+        this.importCharacterRows = [];
     }
 
-    handleImportCsvFileInput(file) {
-        const err = document.getElementById('importCsvError');
-        const preview = document.getElementById('importCsvPreview');
-        const confirmBtn = document.getElementById('importCsvConfirm');
+    handleImportCharactersFileInput(file) {
+        const err = document.getElementById('importCharactersError');
+        const preview = document.getElementById('importCharactersPreview');
+        const confirmBtn = document.getElementById('importCharactersConfirm');
         if (!file) {
             if (err) err.innerHTML = 'No file selected';
             if (confirmBtn) confirmBtn.disabled = true;
@@ -810,7 +832,7 @@ class AdminPage extends Page {
                 const rows = parseCsvText(text);
                 // validate
                 if (!rows || rows.length === 0) {
-                    throw new Error('CSV contains no rows');
+                    throw new Error('File contains no rows');
                 }
                 // ensure headers
                 const required = ['first_name','last_name','user_id','user_password','starting_gold'];
@@ -820,25 +842,25 @@ class AdminPage extends Page {
                     throw new Error('Missing headers: ' + missing.join(', '));
                 }
 
-                this.importCsvRows = rows;
+                this.importCharacterRows = rows;
                 if (err) err.innerHTML = '';
-                if (preview) this.renderImportPreview(rows);
+                if (preview) this.renderImportCharactersPreview(rows);
                 if (confirmBtn) confirmBtn.disabled = rows.length === 0;
             } catch (e) {
-                if (err) err.innerHTML = e.message || 'Invalid CSV';
+                if (err) err.innerHTML = e.message || 'Invalid CSV file';
                 if (preview) preview.innerHTML = '';
                 if (confirmBtn) confirmBtn.disabled = true;
             }
         };
         reader.onerror = (e) => {
-            const errEl = document.getElementById('importCsvError');
+            const errEl = document.getElementById('importCharactersError');
             if (errEl) errEl.innerHTML = 'Failed to read file';
         };
         reader.readAsText(file);
     }
 
-    renderImportPreview(rows) {
-        const preview = document.getElementById('importCsvPreview');
+    renderImportCharactersPreview(rows) {
+        const preview = document.getElementById('importCharactersPreview');
         if (!preview) return;
         const count = rows.length;
         const lines = rows.slice(0, 10).map(r => `<li>${r.first_name} ${r.last_name} (${r.user_id} | ${r.user_password}) - ${r.starting_gold}</li>`).join('');
@@ -848,9 +870,9 @@ class AdminPage extends Page {
         `;
     }
 
-    async confirmImportCsv() {
-        if (!this.importCsvRows || this.importCsvRows.length === 0) return;
-        const rows = this.importCsvRows;
+    async confirmImportCharacters() {
+        if (!this.importCharacterRows || this.importCharacterRows.length === 0) return;
+        const rows = this.importCharacterRows;
         const gameId = this.currentGame.gameId;
         try {
             // create characters sequentially to avoid bursts
@@ -869,14 +891,127 @@ class AdminPage extends Page {
                 };
                 await GameService.createCharacter(gameId, characterData);
             }
-            this.hideImportCsvModal();
+            this.hideImportCharactersModal();
         } catch (err) {
-            const errEl = document.getElementById('importCsvError');
+            const errEl = document.getElementById('importCharactersError');
             if (errEl) errEl.innerHTML = 'Failed to import CSV: ' + (err.message || String(err));
         }
     }
 
-    /********************* End CSV Import Handlers ***********************/
+    /********************* End Characters Import Handlers ***********************/
+
+    /********************* Items Import Handlers ********************/
+    showImportItemsModal() {
+        this.importItemsRows = [];
+        const err = document.getElementById('importItemsError');
+        const preview = document.getElementById('importItemsPreview');
+        const confirmBtn = document.getElementById('importItemsConfirm');
+        if (err) err.innerHTML = '';
+        if (preview) preview.innerHTML = '';
+        if (confirmBtn) confirmBtn.disabled = true;
+
+        const modal = document.getElementById('importItemsModal');
+        modal.style.display = 'flex';
+
+        const fileInput = document.getElementById('importItemsFileInput');
+        fileInput.value = '';
+        fileInput.onchange = (e) => this.handleImportItemsFileInput(e.target.files && e.target.files[0]);
+
+        document.getElementById('importItemsCancel').onclick = () => this.hideImportItemsModal();
+        document.getElementById('importItemsConfirm').onclick = async () => await this.confirmImportItems();
+    }
+
+    hideImportItemsModal() {
+        const modal = document.getElementById('importItemsModal');
+        if (modal) modal.style.display = 'none';
+        this.importItemsRows = [];
+    }
+
+    handleImportItemsFileInput(file) {
+        const err = document.getElementById('importItemsError');
+        const preview = document.getElementById('importItemsPreview');
+        const confirmBtn = document.getElementById('importItemsConfirm');
+        if (!file) {
+            if (err) err.innerHTML = 'No file selected';
+            if (confirmBtn) confirmBtn.disabled = true;
+            if (preview) preview.innerHTML = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const text = ev.target.result;
+            try {
+                const rows = parseCsvText(text);
+                if (!rows || rows.length === 0) throw new Error('CSV contains no rows');
+                const required = ['item_id','item_name','item_description','quantity','price','category'];
+                const headers = Object.keys(rows[0]);
+                const missing = required.filter(r => !headers.includes(r));
+                if (missing.length > 0) throw new Error('Missing headers: ' + missing.join(', '));
+
+                this.importItemsRows = rows;
+                if (err) err.innerHTML = '';
+                if (preview) this.renderImportItemsPreview(rows);
+                if (confirmBtn) confirmBtn.disabled = rows.length === 0;
+            } catch (e) {
+                if (err) err.innerHTML = e.message || 'Invalid CSV';
+                if (preview) preview.innerHTML = '';
+                if (confirmBtn) confirmBtn.disabled = true;
+            }
+        };
+        reader.onerror = () => {
+            const errEl = document.getElementById('importItemsError');
+            if (errEl) errEl.innerHTML = 'Failed to read file';
+        };
+        reader.readAsText(file);
+    }
+
+    renderImportItemsPreview(rows) {
+        const preview = document.getElementById('importItemsPreview');
+        if (!preview) return;
+        const count = rows.length;
+        const lines = rows.slice(0, 10).map(r => `<li>${r.item_id} - ${r.item_name} - ${r.price}</li>`).join('');
+        preview.innerHTML = `
+            <p>Will create <strong>${count}</strong> items.</p>
+            <ul>${lines}${count > 10 ? '<li>...and more</li>' : ''}</ul>
+        `;
+    }
+
+    async confirmImportItems() {
+        if (!this.importItemsRows || this.importItemsRows.length === 0) return;
+        const rows = this.importItemsRows;
+        const gameId = this.currentGame.gameId;
+        try {
+            for (const r of rows) {
+                const itemNumber = parseInt(r.item_id || '0');
+                const name = r.item_name || '';
+                const description = r.item_description || '';
+                const quantity = parseInt(r.quantity || '0');
+                const price = setTwoNumberDecimal(r.price || '0');
+                // category mapping: if category === 'Y' -> isSecret = false; if 'N' -> isSecret = true
+                const cat = String(r.category || '').trim().toUpperCase();
+                const isSecret = (cat === 'N');
+
+                const itemData = {
+                    itemNumber,
+                    name,
+                    description,
+                    quantity,
+                    price,
+                    prereqs: '',
+                    isSecret
+                };
+
+                await GameService.createItem(gameId, itemData);
+            }
+            this.hideImportItemsModal();
+        } catch (err) {
+            const errEl = document.getElementById('importItemsError');
+            if (errEl) errEl.innerHTML = 'Failed to import items CSV: ' + (err.message || String(err));
+        }
+    }
+
+    /******************* End Items Import Handlers ******************/
 
     /********************* Modify Duration Handlers ********************/
 
