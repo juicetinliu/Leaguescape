@@ -998,7 +998,7 @@ class AdminPage extends Page {
                     description,
                     quantity,
                     price,
-                    prereqs: '',
+                    prereqs: '', //TODO!
                     isSecret
                 };
 
