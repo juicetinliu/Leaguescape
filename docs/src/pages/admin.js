@@ -7,6 +7,7 @@ import { router } from '../js/utils/router.js';
 import { parseCsvText } from '../js/utils/csvUtils.js';
 import { msToHms, hmsToMs } from '../js/utils/timeUtils.js';
 import { setTwoNumberDecimalString, setTwoNumberDecimal } from '../js/utils/numUtils.js';
+import { convertMessageTypeToReadableString, convertMessageDetailsToHTML } from '../js/utils/messageUtils.js';
 import { PAGES, GAME_STATE } from '../js/models/Enums.js';
 import AdminHandlerService from '../js/services/handlers/adminHandler.js';
 
@@ -523,9 +524,10 @@ class AdminPage extends Page {
                 <div class="activity-item" id="activity-${msg.messageId}">
                     <div class="activity-header">
                         <span class="timestamp">${msg.activityTime.toDate().toLocaleString("en-US", { timeZone: "PST" })}</span>
-                        <span class="message-type">${msg.messageType}</span>
+                        <span class="message-character">${character ? ` - ${character.name} wants to ` : '???'}</span>
+                        <span class="message-type">${convertMessageTypeToReadableString(msg.messageType)}</span>
                     </div>
-                    <div class="activity-details"><pre>${typeof msg.messageDetails === 'string' ? msg.messageDetails : JSON.stringify(msg.messageDetails)}</pre></div>
+                    <div class="activity-details">${convertMessageDetailsToHTML(msg.messageType, msg.messageDetails, this.items)}</div>
                     <div class="activity-actions">
                         ${activityOptions.map(option => {return `
                             <button class="btn ${option}-msg" data-id="${msg.messageId}">${option.toUpperCase()}</button>
