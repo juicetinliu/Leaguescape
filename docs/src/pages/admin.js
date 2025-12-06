@@ -335,7 +335,7 @@ class AdminPage extends Page {
             card.className = 'item-card';
             card.innerHTML = `
                 <div class="item-info">
-                    <h3>${item.name}</h3>
+                    <h3>${item.isSecret ? '<em>(Secret)</em>' : ''} ${item.name}</h3>
                     <p>Price: ${setTwoNumberDecimalString(item.price)} gold</p>
                     <p>Quantity: ${item.quantity}</p>
                 </div>
@@ -391,8 +391,12 @@ class AdminPage extends Page {
                     <img src="${character.profileImage}" class="profile-image">
                 </div>
                 <div class="profile-info">
-                    <h3>${character.name}</h3>
+                    <h3>${character.canAccessSecret ? '<em>(Secret)</em>' : ''} ${character.name}</h3>
                     <p>Account: ${character.accountNumber}</p>
+                    ${this.currentGame.gameState === GAME_STATE.SETUP ? `
+                        <p>Starting Gold: ${setTwoNumberDecimalString(character.startingGold)}</p>
+                    ` : ''}
+                    <p>Current Gold: ${setTwoNumberDecimalString(character.gold)}</p>
                 </div>
                 ${this.currentGame.gameState !== GAME_STATE.END ? `
                     <div class="profile-actions">
